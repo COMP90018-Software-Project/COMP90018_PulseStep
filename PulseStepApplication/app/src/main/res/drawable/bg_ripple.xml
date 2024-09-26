@@ -1,0 +1,30 @@
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#488E8D8D"> <!-- 点击时的动态灰色波纹效果，半透明黑色 -->
+
+    <item>
+        <layer-list>
+            <!-- outside light gray effect -->
+            <item>
+                <shape android:shape="oval">
+                    <gradient
+                        android:centerX="0.5"
+                        android:centerY="0.5"
+                        android:endColor="@android:color/transparent"
+                        android:gradientRadius="300dp"
+                        android:startColor="@color/light_gray"
+                        android:type="radial" />
+                </shape>
+            </item>
+
+            <!-- button color - orange -->
+            <item android:bottom="20dp" android:left="20dp" android:right="20dp" android:top="20dp">
+                <shape android:shape="oval">
+                    <solid android:color="@color/orange" />
+                </shape>
+            </item>
+
+        </layer-list>
+    </item>
+
+
+</ripple>

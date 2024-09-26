@@ -5,6 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_workout"
     tools:context=".MainActivity">
 
     <TextView
@@ -15,5 +16,37 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Run button -->
+    <Button
+        android:id="@+id/run_button"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:text="Run"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:background="@drawable/bg_ripple"
+        android:stateListAnimator="@drawable/bt_state_animator"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="150dp"/>
+
+    <!--Jump button -->
+    <Button
+        android:id="@+id/jump_button"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:text="Jump"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:background="@drawable/bg_ripple"
+        android:stateListAnimator="@drawable/bt_state_animator"
+        app:layout_constraintTop_toBottomOf="@id/run_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp"/>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
