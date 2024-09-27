@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@drawable/bg_run_summary">
+    android:background="@drawable/bg_jump_summary">
 
     <!-- "Morning Run" Text -->
 
@@ -13,58 +13,57 @@
     <!-- "Kilometers" Text -->
 
     <TextView
-        android:id="@+id/run_summary_title"
+        android:id="@+id/jump_summary_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="68dp"
         android:gravity="center"
-        android:text="Morning Run"
+        android:text="Jump Rope"
         android:textColor="@android:color/black"
         android:textSize="30sp"
-        android:fontFamily="@font/inter_semi_bold"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.147"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/run_distance"
+        android:id="@+id/jump_times"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="-10dp"
         android:gravity="center"
-        android:text="4,91"
+        android:text="100"
         android:textColor="@android:color/black"
         android:textSize="90sp"
-        android:fontFamily="@font/inter_black_italic"
+        android:textStyle="bold|italic"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.145"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/run_summary_title" />
+        app:layout_constraintTop_toBottomOf="@+id/jump_summary_title" />
 
+    <!-- Stats Container (Time, Avg Pace, Calories) -->
     <TextView
-        android:id="@+id/run_unit"
+        android:id="@+id/jump_unit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="-5dp"
         android:gravity="center"
-        android:text="Kilometers"
+        android:text="Times"
         android:textColor="@color/gray"
         android:textSize="20sp"
-        android:fontFamily="@font/inter_medium"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.111"
+        app:layout_constraintHorizontal_bias="0.103"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/run_distance" />
+        app:layout_constraintTop_toBottomOf="@+id/jump_times" />
 
-    <!-- Stats Container (Time, Avg Pace, Calories) -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/run_summary_box"
+        android:id="@+id/jump_summary_box"
         android:layout_width="327dp"
         android:layout_height="204dp"
         android:layout_marginBottom="15dp"
         app:cardCornerRadius="12dp"
-        app:layout_constraintBottom_toTopOf="@+id/bt_finish_run"
+        app:layout_constraintBottom_toTopOf="@+id/bt_finish_jump"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
@@ -81,10 +80,10 @@
                 android:layout_gravity="center_horizontal"
                 android:orientation="horizontal">
 
-<!--                <ImageView-->
-<!--                    android:layout_width="24dp"-->
-<!--                    android:layout_height="24dp"-->
-<!--                    android:src="@drawable/ic_time" />-->
+                <!--                <ImageView-->
+                <!--                    android:layout_width="24dp"-->
+                <!--                    android:layout_height="24dp"-->
+                <!--                    android:src="@drawable/ic_time" />-->
 
                 <TextView
                     android:layout_width="0dp"
@@ -110,10 +109,10 @@
                 android:layout_gravity="center_horizontal"
                 android:orientation="horizontal">
 
-<!--                <ImageView-->
-<!--                    android:layout_width="24dp"-->
-<!--                    android:layout_height="24dp"-->
-<!--                    android:src="@drawable/ic_avg_pace" />-->
+                <!--                <ImageView-->
+                <!--                    android:layout_width="24dp"-->
+                <!--                    android:layout_height="24dp"-->
+                <!--                    android:src="@drawable/ic_avg_pace" />-->
 
                 <TextView
                     android:layout_width="0dp"
@@ -139,10 +138,10 @@
                 android:layout_gravity="center_horizontal"
                 android:orientation="horizontal">
 
-<!--                <ImageView-->
-<!--                    android:layout_width="24dp"-->
-<!--                    android:layout_height="24dp"-->
-<!--                    android:src="@drawable/ic_calories" />-->
+                <!--                <ImageView-->
+                <!--                    android:layout_width="24dp"-->
+                <!--                    android:layout_height="24dp"-->
+                <!--                    android:src="@drawable/ic_calories" />-->
 
                 <TextView
                     android:layout_width="0dp"
@@ -165,7 +164,7 @@
 
     <!-- Finish Button -->
     <Button
-        android:id="@+id/bt_finish_run"
+        android:id="@+id/bt_finish_jump"
         android:layout_width="327dp"
         android:layout_height="48dp"
         android:layout_marginBottom="80dp"
@@ -173,7 +172,6 @@
         android:text="Finish"
         android:textSize="16sp"
         android:textColor="@color/black"
-        android:fontFamily="@font/inter_semi_bold"
         android:textAllCaps="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
