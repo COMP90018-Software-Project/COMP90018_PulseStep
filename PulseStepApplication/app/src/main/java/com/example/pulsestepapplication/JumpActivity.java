@@ -11,39 +11,26 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class RunningActivity extends AppCompatActivity {
+public class JumpActivity extends AppCompatActivity {
 
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_running);
-//    }
-//
-//    ImageView backButton = findViewById(R.id.back_button);
-//
-//    // Set click listener for the back button
-//    backButton.setOnClickListener(new View.OnClickListener() {
-//    @Override
-//    public void onClick(View v) {
-//        // Finish the current activity and return to the previous one
-//        finish();
-//    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_running);
+        setContentView(R.layout.activity_jump);
 
         // Find the back button by its ID
-        ImageView backButton = findViewById(R.id.back_button_running_page);
+        ImageView backButton = findViewById(R.id.back_button_jump_page);
 
         // Set click listener for the back button
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Finish the current activity and return to the RunSummaryActivity page
-                Intent intent = new Intent(RunningActivity.this, RunSummaryActivity.class);
+                Intent intent = new Intent(JumpActivity.this, MainActivity.class);
                 startActivity(intent);
             }
         });
     }
+
+
 }

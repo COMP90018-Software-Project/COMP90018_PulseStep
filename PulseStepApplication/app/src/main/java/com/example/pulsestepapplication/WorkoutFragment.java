@@ -76,6 +76,20 @@ public class WorkoutFragment extends Fragment {
             }
         });
 
+        // Find the Jump button by its ID
+        Button jumpButton = view.findViewById(R.id.jump_button);
+
+        // Set OnClickListener for the Jump button
+        jumpButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Create an Intent to start RunningActivity
+                Intent intent = new Intent(getActivity(), JumpActivity.class);
+                startActivity(intent);
+            }
+        });
+
+
         return view;
     }
 }

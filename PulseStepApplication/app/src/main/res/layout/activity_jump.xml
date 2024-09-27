@@ -5,11 +5,11 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RunningActivity">
+    tools:context=".JumpActivity">
 
     <!-- Toolbar containing the back button and title -->
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar_run"
+        android:id="@+id/toolbar_jump"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/white"
@@ -18,7 +18,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:id="@+id/back_button_running_page"
+            android:id="@+id/back_button_jump_page"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:contentDescription="Back"
@@ -29,10 +29,10 @@
             android:paddingBottom="12dp"/>
 
         <TextView
-            android:id="@+id/run"
+            android:id="@+id/jump_rope"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Run"
+            android:text="Jump Rope"
             android:layout_gravity="center"
             android:textSize="16sp"
             android:textColor="@color/black"
