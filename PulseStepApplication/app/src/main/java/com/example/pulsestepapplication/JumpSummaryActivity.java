@@ -14,7 +14,7 @@ public class JumpSummaryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_run_summary);
+        setContentView(R.layout.activity_jump_summary);
 
         // Reference to the Finish button
         finishButton = findViewById(R.id.bt_finish_jump);
