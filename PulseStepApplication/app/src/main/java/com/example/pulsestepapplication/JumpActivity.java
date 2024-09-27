@@ -26,7 +26,7 @@ public class JumpActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Finish the current activity and return to the RunSummaryActivity page
-                Intent intent = new Intent(JumpActivity.this, MainActivity.class);
+                Intent intent = new Intent(JumpActivity.this, JumpSummaryActivity.class);
                 startActivity(intent);
             }
         });
