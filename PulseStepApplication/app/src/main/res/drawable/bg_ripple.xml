@@ -1,5 +1,5 @@
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="#488E8D8D"> <!-- 点击时的动态灰色波纹效果，半透明黑色 -->
+    android:color="@color/ripple_gray"> <!-- 点击时的动态灰色波纹效果，半透明黑色 -->
 
     <item>
         <layer-list>

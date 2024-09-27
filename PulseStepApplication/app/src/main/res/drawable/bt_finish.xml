@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/ripple_gray">
+    <!-- 正常状态下按钮的背景 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFA07A" /> <!-- 按钮默认颜色 -->
+            <corners android:radius="30dp" /> <!-- 按钮的圆角半径 -->
+        </shape>
+    </item>
+
+    <!-- 定义波纹效果的范围 -->
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" /> <!-- 这个是波纹显示的区域，可选择透明或白色 -->
+            <corners android:radius="30dp" />
+        </shape>
+    </item>
+</ripple>
