@@ -13,7 +13,7 @@
     <!-- "Kilometers" Text -->
 
     <TextView
-        android:id="@+id/textViewTitle"
+        android:id="@+id/jump_summary_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="68dp"
@@ -28,7 +28,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/textViewDistance"
+        android:id="@+id/jump_times"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="-10dp"
@@ -40,11 +40,11 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.145"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewTitle" />
+        app:layout_constraintTop_toBottomOf="@+id/jump_summary_title" />
 
     <!-- Stats Container (Time, Avg Pace, Calories) -->
     <TextView
-        android:id="@+id/textViewUnit"
+        android:id="@+id/jump_unit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="-5dp"
@@ -55,15 +55,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.103"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewDistance" />
+        app:layout_constraintTop_toBottomOf="@+id/jump_times" />
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardViewStats"
+        android:id="@+id/jump_summary_box"
         android:layout_width="327dp"
         android:layout_height="204dp"
         android:layout_marginBottom="15dp"
         app:cardCornerRadius="12dp"
-        app:layout_constraintBottom_toTopOf="@+id/bt_finish"
+        app:layout_constraintBottom_toTopOf="@+id/bt_finish_jump"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
@@ -164,7 +164,7 @@
 
     <!-- Finish Button -->
     <Button
-        android:id="@+id/bt_finish"
+        android:id="@+id/bt_finish_jump"
         android:layout_width="327dp"
         android:layout_height="48dp"
         android:layout_marginBottom="80dp"

@@ -17,7 +17,7 @@ public class JumpSummaryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_run_summary);
 
         // Reference to the Finish button
-        finishButton = findViewById(R.id.bt_finish);
+        finishButton = findViewById(R.id.bt_finish_jump);
 
         // Handle Finish button click
         finishButton.setOnClickListener(new View.OnClickListener() {
