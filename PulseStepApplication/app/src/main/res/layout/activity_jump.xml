@@ -21,26 +21,24 @@
             android:id="@+id/back_button_jump_page"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="Back"
-            android:src="@drawable/ic_back_arrow"
             android:layout_gravity="start"
-            android:paddingStart="8dp"
+            android:contentDescription="Back"
+            android:paddingStart="5dp"
             android:paddingTop="12dp"
-            android:paddingBottom="12dp"/>
+            android:paddingBottom="12dp"
+            android:src="@drawable/ic_back_arrow" />
 
         <TextView
             android:id="@+id/jump_rope"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Jump Rope"
-            android:layout_gravity="center"
-            android:textSize="16sp"
-            android:textColor="@color/black"
             android:fontFamily="@font/overpass_bold"
-            android:layout_marginStart="16dp"
-            android:paddingTop="18dp"
-            android:paddingLeft="20dp"
-            android:layout_marginEnd="16dp"/>
+            android:text="Jump Rope"
+            android:textColor="@color/black"
+            android:paddingLeft="10dp"
+            android:textSize="20sp"
+            android:layout_gravity="center"
+            android:paddingTop="8dp" />
 
     </androidx.appcompat.widget.Toolbar>
 
