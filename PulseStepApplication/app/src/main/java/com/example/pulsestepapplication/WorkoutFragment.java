@@ -1,5 +1,6 @@
 package com.example.pulsestepapplication;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -7,6 +8,7 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -59,6 +61,18 @@ public class WorkoutFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_workout, container, false);
+        View view =  inflater.inflate(R.layout.fragment_workout, container, false);
+
+        Button runButton = view.findViewById(R.id.run_button);
+        // Handle Finish button click
+        runButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Finish the activity and return to the previous screen
+                Intent intent = new Intent(getActivity(),RunSummaryActivity.class);
+                startActivity(intent);
+            }
+        });
+        return view;
     }
 }
