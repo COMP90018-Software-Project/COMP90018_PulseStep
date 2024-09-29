@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">PulseStep Application</string>
+    <string name="light">fonts/Light.otf</string>
+    <string name="bold">fonts/extrabold.otf</string>
+    <string name="empty_label"></string>
+    <string name="sample_username">Linh Nguyen</string>
 </resources>
