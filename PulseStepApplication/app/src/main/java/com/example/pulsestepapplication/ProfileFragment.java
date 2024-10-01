@@ -7,11 +7,9 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.sahana.horizontalcalendar.HorizontalCalendar;
-import com.sahana.horizontalcalendar.OnDateSelectListener;
-import com.sahana.horizontalcalendar.model.DateModel;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -20,7 +18,8 @@ import com.sahana.horizontalcalendar.model.DateModel;
  */
 public class ProfileFragment extends Fragment {
     private HorizontalCalendar mHorizontalCalendar;
-    private TextView mDateTextView;
+//    private TextView mDateTextView;
+
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -60,6 +59,7 @@ public class ProfileFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
     }
 
     @Override
@@ -71,4 +71,5 @@ public class ProfileFragment extends Fragment {
         mHorizontalCalendar = view.findViewById(R.id.horizontalCalendar);
         return view;
     }
+
 }

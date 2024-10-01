@@ -7,6 +7,7 @@
     tools:context=".ProfileFragment"
     android:background="@color/white">
 
+
     <!-- Toolbar containing the setting button and title -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_profile"
@@ -72,7 +73,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="40dp"
         app:layout_constraintTop_toBottomOf="@id/profile_username"
-        app:numOfDays="90"
+        app:numOfDays="60"
         app:setBgColor="@color/white"
         app:setDateFontStyle="fonts/Light.otf"
         app:setDateTextSize="22sp"
@@ -83,7 +84,9 @@
         app:setSelectedBgColor="@color/pink"
         app:setSelectedTextColor="@color/black"
         app:setTextColor="@color/black"
-        app:setWeekTextSize="13sp" />
+        app:setWeekTextSize="13sp"
+        app:setLanguage="English"/>
+
 
     <!-- CardView for Workout (Jump) -->
     <androidx.cardview.widget.CardView

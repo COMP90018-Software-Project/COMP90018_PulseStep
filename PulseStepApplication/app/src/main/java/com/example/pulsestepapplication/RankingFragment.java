@@ -3,10 +3,14 @@ package com.example.pulsestepapplication;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -14,6 +18,17 @@ import android.view.ViewGroup;
  * create an instance of this fragment.
  */
 public class RankingFragment extends Fragment {
+
+    ArrayList<RankModel> rankModels = new ArrayList<>();
+    int[] rankUserImages = {R.drawable.sample_profile_img,
+            R.drawable.sample_profile_img,
+            R.drawable.sample_profile_img,
+            R.drawable.sample_profile_img,
+            R.drawable.sample_profile_img,
+            R.drawable.sample_profile_img,
+            R.drawable.sample_profile_img,
+            R.drawable.sample_profile_img,
+            R.drawable.sample_profile_img};
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -53,12 +68,37 @@ public class RankingFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        setUpRankModels();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_ranking, container, false);
+        View view =  inflater.inflate(R.layout.fragment_ranking, container, false);
+
+        RecyclerView rankRecyclerView = view.findViewById(R.id.ranking_List);
+        rankRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+
+        RankListAdapter rankListAdapter = new RankListAdapter(requireContext(), rankModels);
+        rankRecyclerView.setAdapter(rankListAdapter);
+
+        return view;
+    }
+
+    private void setUpRankModels(){
+        String[] rankNo = getResources().getStringArray(R.array.sample_ranking_no);
+        String[] rankUserNames = getResources().getStringArray(R.array.sample_ranking_user_names);
+        String[] rankWorkoutTimes = getResources().getStringArray(R.array.sample_ranking_times);
+
+        for (int i = 0; i<rankNo.length; i++){
+            rankModels.add(new RankModel(rankNo[i],
+                    rankUserNames[i],
+                    rankWorkoutTimes[i],
+                    rankUserImages[i]));
+        }
+
     }
 }
