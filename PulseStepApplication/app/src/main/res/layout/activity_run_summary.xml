@@ -6,12 +6,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/bg_run_summary">
 
-    <!-- "Morning Run" Text -->
-
-    <!-- Distance Display -->
-
-    <!-- "Kilometers" Text -->
-
     <TextView
         android:id="@+id/run_summary_title"
         android:layout_width="wrap_content"

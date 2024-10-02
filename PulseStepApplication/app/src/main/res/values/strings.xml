@@ -6,12 +6,12 @@
     <string name="sample_username">Linh Nguyen</string>
 
 
-<!--    Ranking Page -->
-<!--    Ranking page - title -->
+    <!--    Ranking Page -->
+    <!--    Ranking page - title -->
     <string name="rank_title">Daily Sports Rankings</string>
     <string name="progress_title"> YOUR PROGRESS</string>
     <string name="target_title">Daily target</string>
-<!--    sample string for ranking list -->
+    <!--    sample string for ranking list -->
     <string-array name="sample_ranking_no">
         <item>01.</item>
         <item>02.</item>
@@ -49,5 +49,9 @@
         <item>1.5 hours</item>
         <item>1 hour</item>
     </string-array>
-
+    <!--    Dialog - Set daily Target-->
+    <string name="set_target_title">Set Your Target</string>
+    <string name="bt_cancel">CANCEL</string>
+    <string name="bt_set">SET</string>
+    <string name="reset_password_context">Your password has been successfully reset. click confirm to set a new password</string>
 </resources>

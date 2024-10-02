@@ -59,14 +59,27 @@
         android:id="@+id/profile_username"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="UK"
+        android:gravity="center"
+        android:fontFamily="@font/overpass_bold"
+        android:textSize="14dp"
+        android:textStyle="bold"
+        android:textColor="#9B9BA1"
+        android:layout_marginTop="5dp"
+        app:layout_constraintTop_toBottomOf="@id/profile_image" />
+
+    <!-- Profile Username -->
+    <TextView
+        android:id="@+id/location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="@string/sample_username"
         android:gravity="center"
         android:fontFamily="@font/overpass_bold"
         android:textSize="24dp"
         android:textStyle="bold"
-        android:layout_marginTop="40dp"
-        app:layout_constraintTop_toBottomOf="@id/profile_image" />
-
+        android:layout_marginTop="5dp"
+        app:layout_constraintTop_toBottomOf="@id/profile_username" />
 
     <TextView
         android:id="@+id/month"
@@ -77,7 +90,7 @@
         android:textSize="16dp"
         android:fontFamily="@font/overpass_bold"
         android:gravity="center"
-        app:layout_constraintTop_toBottomOf="@+id/profile_username" />
+        app:layout_constraintTop_toBottomOf="@+id/location" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dates_rv"
@@ -217,7 +230,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="Jump"
+                android:text="Running"
                 android:fontFamily="@font/overpass_bold"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"

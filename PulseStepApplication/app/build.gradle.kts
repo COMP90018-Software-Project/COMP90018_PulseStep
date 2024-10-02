@@ -35,6 +35,7 @@ android {
 }
 
 dependencies {
+    implementation("com.github.dhaval2404:imagepicker:2.1")
     implementation("com.google.android.material:material:1.5.0")
     implementation("de.hdodenhof:circleimageview:3.0.0")
     implementation(libs.appcompat)
