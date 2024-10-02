@@ -64,9 +64,25 @@
                 android:textSize="14sp"
                 android:fontFamily="@font/inter_semi_bold"
                 android:textColor="@color/gray"
+                android:layout_marginEnd="20dp"
                 app:layout_constraintEnd_toStartOf="@id/rank_like"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"/>
+
+            <TextView
+                android:id="@+id/num_like"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5"
+                android:textColor="@color/like_orange"
+                android:textSize="12sp"
+                android:fontFamily="@font/inter_semi_bold"
+                android:layout_marginTop="10dp"
+                app:layout_constraintBottom_toTopOf="@id/rank_like"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="@id/rank_like"
+                app:layout_constraintStart_toStartOf="@+id/rank_like"/>
+
 
             <CheckBox
                 android:id="@+id/rank_like"
@@ -74,9 +90,10 @@
                 android:layout_height="wrap_content"
                 android:button="@drawable/sl_like"
                 app:buttonTint="@color/like_orange"
+                android:layout_marginTop="-10dp"
+                android:layout_marginEnd="10dp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
+                app:layout_constraintTop_toBottomOf="@id/num_like"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
