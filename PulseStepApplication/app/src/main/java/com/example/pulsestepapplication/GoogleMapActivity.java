@@ -296,12 +296,27 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         googleMap = map;
         applyCustomMapStyle();
 
+        // Check if location permissions are granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             onLocationPermissionGranted();
         } else {
             showDefaultMap();
         }
+
+        // Set the initial camera position to the user's last known location
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (location != null) {
+                LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                // Move camera immediately to the last known location
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM_LEVEL));
+            } else {
+                // If no last known location, set a default location to avoid zooming out to the global level
+                LatLng defaultLatLng = new LatLng(0, 0); // Replace with a more appropriate default location if needed
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLatLng, DEFAULT_ZOOM_LEVEL));
+            }
+        });
     }
+
 
     /**
      * Handles actions after GPS location permission is granted.

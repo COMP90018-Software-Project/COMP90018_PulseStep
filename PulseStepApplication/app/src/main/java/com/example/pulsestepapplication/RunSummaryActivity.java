@@ -134,7 +134,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
      * Displays the trajectory on the Google Map with start and end markers.
      */
     private void displayTrajectoryOnMap() {
-        if (googleMap == null) return;
+        if (googleMap == null || trajectory == null || trajectory.isEmpty()) return;
 
         // Draw the polyline
         PolylineOptions polylineOptions = new PolylineOptions()
@@ -163,11 +163,14 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             builder.include(point);
         }
         LatLngBounds bounds = builder.build();
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+
+        // Adjust the camera to the calculated bounds before displaying the path
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
 
         // Hide default background if trajectory is present
         defaultBackground.setVisibility(View.GONE);
     }
+
 
     /**
      * Shows a default background image if no trajectory is available.
