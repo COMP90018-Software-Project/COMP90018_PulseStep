@@ -72,6 +72,7 @@
         app:layout_constraintTop_toBottomOf="@+id/run_distance" />
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/map_container"
         android:layout_width="0dp"
         android:layout_height="204dp"
         android:layout_marginTop="16dp"

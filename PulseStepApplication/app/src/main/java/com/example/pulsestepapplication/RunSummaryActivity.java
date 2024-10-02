@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -44,6 +45,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private String address; // optional
     private int stepCount;
     private ArrayList<LatLng> trajectory;
+    private CardView mapCard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +74,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         addressTextView = findViewById(R.id.run_summary_address);
         stepCountTextView = findViewById(R.id.run_summary_steps);
         defaultBackground = findViewById(R.id.default_background);
+        mapCard = findViewById(R.id.map_container);
     }
 
     /**
@@ -177,6 +180,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
      */
     private void showDefaultBackground() {
         // Show default background image
+        mapCard.setVisibility(View.GONE);
         defaultBackground.setVisibility(View.VISIBLE);
     }
 
