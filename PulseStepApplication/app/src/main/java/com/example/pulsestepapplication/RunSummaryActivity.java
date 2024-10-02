@@ -92,7 +92,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
      * Displays the retrieved data on the UI components.
      */
     private void displayData() {
-        distanceTextView.setText(String.format("%.2f km", distance));
+        distanceTextView.setText(String.format("%.2f", distance));
         timeTextView.setText(time != null ? time : "00:00");
         stepCountTextView.setText(String.valueOf(stepCount));
         addressTextView.setText(address != null ? address : "N/A");
