@@ -6,31 +6,34 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- MapView as Background -->
-    <com.amap.api.maps.MapView
-        android:id="@+id/map_view_summary"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <!-- Default Background Image -->
     <ImageView
         android:id="@+id/default_background"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:src="@drawable/bg_run_summary"
         android:scaleType="centerCrop"
         android:visibility="gone"
-        android:src="@drawable/bg_run_summary"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Map Fragment -->
     <!-- Overlay UI Components -->
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/map_fragment_summary"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="128dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/run_summary_title"

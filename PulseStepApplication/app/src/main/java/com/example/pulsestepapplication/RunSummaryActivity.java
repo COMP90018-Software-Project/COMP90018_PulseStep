@@ -1,34 +1,42 @@
 package com.example.pulsestepapplication;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.amap.api.maps.AMap;
-import com.amap.api.maps.CameraUpdateFactory;
-import com.amap.api.maps.MapView;
-import com.amap.api.maps.MapsInitializer;
-import com.amap.api.maps.model.BitmapDescriptorFactory;
-import com.amap.api.maps.model.LatLng;
-import com.amap.api.maps.model.LatLngBounds;
-import com.amap.api.maps.model.MarkerOptions;
-import com.amap.api.maps.model.PolylineOptions;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 
-public class RunSummaryActivity extends AppCompatActivity {
+/**
+ * RunSummaryActivity displays the summary of a run, including distance, time, address, step count,
+ * and the trajectory on a Google Map.
+ */
+public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     // UI Components
-    private MapView mMapView;
-    private AMap aMap;
+    private GoogleMap googleMap;
+    private SupportMapFragment mapFragment;
     private TextView distanceTextView;
     private TextView timeTextView;
     private TextView addressTextView;
     private TextView stepCountTextView;
+    private ImageView defaultBackground;
 
     // Tracking Data
     private float distance; // in kilometers
@@ -36,68 +44,48 @@ public class RunSummaryActivity extends AppCompatActivity {
     private String address; // optional
     private int stepCount;
     private ArrayList<LatLng> trajectory;
-    private ImageView imageview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setupAmapPrivacy();
-
         setContentView(R.layout.activity_run_summary);
 
-        // Initialize views
+        // Initialize UI components
         initializeUIComponents();
 
         // Retrieve data from Intent
         retrieveIntentData();
 
-        // Initialize MapView
-        initializeMapView(savedInstanceState);
-
         // Display data
         displayData();
 
-        // Display trajectory on map
-        if (trajectory != null && !trajectory.isEmpty()) {
-            displayTrajectory();
-        } else {
-            showDefaultBackground();
-        }
+        // Initialize and set up the map
+        setupMap(savedInstanceState);
     }
 
     /**
      * Initializes the UI components by finding them via their IDs.
      */
     private void initializeUIComponents() {
-        imageview = findViewById(R.id.default_background);
-        mMapView = findViewById(R.id.map_view_summary);
         distanceTextView = findViewById(R.id.run_distance);
         timeTextView = findViewById(R.id.run_summary_time);
         addressTextView = findViewById(R.id.run_summary_address);
         stepCountTextView = findViewById(R.id.run_summary_steps);
+        defaultBackground = findViewById(R.id.default_background);
     }
 
     /**
      * Retrieves data passed from the tracking activity via Intent.
      */
     private void retrieveIntentData() {
-        if (getIntent() != null) {
-            distance = getIntent().getFloatExtra("distance", 0.0f);
-            time = getIntent().getStringExtra("time");
-            stepCount = getIntent().getIntExtra("stepCount", 0);
-            trajectory = getIntent().getParcelableArrayListExtra("trajectory");
-            address = getIntent().getStringExtra("address"); // Optional
+        Intent intent = getIntent();
+        if (intent != null) {
+            distance = intent.getFloatExtra("distance", 0.0f);
+            time = intent.getStringExtra("time");
+            stepCount = intent.getIntExtra("stepCount", 0);
+            trajectory = intent.getParcelableArrayListExtra("trajectory");
+            address = intent.getStringExtra("address"); // Optional
         }
-    }
-
-    /**
-     * Initializes the MapView and restores its state.
-     *
-     * @param savedInstanceState The saved instance state.
-     */
-    private void initializeMapView(Bundle savedInstanceState) {
-        mMapView.onCreate(savedInstanceState);
-        aMap = mMapView.getMap();
     }
 
     /**
@@ -111,28 +99,60 @@ public class RunSummaryActivity extends AppCompatActivity {
     }
 
     /**
-     * Displays the trajectory on the map.
+     * Sets up the Google Map.
+     *
+     * @param savedInstanceState The saved instance state.
      */
-    private void displayTrajectory() {
-        if (aMap == null) return;
+    private void setupMap(Bundle savedInstanceState) {
+        mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map_fragment_summary);
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
+        } else {
+            Toast.makeText(this, "Error initializing map.", Toast.LENGTH_SHORT).show();
+            showDefaultBackground();
+        }
+    }
+
+    /**
+     * Callback when the Google Map is ready to be used.
+     *
+     * @param map The GoogleMap instance.
+     */
+    @Override
+    public void onMapReady(GoogleMap map) {
+        googleMap = map;
+
+        if (trajectory != null && !trajectory.isEmpty()) {
+            displayTrajectoryOnMap();
+        } else {
+            showDefaultBackground();
+        }
+    }
+
+    /**
+     * Displays the trajectory on the Google Map with start and end markers.
+     */
+    private void displayTrajectoryOnMap() {
+        if (googleMap == null) return;
 
         // Draw the polyline
         PolylineOptions polylineOptions = new PolylineOptions()
                 .addAll(trajectory)
                 .color(getResources().getColor(R.color.like_orange))
                 .width(10);
-        aMap.addPolyline(polylineOptions);
+        googleMap.addPolyline(polylineOptions);
 
         // Add start and end markers
         LatLng startPoint = trajectory.get(0);
         LatLng endPoint = trajectory.get(trajectory.size() - 1);
 
-        aMap.addMarker(new MarkerOptions()
+        googleMap.addMarker(new MarkerOptions()
                 .position(startPoint)
                 .title("Start Point")
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
 
-        aMap.addMarker(new MarkerOptions()
+        googleMap.addMarker(new MarkerOptions()
                 .position(endPoint)
                 .title("End Point")
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
@@ -143,59 +163,52 @@ public class RunSummaryActivity extends AppCompatActivity {
             builder.include(point);
         }
         LatLngBounds bounds = builder.build();
-        aMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+
+        // Hide default background if trajectory is present
+        defaultBackground.setVisibility(View.GONE);
     }
 
     /**
      * Shows a default background image if no trajectory is available.
      */
     private void showDefaultBackground() {
-        // Optionally, you can overlay an ImageView or adjust visibility of certain views
-        Toast.makeText(this, "No trajectory data available", Toast.LENGTH_SHORT).show();
-        imageview.setVisibility(View.VISIBLE);
+        // Show default background image
+        defaultBackground.setVisibility(View.VISIBLE);
     }
 
     /**
-     * Applies AMap privacy settings.
-     */
-    private void setupAmapPrivacy() {
-        MapsInitializer.updatePrivacyShow(this, true, true);
-        MapsInitializer.updatePrivacyAgree(this, true);
-    }
-
-    /**
-     * Lifecycle methods to manage MapView's state.
+     * Lifecycle methods to manage MapFragment's state.
      */
     @Override
     protected void onResume() {
         super.onResume();
-        if (mMapView != null) {
-            mMapView.onResume();
+        if (mapFragment != null) {
+            mapFragment.onResume();
         }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mMapView != null) {
-            mMapView.onPause();
+        if (mapFragment != null) {
+            mapFragment.onPause();
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mMapView != null) {
-            mMapView.onDestroy();
+        if (mapFragment != null) {
+            mapFragment.onDestroy();
         }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (mMapView != null) {
-            mMapView.onSaveInstanceState(outState);
+        if (mapFragment != null) {
+            mapFragment.onSaveInstanceState(outState);
         }
     }
-
 }

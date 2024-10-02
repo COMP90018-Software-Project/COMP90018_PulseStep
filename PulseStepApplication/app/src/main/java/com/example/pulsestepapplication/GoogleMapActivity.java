@@ -77,7 +77,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
-    private final int realStep = 1;
+    private final int realStep = -1;
 
     // Step Counter
     private StepCounter stepCounter;
