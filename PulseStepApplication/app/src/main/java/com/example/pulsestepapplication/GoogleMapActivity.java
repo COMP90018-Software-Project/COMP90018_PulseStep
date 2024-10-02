@@ -77,7 +77,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
-    private final int realStep = -1;
+    private final int realStep = 1;
 
     // Step Counter
     private StepCounter stepCounter;
@@ -386,16 +386,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             stepCounterGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
         }
-
-        if (!locationGranted) {
-            Toast.makeText(this, "Please grant location permission to enable map functionality", Toast.LENGTH_SHORT).show();
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !stepCounterGranted) {
             Toast.makeText(this, "Please grant step counter permission to enable step tracking", Toast.LENGTH_SHORT).show();
         }
-
+        if (!locationGranted) {
+            Toast.makeText(this, "Please grant location permission to enable map functionality", Toast.LENGTH_SHORT).show();
+        }
         // Return whether all required permissions have been granted
-        return locationGranted && stepCounterGranted;
+        return  stepCounterGranted;
     }
 
     /**
@@ -598,7 +596,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 onStepCounterPermissionGranted();
             } else {
-                Toast.makeText(this, "Activity recognition permission denied", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "Activity recognition permission denied", Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Activity recognition permission denied");
             }
         }

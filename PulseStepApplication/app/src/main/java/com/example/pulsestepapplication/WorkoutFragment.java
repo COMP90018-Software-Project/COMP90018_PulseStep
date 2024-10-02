@@ -343,7 +343,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
-            showToast("Location permissions were denied");
+            //showToast("Location permissions were denied");
             proceedToMapActivity(null, null);
         }
     }
@@ -421,14 +421,14 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                     checkNetworkAndProceed();
                 }
             } else {
-                showToast("Location permissions denied");
+                //showToast("Location permissions denied");
                 proceedToMapActivity(null, null);
             }
         } else if (requestCode == ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Activity recognition permission granted");
             } else {
-                showToast("Activity recognition permission denied");
+                //showToast("Activity recognition permission denied");
             }
             checkNetworkAndProceed();
         }
