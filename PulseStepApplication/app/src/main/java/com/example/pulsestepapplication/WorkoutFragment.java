@@ -40,6 +40,9 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
     // Permission request codes
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE = 2;
+    private static final float DISTANCE_THRESHOLD_METERS = 16093.4f; // 10 miles in meters
+    private Double lastLatitude = null;
+    private Double lastLongitude = null;
 
     private static final String TAG = "WorkoutFragment";
 
@@ -59,10 +62,8 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                              @Nullable Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
-
         // Initialize FusedLocationProviderClient for location services
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-
         // Initialize map if location permissions are granted
         if (hasLocationPermissions()) {
             initializeMap();
@@ -123,7 +124,16 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                     .addOnSuccessListener(location -> {
                         if (location != null) {
                             LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f)); // Zoom level 15
+
+                            // Check if the new location is significantly different
+                            if (shouldUpdateMap(location)) {
+                                // Update the map camera position
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f)); // Zoom level 15
+
+                                // Store the new location
+                                lastLatitude = location.getLatitude();
+                                lastLongitude = location.getLongitude();
+                            }
                         } else {
                             // If last known location is null, request a new location
                             requestNewLocation();
@@ -138,6 +148,24 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
             showToast("Location permission denied");
         }
     }
+    private boolean shouldUpdateMap(Location newLocation) {
+        if (lastLatitude == null || lastLongitude == null) {
+            // No previous location, so we should update the map
+            return true;
+        }
+
+        // Create a Location object for the last known location
+        Location lastLocation = new Location("lastLocation");
+        lastLocation.setLatitude(lastLatitude);
+        lastLocation.setLongitude(lastLongitude);
+
+        // Calculate the distance between the last location and the new location
+        float distanceInMeters = lastLocation.distanceTo(newLocation);
+
+        // Return true if the distance is greater than the threshold
+        return distanceInMeters > DISTANCE_THRESHOLD_METERS;
+    }
+
 
     /**
      * Applies a custom style to the Google Map from a raw resource file.
