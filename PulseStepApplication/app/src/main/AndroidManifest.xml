@@ -1,6 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- 网络相关权限 -->
+    <!-- 允许访问网络，必选权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 允许获取网络状态，用于网络定位 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 定位相关权限 -->
+    <!-- 允许获取粗略位置，若用GPS实现定位小蓝点功能则必选 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- 允许访问GPS定位，提供更精确的位置数据 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- 允许申请调用A-GPS模块 -->
+    <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
+
+    <!-- 设备和运营商信息权限 -->
+    <!-- 允许获取设备和运营商信息，用于问题排查和网络定位 -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- Wi-Fi相关权限 -->
+    <!-- 允许获取Wi-Fi网络信息，用于网络定位 -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- 允许修改Wi-Fi状态，用于网络定位 -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
+    <!-- 存储相关权限 -->
+    <!-- 允许读写扩展存储，用于数据缓存和搜索结果缓存，若无此权限则写到私有目录 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- 针对 Android 11 及以上版本的权限，用于全面管理外部存储（需谨慎使用） -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
+
+    <!-- 蓝牙相关权限 -->
+    <!-- 允许获取蓝牙信息进行室内定位 -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <!-- 允许管理蓝牙设置 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
 
     <application
         android:allowBackup="true"
@@ -12,6 +50,25 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PulseStepApplication"
         tools:targetApi="31">
+        <!-- 高德地图API Key -->
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="e4e9e19d62fb6fad695ed6ddf95b5227" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <!--
+             The API key for Google Maps-based APIs.
+        -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <!-- 高德地图服务 -->
+        <service android:name="com.amap.api.location.APSService" />
+
         <activity
             android:name=".ResetPassword"
             android:exported="false"
@@ -45,6 +102,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
     </application>
 
 </manifest>
