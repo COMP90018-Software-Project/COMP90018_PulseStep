@@ -337,44 +337,28 @@ public class AmapActivity extends AppCompatActivity {
             return;
         }
 
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        LatLng startPoint = null;
-        LatLng endPoint = null;
+        // Prepare data to send
+        float distanceInKm = totalDistance / 1000;
+        String timeElapsed = timerTextView.getText().toString();
+        String address = "Current Address"; // Replace with actual address if available
+        int stepCount = currentStepCount;
+
+        // Collect trajectory points
+        ArrayList<com.amap.api.maps.model.LatLng> trajectory = new ArrayList<>();
         for (Polyline polyline : polylines) {
-            List<LatLng> points = polyline.getPoints();
-            if (points.size() > 0) {
-                if (startPoint == null) {
-                    startPoint = points.get(0);
-                }
-                endPoint = points.get(points.size() - 1);
-            }
-            for (LatLng point : points) {
-                builder.include(point);
-            }
-        }
-        LatLngBounds bounds = builder.build();
-        aMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
-
-        if (totalDistance > 0.02) { // If distance is greater than 20 meters
-            // Add start marker
-            if (startPoint != null) {
-                aMap.addMarker(new MarkerOptions()
-                        .position(startPoint)
-                        .title("Start Point")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-            }
-            // Add end marker
-            if (endPoint != null) {
-                aMap.addMarker(new MarkerOptions()
-                        .position(endPoint)
-                        .title("End Point")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-            }
+            trajectory.addAll(polyline.getPoints());
         }
 
-        stopTracking();
-        removeUserLocationMarker();
-        resetStepCounter();
+        // Create Intent to RunSummaryActivity
+        Intent intent = new Intent(AmapActivity.this, RunSummaryActivity.class);
+        intent.putExtra("distance", distanceInKm);
+        intent.putExtra("time", timeElapsed);
+        intent.putExtra("address", address);
+        intent.putExtra("steps", stepCount);
+        intent.putParcelableArrayListExtra("trajectory", trajectory);
+
+        startActivity(intent);
+        finish(); // Optionally finish the current activity
     }
 
     /**

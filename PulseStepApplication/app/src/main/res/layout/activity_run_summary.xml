@@ -1,10 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@drawable/bg_run_summary">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- MapView as Background -->
+    <com.amap.api.maps.MapView
+        android:id="@+id/map_view_summary"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Default Background Image -->
+    <ImageView
+        android:id="@+id/default_background"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_run_summary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Overlay UI Components -->
 
     <TextView
         android:id="@+id/run_summary_title"
@@ -27,7 +52,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="-10dp"
         android:gravity="center"
-        android:text="4,91"
+        android:text="4.91"
         android:textColor="@android:color/black"
         android:textSize="90sp"
         android:fontFamily="@font/inter_black_italic"
@@ -51,7 +76,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/run_distance" />
 
-    <!-- Stats Container (Time, Avg Pace, Calories) -->
+    <!-- Stats Container (Time, Steps, Address) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/run_summary_box"
         android:layout_width="327dp"
@@ -72,15 +97,10 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
                 android:orientation="horizontal">
 
-<!--                <ImageView-->
-<!--                    android:layout_width="24dp"-->
-<!--                    android:layout_height="24dp"-->
-<!--                    android:src="@drawable/ic_time" />-->
-
                 <TextView
+                    android:id="@+id/run_summary_time_label"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -90,6 +110,7 @@
                     android:textSize="16sp" />
 
                 <TextView
+                    android:id="@+id/run_summary_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="44:58"
@@ -97,60 +118,54 @@
                     android:textSize="16sp" />
             </LinearLayout>
 
-            <!-- Avg Pace -->
+            <!-- Steps -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:orientation="horizontal">
-
-<!--                <ImageView-->
-<!--                    android:layout_width="24dp"-->
-<!--                    android:layout_height="24dp"-->
-<!--                    android:src="@drawable/ic_avg_pace" />-->
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
 
                 <TextView
+                    android:id="@+id/run_summary_steps_label"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:paddingStart="8dp"
-                    android:text="Avg Pace"
+                    android:text="Steps"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
 
                 <TextView
+                    android:id="@+id/run_summary_steps"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="9'09&quot;"
+                    android:text="308"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
             </LinearLayout>
 
-            <!-- Calories -->
+            <!-- Address -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:orientation="horizontal">
-
-<!--                <ImageView-->
-<!--                    android:layout_width="24dp"-->
-<!--                    android:layout_height="24dp"-->
-<!--                    android:src="@drawable/ic_calories" />-->
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
 
                 <TextView
+                    android:id="@+id/run_summary_address_label"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:paddingStart="8dp"
-                    android:text="Calories"
+                    android:text="Address"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
 
                 <TextView
+                    android:id="@+id/run_summary_address"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="308"
+                    android:text="123 Main St"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
             </LinearLayout>
@@ -172,6 +187,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

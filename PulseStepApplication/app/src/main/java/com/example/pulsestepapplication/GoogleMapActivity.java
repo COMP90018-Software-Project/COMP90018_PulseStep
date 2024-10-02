@@ -501,49 +501,34 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Shows the last tracked path on the map with start and end markers.
      */
     private void showLastTrack() {
-        if (polyLines.isEmpty()) {
-            Toast.makeText(this, "Path too short", Toast.LENGTH_SHORT).show();
+        /*if (polyLines.isEmpty()) {
+            Toast.makeText(this, "No track to show", Toast.LENGTH_SHORT).show();
             return;
         }
+         */
 
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        LatLng startPoint = null;
-        LatLng endPoint = null;
+        // Prepare data to send
+        float distanceInKm = totalDistance / 1000;
+        String timeElapsed = timerTextView.getText().toString();
+        String address = "Current Address"; // Replace with actual address if available
+        int stepCount = currentStepCount;
+
+        // Collect trajectory points
+        ArrayList<com.google.android.gms.maps.model.LatLng> trajectory = new ArrayList<>();
         for (Polyline polyline : polyLines) {
-            List<LatLng> points = polyline.getPoints();
-            if (points.size() > 0) {
-                if (startPoint == null) {
-                    startPoint = points.get(0);
-                }
-                endPoint = points.get(points.size() - 1);
-            }
-            for (LatLng point : points) {
-                builder.include(point);
-            }
-        }
-        LatLngBounds bounds = builder.build();
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
-
-        if (totalDistance > 0.02) { // If distance is greater than 20 meters
-            // Add start marker
-            if (startPoint != null) {
-                googleMap.addMarker(new MarkerOptions()
-                        .position(startPoint)
-                        .title("Start Point")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-            }
-            // Add end marker
-            if (endPoint != null) {
-                googleMap.addMarker(new MarkerOptions()
-                        .position(endPoint)
-                        .title("End Point")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-            }
+            trajectory.addAll(polyline.getPoints());
         }
 
-        stopTracking();
-        removeUserLocationMarker();
-        resetStepCounter();
+        // Create Intent to RunSummaryActivity
+        Intent intent = new Intent(GoogleMapActivity.this, RunSummaryActivity.class);
+        intent.putExtra("distance", distanceInKm);
+        intent.putExtra("time", timeElapsed);
+        intent.putExtra("address", address);
+        intent.putExtra("steps", stepCount);
+        intent.putParcelableArrayListExtra("trajectory", trajectory);
+
+        startActivity(intent);
+        finish(); // Optionally finish the current activity
     }
 
     /**
