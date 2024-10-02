@@ -32,10 +32,13 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+
 }
 
 dependencies {
-
+    implementation("com.google.android.material:material:1.5.0")
+    implementation("de.hdodenhof:circleimageview:3.0.0")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

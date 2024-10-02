@@ -13,21 +13,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class RunningActivity extends AppCompatActivity {
 
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_running);
-//    }
-//
-//    ImageView backButton = findViewById(R.id.back_button);
-//
-//    // Set click listener for the back button
-//    backButton.setOnClickListener(new View.OnClickListener() {
-//    @Override
-//    public void onClick(View v) {
-//        // Finish the current activity and return to the previous one
-//        finish();
-//    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

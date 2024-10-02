@@ -1,5 +1,4 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 点击状态 -->
     <item android:state_pressed="true">
         <objectAnimator
             android:propertyName="scaleX"
@@ -15,7 +14,6 @@
             android:valueType="floatType"/>
     </item>
 
-    <!-- 松开后的恢复状态 -->
     <item>
         <objectAnimator
             android:propertyName="scaleX"
