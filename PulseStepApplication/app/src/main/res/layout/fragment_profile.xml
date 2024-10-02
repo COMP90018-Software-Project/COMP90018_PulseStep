@@ -61,32 +61,33 @@
         android:layout_height="wrap_content"
         android:text="@string/sample_username"
         android:gravity="center"
+        android:fontFamily="@font/overpass_bold"
         android:textSize="24dp"
         android:textStyle="bold"
         android:layout_marginTop="40dp"
         app:layout_constraintTop_toBottomOf="@id/profile_image" />
 
-    <!-- Horizontal Calendar -->
-    <com.sahana.horizontalcalendar.HorizontalCalendar
-        android:id="@+id/horizontalCalendar"
+
+    <TextView
+        android:id="@+id/month"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        app:layout_constraintTop_toBottomOf="@id/profile_username"
-        app:numOfDays="60"
-        app:setBgColor="@color/white"
-        app:setDateFontStyle="fonts/Light.otf"
-        app:setDateTextSize="22sp"
-        app:setLabel="@string/empty_label"
-        app:setLabelFontStyle="@string/bold"
-        app:setMonthFontStyle="@string/bold"
-        app:setMonthTextSize="17sp"
-        app:setSelectedBgColor="@color/pink"
-        app:setSelectedTextColor="@color/black"
-        app:setTextColor="@color/black"
-        app:setWeekTextSize="13sp"
-        app:setLanguage="English"/>
+        android:layout_marginTop="10dp"
+        android:padding="8dp"
+        android:textSize="16dp"
+        android:fontFamily="@font/overpass_bold"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@+id/profile_username" />
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/dates_rv"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/month" />
 
     <!-- CardView for Workout (Jump) -->
     <androidx.cardview.widget.CardView
@@ -94,7 +95,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        app:layout_constraintTop_toBottomOf="@id/horizontalCalendar"
+        app:layout_constraintTop_toBottomOf="@id/dates_rv"
         android:layout_marginTop="24dp"
         app:cardCornerRadius="35dp"
         app:cardElevation="1dp">
@@ -121,6 +122,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:text="Jump"
+                android:fontFamily="@font/overpass_bold"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -135,9 +137,9 @@
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="5dp"
                 android:text="24 min"
+                android:fontFamily="@font/overpass_black_italic"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="14sp"
-                android:textStyle="italic|bold"
                 app:layout_constraintStart_toEndOf="@id/icon_jump"
                 app:layout_constraintTop_toBottomOf="@id/label_jump" />
 
@@ -147,6 +149,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginRight="5dp"
                 android:text="100 times"
+                android:fontFamily="@font/overpass_bold"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -160,6 +163,7 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginRight="5dp"
                 android:text="348 kcal"
+                android:fontFamily="@font/overpass_black_italic"
                 android:textColor="@color/black"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -214,6 +218,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:text="Jump"
+                android:fontFamily="@font/overpass_bold"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -228,9 +233,9 @@
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="5dp"
                 android:text="24 min"
+                android:fontFamily="@font/overpass_black_italic"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="14sp"
-                android:textStyle="italic|bold"
                 app:layout_constraintStart_toEndOf="@id/icon_run"
                 app:layout_constraintTop_toBottomOf="@id/label_run" />
 
@@ -240,6 +245,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginRight="5dp"
                 android:text="4.22 km"
+                android:fontFamily="@font/overpass_bold"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -253,6 +259,7 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginRight="5dp"
                 android:text="248 kcal"
+                android:fontFamily="@font/overpass_black_italic"
                 android:textColor="@color/black"
                 android:textSize="14sp"
                 android:textStyle="bold"

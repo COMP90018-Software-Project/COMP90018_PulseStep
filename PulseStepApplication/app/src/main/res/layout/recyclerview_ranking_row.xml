@@ -62,7 +62,7 @@
                 android:layout_height="wrap_content"
                 android:text="12.5hours"
                 android:textSize="14sp"
-                android:fontFamily="@font/inter_semi_bold"
+                android:fontFamily="@font/inter_medium"
                 android:textColor="@color/gray"
                 app:layout_constraintEnd_toStartOf="@id/rank_like"
                 app:layout_constraintTop_toTopOf="parent"
