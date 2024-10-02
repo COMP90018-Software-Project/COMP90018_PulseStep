@@ -13,26 +13,41 @@
         android:layout_marginTop="50dp"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context="com.example.myapplication.GoogleMapActivity" />
+        android:layout_height="match_parent"/>
 
+    <!-- Toolbar containing the back button and title -->
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+        android:id="@+id/toolbar_run"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:visibility="visible">
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Custom TextView for centered title -->
-        <TextView
-            android:id="@+id/toolbar_title"
+        <ImageView
+            android:id="@+id/back_button_running_page"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="Google Map Activity"
-            android:textColor="@android:color/white"
+            android:contentDescription="Back"
+            android:src="@drawable/ic_back_arrow"
+            android:layout_gravity="start"
+            android:paddingStart="8dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"/>
+
+        <TextView
+            android:id="@+id/run"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Run"
+            android:textColor="@color/black"
+            android:fontFamily="@font/overpass_bold"
+            android:paddingLeft="10dp"
             android:textSize="20sp"
-            android:textStyle="bold" />
+            android:layout_gravity="center"
+            android:paddingTop="8dp" />
+
     </androidx.appcompat.widget.Toolbar>
     <!-- 在 activity_google_map.xml 中添加 -->
     <ImageView

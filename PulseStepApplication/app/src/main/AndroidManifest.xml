@@ -69,6 +69,11 @@
         <!-- 高德地图服务 -->
         <service android:name="com.amap.api.location.APSService" />
 
+
+        <activity android:name=".AmapActivity"
+            android:exported="false"/>
+        <activity android:name=".GoogleMapActivity"
+            android:exported="false"/>
         <activity
             android:name=".ResetPassword"
             android:exported="false"

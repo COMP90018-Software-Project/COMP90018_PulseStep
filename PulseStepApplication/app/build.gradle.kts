@@ -44,6 +44,8 @@ android {
 }
 
 dependencies {
+    implementation ("androidx.fragment:fragment:1.5.5")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.android.gms:play-services-maps:18.0.0")
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation("com.github.dhaval2404:imagepicker:2.1")
