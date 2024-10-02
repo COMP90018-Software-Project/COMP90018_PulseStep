@@ -49,5 +49,9 @@
         <item>1.5 hours</item>
         <item>1 hour</item>
     </string-array>
+<!--    Dialog - Set daily Target-->
+    <string name="set_target_title">Set Your Target</string>
+    <string name="bt_cancel">CANCEL</string>
+    <string name="bt_set">SET</string>
 
 </resources>
