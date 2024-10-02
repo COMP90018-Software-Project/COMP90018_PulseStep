@@ -49,7 +49,6 @@
             android:paddingTop="8dp" />
 
     </androidx.appcompat.widget.Toolbar>
-    <!-- 在 activity_google_map.xml 中添加 -->
     <ImageView
         android:id="@+id/default_image_view"
         android:layout_width="match_parent"

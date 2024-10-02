@@ -6,9 +6,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -29,12 +31,14 @@ import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.MyLocationStyle;
 import com.amap.api.maps.model.Polyline;
 import com.amap.api.maps.model.PolylineOptions;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * AmapActivity handles the tracking and display of the user's movement using AMap.
+ */
 public class AmapActivity extends AppCompatActivity {
 
     // UI Components
@@ -43,10 +47,11 @@ public class AmapActivity extends AppCompatActivity {
     private ImageButton btnPauseResume;
     private ImageButton btnShow;
     private TextView timerTextView, stepTextView, distanceTextView;
+    private ImageView backButton;
 
     // Tracking Variables
-    private List<Polyline> polylines = new ArrayList<>();
-    private List<LatLng> currentSegmentPoints = new ArrayList<>();
+    private final List<Polyline> polylines = new ArrayList<>();
+    private final List<LatLng> currentSegmentPoints = new ArrayList<>();
     private boolean isTracking = false;
     private boolean isPaused = false;
     private boolean isLocationReady = false;
@@ -70,14 +75,14 @@ public class AmapActivity extends AppCompatActivity {
     // Timer-related
     private long startTime = 0L;
     private long pauseTime = 0L;
-    private Handler timerHandler = new Handler();
-    private Runnable timerRunnable = new Runnable() {
+    private final Handler timerHandler = new Handler();
+    private final Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
             long millis = SystemClock.elapsedRealtime() - startTime;
             int seconds = (int) (millis / 1000);
             int minutes = seconds / 60;
-            seconds = seconds % 60;
+            seconds %= 60;
             timerTextView.setText(String.format("%02d:%02d", minutes, seconds));
             timerHandler.postDelayed(this, 1000);
         }
@@ -91,66 +96,62 @@ public class AmapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_amap);
 
         // Initialize views
+        initializeUIComponents();
+
+        // Initialize map and configure it
+        initializeMapView(savedInstanceState);
+        configureMap();
+
+        // Set up step counter
+        setupStepCounter();
+
+        // Set up button listeners
+        setupButtonListeners();
+    }
+
+    /**
+     * Initializes the UI components by finding them via their IDs.
+     */
+    private void initializeUIComponents() {
         mMapView = findViewById(R.id.amap_view);
         btnPauseResume = findViewById(R.id.btn_stop);
         btnShow = findViewById(R.id.btn_show);
         timerTextView = findViewById(R.id.timer_text_view);
         stepTextView = findViewById(R.id.step_text_view);
         distanceTextView = findViewById(R.id.distance_text_view);
-        // Find the back button by its ID
-        ImageView backButton = findViewById(R.id.back_button_running_page);
+        backButton = findViewById(R.id.back_button_running_page);
 
         // Set click listener for the back button
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Finish the current activity and return to the RunSummaryActivity page
-                Intent intent = new Intent(AmapActivity.this, MainActivity.class);
-                startActivity(intent);
-            }
-        });
-        // Map and Step Counter setup
-        initializeMapView(savedInstanceState);
-        configureMap();
-
-        setupStepCounter();
-        setupButtonListeners();
-
+        backButton.setOnClickListener(v -> navigateToMainActivity());
     }
 
-    // Step Counter Setup
-    private void setupStepCounter() {
-        if (!checkActivityRecognitionPermission()) {
-            requestActivityRecognitionPermission();
-            return;
-        }
-        stepCounter = new StepCounter(this);
-        stepCounter.setStepCounterListener(stepCount -> runOnUiThread(() -> {
-            stepTextView.setText(String.valueOf(stepCount));
-            currentStepCount = stepCount;
-            if (stepCount > realStep && isLocationReady) {
-                startTracking();
-            }
-        }));
+    /**
+     * Navigates back to the MainActivity.
+     */
+    private void navigateToMainActivity() {
+        Intent intent = new Intent(AmapActivity.this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
-    // Set up Button Listeners
-    private void setupButtonListeners() {
-        btnPauseResume.setOnClickListener(v -> handlePauseResumeButtonClick());
-        btnShow.setOnClickListener(v -> showLastTrack());
-    }
-    // MapView Initialization
+
+    /**
+     * Initializes the MapView and restores its state.
+     *
+     * @param savedInstanceState The saved instance state.
+     */
     private void initializeMapView(Bundle savedInstanceState) {
-        mMapView = findViewById(R.id.amap_view);
-        if (mMapView != null) {
-            mMapView.onCreate(savedInstanceState);
-            aMap = mMapView.getMap();
-        }
+        mMapView.onCreate(savedInstanceState);
+        aMap = mMapView.getMap();
     }
 
+    /**
+     * Configures the AMap with custom styles and location settings.
+     */
     private void configureMap() {
         if (aMap == null) return;
-        // Set map type (e.g., normal, satellite, night mode, etc.)
-        aMap.setMapType(AMap.MAP_TYPE_NORMAL); // Change to other types if needed
+
+        // Set map type (e.g., normal, satellite)
+        aMap.setMapType(AMap.MAP_TYPE_NORMAL);
 
         // Set up custom location marker style
         MyLocationStyle myLocationStyle = new MyLocationStyle();
@@ -158,12 +159,10 @@ public class AmapActivity extends AppCompatActivity {
 
         // Set a custom icon for the location marker
         Bitmap originalIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.img);
-        int width = 80;  // Set the desired width (in pixels)
-        int height = 80; // Set the desired height (in pixels)
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalIconBitmap, width, height, false);
-
-        // Set the resized bitmap as the custom location marker
-        myLocationStyle.myLocationIcon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
+        if (originalIconBitmap != null) {
+            Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalIconBitmap, 80, 80, false);
+            myLocationStyle.myLocationIcon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
+        }
 
         // Set the accuracy circle color (optional)
         myLocationStyle.strokeColor(0x00000000); // Transparent color
@@ -171,10 +170,10 @@ public class AmapActivity extends AppCompatActivity {
 
         aMap.setMyLocationStyle(myLocationStyle);
         aMap.setMyLocationEnabled(true); // Enable location blue dot
+
         // Hide certain map features (if necessary)
         aMap.showBuildings(false); // Hide buildings
         aMap.showMapText(false); // Hide POI names
-
 
         // Set up the location change listener to update the path
         aMap.setOnMyLocationChangeListener(location -> {
@@ -191,8 +190,35 @@ public class AmapActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Sets up the StepCounter and initializes its listener.
+     */
+    private void setupStepCounter() {
+        if (!checkActivityRecognitionPermission()) {
+            requestActivityRecognitionPermission();
+            return;
+        }
+        stepCounter = new StepCounter(this);
+        stepCounter.setStepCounterListener(stepCount -> runOnUiThread(() -> {
+            stepTextView.setText(String.valueOf(stepCount));
+            currentStepCount = stepCount;
+            if (stepCount > realStep && isLocationReady) {
+                startTracking();
+            }
+        }));
+    }
 
-    // Button Handlers
+    /**
+     * Sets up the button listeners for pause/resume and show actions.
+     */
+    private void setupButtonListeners() {
+        btnPauseResume.setOnClickListener(v -> handlePauseResumeButtonClick());
+        btnShow.setOnClickListener(v -> showLastTrack());
+    }
+
+    /**
+     * Handles the pause/resume button click event.
+     */
     private void handlePauseResumeButtonClick() {
         if (!isTracking && !isPaused) {
             startTracking();
@@ -205,35 +231,13 @@ public class AmapActivity extends AppCompatActivity {
         } else if (isTracking && isPaused) {
             resumeTracking();
             btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.pause));
-            // Animate btnShow
-            // animateShowButton();
             btnShow.setVisibility(View.GONE);
         }
     }
 
-    private void animateShowButton() {
-        // Calculate the start and end positions
-        int[] btnPauseResumeLocation = new int[2];
-        btnPauseResume.getLocationOnScreen(btnPauseResumeLocation);
-
-        int[] btnShowLocation = new int[2];
-        btnShow.getLocationOnScreen(btnShowLocation);
-
-        float startX = btnPauseResumeLocation[0] + btnPauseResume.getWidth() / 2f - btnShow.getWidth() / 2f;
-        float startY = btnPauseResumeLocation[1] + btnPauseResume.getHeight() / 2f - btnShow.getHeight() / 2f;
-
-        // Set the initial position of btnShow
-        btnShow.setTranslationX(startX);
-        btnShow.setTranslationY(startY);
-
-        // Perform the animation
-        btnShow.animate()
-                .translationX(btnShowLocation[0] - startX) // Move to the original position
-                .translationY(btnShowLocation[1] - startY)
-                .setDuration(300) // Duration of the animation
-                .start();
-    }
-
+    /**
+     * Starts the tracking process, including location updates and step tracking.
+     */
     private void startTracking() {
         isTracking = true;
         isPaused = false;
@@ -246,30 +250,40 @@ public class AmapActivity extends AppCompatActivity {
         aMap.setMyLocationEnabled(true);
         stepCounter.startStepTracking();
 
-        // 获取当前位置并聚焦到地图上
+        // Get current location and focus the map
         if (aMap.getMyLocation() != null) {
             LatLng currentLocation = new LatLng(aMap.getMyLocation().getLatitude(), aMap.getMyLocation().getLongitude());
             aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, MOVE_ZOOM_LEVEL));
         }
     }
 
+    /**
+     * Pauses the tracking process.
+     */
     private void pauseTracking() {
         stepCounter.stopStepTracking();
         isPaused = true;
         pauseTime = SystemClock.elapsedRealtime();
         timerHandler.removeCallbacks(timerRunnable);
-        //Toast.makeText(this, "Paused Tracking", Toast.LENGTH_SHORT).show();
+        btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.start));
+        btnShow.setVisibility(View.VISIBLE);
+        drawCurrentPolyline();
     }
 
+    /**
+     * Resumes the tracking process after a pause.
+     */
     private void resumeTracking() {
         stepCounter.startStepTracking();
         isPaused = false;
         startTime += (SystemClock.elapsedRealtime() - pauseTime);
         timerHandler.postDelayed(timerRunnable, 0);
         startNewSegment();
-        //Toast.makeText(this, "Resumed Tracking", Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * Starts a new segment for path tracking.
+     */
     private void startNewSegment() {
         PolylineOptions polylineOptions = new PolylineOptions().width(10).color(0xFFFF0000);
         Polyline newPolyline = aMap.addPolyline(polylineOptions);
@@ -277,8 +291,12 @@ public class AmapActivity extends AppCompatActivity {
         currentSegmentPoints.clear();
     }
 
+    /**
+     * Updates the path with the new location and calculates the total distance.
+     *
+     * @param latLng The new location coordinates.
+     */
     private void updatePath(LatLng latLng) {
-        //if (currentStepCount > realStep) {
         if (!currentSegmentPoints.isEmpty()) {
             LatLng lastLatLng = currentSegmentPoints.get(currentSegmentPoints.size() - 1);
             float[] results = new float[1];
@@ -290,21 +308,34 @@ public class AmapActivity extends AppCompatActivity {
         if (!polylines.isEmpty()) {
             Polyline currentPolyline = polylines.get(polylines.size() - 1);
             currentPolyline.setPoints(new ArrayList<>(currentSegmentPoints));
-        //}
-    }}
+        }
+    }
 
+    /**
+     * Draws the current polyline on the map.
+     */
+    private void drawCurrentPolyline() {
+        if (!currentSegmentPoints.isEmpty()) {
+            PolylineOptions polylineOptions = new PolylineOptions().addAll(currentSegmentPoints).color(getResources().getColor(R.color.like_orange)).width(10);
+            if (polylines.isEmpty() || isPaused) {
+                Polyline polyline = aMap.addPolyline(polylineOptions);
+                polylines.add(polyline);
+            } else {
+                polylines.get(polylines.size() - 1).remove();
+                Polyline polyline = aMap.addPolyline(polylineOptions);
+                polylines.set(polylines.size() - 1, polyline);
+            }
+        }
+    }
+
+    /**
+     * Shows the last tracked path on the map with start and end markers.
+     */
     private void showLastTrack() {
         if (polylines.isEmpty()) {
             Toast.makeText(this, "No track to show", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        aMap.animateCamera(CameraUpdateFactory.newLatLngBounds(getLatLngBounds(), 100));
-        isTracking = false;
-        isPaused = false;
-        timerHandler.removeCallbacks(timerRunnable);
-        aMap.setMyLocationEnabled(false);
-        stepCounter.stopStepTracking();
 
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         LatLng startPoint = null;
@@ -323,26 +354,45 @@ public class AmapActivity extends AppCompatActivity {
         }
         LatLngBounds bounds = builder.build();
         aMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
-        if (startPoint != null) {
-            aMap.addMarker(new MarkerOptions()
-                    .position(startPoint)
-                    .title("Start Point")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))); // 使用绿色标记
+
+        if (totalDistance > 0.02) { // If distance is greater than 20 meters
+            // Add start marker
+            if (startPoint != null) {
+                aMap.addMarker(new MarkerOptions()
+                        .position(startPoint)
+                        .title("Start Point")
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+            }
+            // Add end marker
+            if (endPoint != null) {
+                aMap.addMarker(new MarkerOptions()
+                        .position(endPoint)
+                        .title("End Point")
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+            }
         }
-        if (endPoint != null) {
-            aMap.addMarker(new MarkerOptions()
-                    .position(endPoint)
-                    .title("End Point")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))); // 使用红色标记
-        }
+
+        stopTracking();
+        removeUserLocationMarker();
+        resetStepCounter();
     }
 
+    /**
+     * Checks if the new point is within the current map bounds and adjusts the zoom if necessary.
+     *
+     * @param newPoint The new location point.
+     */
     private void checkBoundaryAndAdjustZoom(LatLng newPoint) {
         if (!aMap.getProjection().getVisibleRegion().latLngBounds.contains(newPoint)) {
             aMap.animateCamera(CameraUpdateFactory.newLatLngBounds(getLatLngBounds(), 100));
         }
     }
 
+    /**
+     * Calculates the LatLngBounds that include all tracked points.
+     *
+     * @return The calculated LatLngBounds.
+     */
     private LatLngBounds getLatLngBounds() {
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         for (Polyline polyline : polylines) {
@@ -353,7 +403,50 @@ public class AmapActivity extends AppCompatActivity {
         return builder.build();
     }
 
-    // Permission Handling
+    /**
+     * Removes the user location marker from the map.
+     */
+    private void removeUserLocationMarker() {
+        // Assuming you have a reference to the user location marker, remove it here
+        // Example:
+        // if (userLocationMarker != null) {
+        //     userLocationMarker.remove();
+        // }
+        aMap.setMyLocationEnabled(false);
+    }
+
+    /**
+     * Resets the step counter.
+     */
+    private void resetStepCounter() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
+            stepCounter.resetStepTracking();
+        }
+    }
+
+    /**
+     * Stops the tracking process and resets related variables.
+     */
+    private void stopTracking() {
+        isTracking = false;
+        isPaused = false;
+        timerHandler.removeCallbacks(timerRunnable);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
+            stepCounter.stopStepTracking();
+        }
+    }
+
+    /**
+     * Applies AMap privacy settings.
+     */
+    private void setupAmapPrivacy() {
+        MapsInitializer.updatePrivacyShow(this, true, true);
+        MapsInitializer.updatePrivacyAgree(this, true);
+    }
+
+    /**
+     * Checks and requests necessary permissions.
+     */
     private void checkPermissions() {
         if (!checkNetworkPermission()) {
             requestNetworkPermission();
@@ -392,6 +485,13 @@ public class AmapActivity extends AppCompatActivity {
         // Placeholder for requesting network-related permissions if required in the future
     }
 
+    /**
+     * Handles the result of permission requests.
+     *
+     * @param requestCode  The request code passed in requestPermissions().
+     * @param permissions  The requested permissions.
+     * @param grantResults The grant results for the corresponding permissions.
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -406,25 +506,52 @@ public class AmapActivity extends AppCompatActivity {
                 setupStepCounter();
             } else {
                 Toast.makeText(this, "Activity recognition permission denied", Toast.LENGTH_SHORT).show();
+                Log.e("StepCounter", "Activity recognition permission denied");
             }
         }
     }
 
-    // Map Privacy Settings
-    private void setupAmapPrivacy() {
-        MapsInitializer.updatePrivacyShow(this, true, true);
-        MapsInitializer.updatePrivacyAgree(this, true);
+    /**
+     * Saves the instance state to handle configuration changes.
+     *
+     * @param outState The Bundle in which to place saved state.
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mMapView != null) {
+            mMapView.onSaveInstanceState(outState);
+        }
     }
 
-    // Lifecycle Methods
+    /**
+     * Resumes the MapView and handles tracking state.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         if (mMapView != null) {
             mMapView.onResume();
         }
+
+        // If tracking is not paused, re-enable map tracking
+        if (isTracking && !isPaused) {
+            startTracking();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
+                stepCounter.registerListener();
+            }
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
+                stepCounter.unregisterListener();
+            }
+        }
+
+        btnShow.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Pauses the MapView and removes location updates.
+     */
     @Override
     protected void onPause() {
         super.onPause();
@@ -433,6 +560,9 @@ public class AmapActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Destroys the MapView and cleans up resources.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -440,13 +570,5 @@ public class AmapActivity extends AppCompatActivity {
             mMapView.onDestroy();
         }
         timerHandler.removeCallbacks(timerRunnable);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (mMapView != null) {
-            mMapView.onSaveInstanceState(outState);
-        }
     }
 }

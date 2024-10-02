@@ -36,63 +36,56 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
+
     // Permission request codes
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE = 2;
 
-    private static final String TAG = "MyFragment";
+    private static final String TAG = "WorkoutFragment";
 
     private FusedLocationProviderClient fusedLocationClient;
     private GoogleMap mMap;
+
     public WorkoutFragment() {
         // Required empty public constructor
     }
 
+    /**
+     * Inflates the fragment layout, initializes location services, and sets up button listeners.
+     */
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Inflate the layout for this fragment (replace 'fragment_workout' with your layout file)
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
 
-
-        // 初始化 FusedLocationProviderClient
+        // Initialize FusedLocationProviderClient for location services
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-        if (hasLocationPermissions()) {
 
+        // Initialize map if location permissions are granted
+        if (hasLocationPermissions()) {
             initializeMap();
         } else {
-            Log.d(TAG, "定位权限未授予，地图未显示");
+            Log.d(TAG, "Location permissions not granted; map will not be displayed");
         }
-        // Find the run button and set up an OnClickListener
+
+        // Set up Run button to initiate permission and network checks
         Button runButton = view.findViewById(R.id.run_button);
-        runButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Start the permission and network checking process when the button is clicked
-                checkPermissionsAndProceed();
-            }
-        });
+        runButton.setOnClickListener(v -> checkPermissionsAndProceed());
 
-
-        // Find the Jump button by its ID
+        // Set up Jump button to navigate to JumpActivity
         Button jumpButton = view.findViewById(R.id.jump_button);
-
-        // Set OnClickListener for the Jump button
-        jumpButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Create an Intent to start RunningActivity
-                Intent intent = new Intent(getActivity(), JumpActivity.class);
-                startActivity(intent);
-            }
+        jumpButton.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), JumpActivity.class);
+            startActivity(intent);
         });
-
 
         return view;
     }
 
     /**
-     * 初始化地图，将其加载到 map_container 中
+     * Initializes the Google Map by replacing the map container with a SupportMapFragment.
      */
     private void initializeMap() {
         SupportMapFragment mapFragment = new SupportMapFragment();
@@ -102,21 +95,27 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         mapFragment.getMapAsync(this);
     }
 
+    /**
+     * Called when the Google Map is ready. Configures map settings and retrieves the user's location.
+     *
+     * @param googleMap The GoogleMap object that is ready to be used.
+     */
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
-        // 禁用定位图层以隐藏蓝色的定位点
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            mMap.setMyLocationEnabled(false); // 设置为 false 以隐藏定位点
+
+        // Disable default location layer to hide the blue dot
+        if (hasLocationPermissions()) {
+            mMap.setMyLocationEnabled(false);
         }
+
+        // Apply custom map style and center the map on the user's location
         applyCustomMapStyle();
-        // 获取并设置用户当前位置
         getUserLocationAndZoom();
     }
 
     /**
-     * 获取用户当前位置并将地图中心定位到该位置，同时放大地图
+     * Retrieves the user's current location and moves the map camera to that position with zoom.
      */
     private void getUserLocationAndZoom() {
         try {
@@ -124,77 +123,104 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                     .addOnSuccessListener(location -> {
                         if (location != null) {
                             LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f)); // 放大级别为15
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f)); // Zoom level 15
                         } else {
-                            // 如果最后已知位置为空，尝试获取新位置
+                            // If last known location is null, request a new location
                             requestNewLocation();
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "获取位置失败", e);
-                        showToast("无法获取当前位置");
+                        Log.e(TAG, "Failed to retrieve location", e);
+                        showToast("Unable to get current location");
                     });
         } catch (SecurityException e) {
-            Log.e(TAG, "权限错误", e);
-            showToast("定位权限被拒绝");
+            Log.e(TAG, "Permission error", e);
+            showToast("Location permission denied");
         }
     }
 
-    // Attempt to apply custom map style
+    /**
+     * Applies a custom style to the Google Map from a raw resource file.
+     */
     private void applyCustomMapStyle() {
         try {
             boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.workout));
             if (!success) {
-                Log.e("GoogleMapActivity", "Style parsing failed.");
+                Log.e(TAG, "Map style parsing failed.");
             } else {
-                Log.d("GoogleMapActivity", "Map style applied successfully.");
+                Log.d(TAG, "Map style applied successfully.");
             }
         } catch (Resources.NotFoundException e) {
-            Log.e("GoogleMapActivity", "Can't find style. Error: ", e);
+            Log.e(TAG, "Map style resource not found", e);
         }
     }
+
     /**
-     * Checks if the necessary permissions are granted.
-     * If not, requests them. Proceeds to network checking if permissions are granted.
+     * Checks if necessary permissions are granted and proceeds to network checks.
+     * If permissions are not granted, requests them.
      */
     private void checkPermissionsAndProceed() {
         if (!hasLocationPermissions()) {
             // Request location permissions if not granted
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            }, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
-            // Location permissions are granted, now check activity recognition permissions
+            // Location permissions are granted; check activity recognition permissions
             if (isActivityRecognitionPermissionRequired()) {
                 if (!hasActivityRecognitionPermission()) {
                     // Request activity recognition permission if required and not granted
                     requestActivityRecognitionPermission();
                 } else {
-                    // Activity recognition permission is granted, proceed to network checking
+                    // Permissions are granted; proceed to network checks
                     checkNetworkAndProceed();
                 }
             } else {
-                // Activity recognition permission not required (below Android 10), proceed to network checking
+                // Activity recognition permission not required; proceed to network checks
                 checkNetworkAndProceed();
             }
         }
     }
 
+    /**
+     * Determines if activity recognition permission is required based on Android version.
+     *
+     * @return True if permission is required, false otherwise.
+     */
     private boolean isActivityRecognitionPermissionRequired() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
     }
 
+    /**
+     * Checks if location permissions are granted.
+     *
+     * @return True if granted, false otherwise.
+     */
     private boolean hasLocationPermissions() {
         return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
+    /**
+     * Checks if activity recognition permission is granted.
+     *
+     * @return True if granted, false otherwise.
+     */
     private boolean hasActivityRecognitionPermission() {
         return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
     }
 
+    /**
+     * Requests activity recognition permission.
+     */
     private void requestActivityRecognitionPermission() {
         requestPermissions(new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE);
     }
 
+    /**
+     * Checks network connectivity and proceeds based on the network status.
+     */
     private void checkNetworkAndProceed() {
         ConnectivityManager connectivityManager = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager == null) {
@@ -229,6 +255,9 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    /**
+     * Checks location permissions and retrieves the user's location to start the appropriate map activity.
+     */
     private void checkLocationAndStartMapActivity() {
         if (!hasLocationPermissions()) {
             showToast("Location permissions not granted");
@@ -238,69 +267,65 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
 
         Log.d(TAG, "Attempting to get last known location");
 
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            proceedToMapActivity(null, null);
-            return;
-        }
-
-        fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
+        try {
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(location -> {
                         if (location != null) {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                             Log.d(TAG, "Location obtained: " + latitude + ", " + longitude);
                             proceedToMapActivity(latitude, longitude);
                         } else {
-                            Log.d(TAG, "Last known location is null, attempting to get a new location");
+                            Log.d(TAG, "Last known location is null; requesting new location");
                             requestNewLocation();
                         }
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
+                    })
+                    .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to get location", e);
                         showToast("Unable to retrieve current location");
                         proceedToMapActivity(null, null);
-                    }
-                });
+                    });
+        } catch (SecurityException e) {
+            Log.e(TAG, "Permission error", e);
+            proceedToMapActivity(null, null);
+        }
     }
 
+    /**
+     * Requests a new high-accuracy location from the location provider.
+     */
     private void requestNewLocation() {
         try {
             fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
-                    .addOnSuccessListener(new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            if (location != null) {
-                                double latitude = location.getLatitude();
-                                double longitude = location.getLongitude();
-                                Log.d(TAG, "New location obtained: " + latitude + ", " + longitude);
-                                proceedToMapActivity(latitude, longitude);
-                            } else {
-                                showToast("Unable to retrieve current location");
-                                proceedToMapActivity(null, null);
-                            }
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.e(TAG, "Failed to retrieve current location", e);
+                    .addOnSuccessListener(location -> {
+                        if (location != null) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            Log.d(TAG, "New location obtained: " + latitude + ", " + longitude);
+                            proceedToMapActivity(latitude, longitude);
+                        } else {
                             showToast("Unable to retrieve current location");
                             proceedToMapActivity(null, null);
                         }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to retrieve current location", e);
+                        showToast("Unable to retrieve current location");
+                        proceedToMapActivity(null, null);
                     });
         } catch (SecurityException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Permission error", e);
             showToast("Location permissions were denied");
             proceedToMapActivity(null, null);
         }
     }
 
+    /**
+     * Starts the appropriate map activity based on the user's location and permissions.
+     *
+     * @param latitude  The latitude of the user's location, or null if unavailable.
+     * @param longitude The longitude of the user's location, or null if unavailable.
+     */
     private void proceedToMapActivity(Double latitude, Double longitude) {
         Intent intent;
         if (latitude != null && longitude != null) {
@@ -321,21 +346,42 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         startActivity(intent);
     }
 
+    /**
+     * Determines if the given location is within China based on latitude and longitude.
+     *
+     * @param latitude  The latitude to check.
+     * @param longitude The longitude to check.
+     * @return True if the location is in China, false otherwise.
+     */
     private boolean isInChina(double latitude, double longitude) {
         return latitude >= 18.0 && latitude <= 53.0 && longitude >= 73.0 && longitude <= 135.0;
     }
 
+    /**
+     * Displays a short toast message to the user.
+     *
+     * @param message The message to display.
+     */
     private void showToast(String message) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * Handles the result of permission requests and proceeds accordingly.
+     *
+     * @param requestCode  The request code passed in requestPermissions().
+     * @param permissions  The requested permissions.
+     * @param grantResults The grant results for the corresponding permissions.
+     */
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && (grantResults[0] == PackageManager.PERMISSION_GRANTED ||
-                    grantResults[1] == PackageManager.PERMISSION_GRANTED)) {
+            if (grantResults.length > 0 &&
+                    (grantResults[0] == PackageManager.PERMISSION_GRANTED ||
+                            grantResults[1] == PackageManager.PERMISSION_GRANTED)) {
                 Log.d(TAG, "Location permissions granted");
                 if (isActivityRecognitionPermissionRequired()) {
                     if (!hasActivityRecognitionPermission()) {
@@ -353,12 +399,10 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         } else if (requestCode == ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Activity recognition permission granted");
-                checkNetworkAndProceed();
             } else {
                 showToast("Activity recognition permission denied");
-                checkNetworkAndProceed();
             }
+            checkNetworkAndProceed();
         }
     }
-
 }

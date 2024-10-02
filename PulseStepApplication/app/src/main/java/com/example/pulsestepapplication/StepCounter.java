@@ -1,5 +1,6 @@
 package com.example.pulsestepapplication;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -13,42 +14,62 @@ import android.util.Log;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+/**
+ * StepCounter class to track the number of steps using the device's step detector sensor.
+ */
 public class StepCounter {
+    private static final String TAG = "StepCounter";
+    private static final int REQUEST_CODE = 1001; // Permission request code
+
     private final SensorManager sensorManager;
     private final Sensor stepDetectorSensor;
-    private SensorEventListener stepListener;
-    private int stepCount = 0; // 本次跟踪的步数
-    private int savedStepCount = 0; // 保存的步数
-    private boolean isTrackingSteps = false;
-    private StepCounterListener stepCounterListener;
-    private final Context context;
     private final Activity activity;
-    private static final int REQUEST_CODE = 1001; // 权限请求代码
+    private final Context context;
 
+    private SensorEventListener stepListener;
+    private int stepCount = 0; // Steps counted in the current tracking session
+    private int savedStepCount = 0; // Total saved steps across sessions
+    private boolean isTrackingSteps = false;
+
+    private StepCounterListener stepCounterListener;
+
+    /**
+     * Listener interface for step count updates.
+     */
     public interface StepCounterListener {
         void onStepCountUpdated(int stepCount);
     }
 
+    /**
+     * Constructor initializes the sensor manager and step detector sensor.
+     *
+     * @param activity The activity context.
+     */
     public StepCounter(Activity activity) {
-        this.context = activity;
         this.activity = activity;
+        this.context = activity;
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
 
         if (stepDetectorSensor == null) {
-            Log.e("StepCounter", "步数检测器不可用！");
+            Log.e(TAG, "Step detector sensor is not available!");
             return;
         }
 
+        initializeStepListener();
+    }
+
+    /**
+     * Initializes the SensorEventListener for step detection.
+     */
+    private void initializeStepListener() {
         stepListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                // 确保只有在 isTrackingSteps 为 true 时才更新步数
                 if (isTrackingSteps) {
                     stepCount++;
                     int currentSteps = savedStepCount + stepCount;
-
-                    Log.d("StepCounter", "步数更新: " + currentSteps);
+                    Log.d(TAG, "Step count updated: " + currentSteps);
 
                     if (stepCounterListener != null) {
                         stepCounterListener.onStepCountUpdated(currentSteps);
@@ -58,67 +79,88 @@ public class StepCounter {
 
             @Override
             public void onAccuracyChanged(Sensor sensor, int accuracy) {
-                // 不需要处理精度变化
+                // No action needed on accuracy change
             }
         };
     }
 
+    /**
+     * Sets the listener to receive step count updates.
+     *
+     * @param listener The StepCounterListener implementation.
+     */
     public void setStepCounterListener(StepCounterListener listener) {
         if (listener != null) {
             this.stepCounterListener = listener;
         } else {
-            Log.e("StepCounter", "传入的 StepCounterListener 为空");
+            Log.e(TAG, "Passed StepCounterListener is null");
         }
     }
 
+    /**
+     * Starts step tracking by registering the sensor listener.
+     * Requests ACTIVITY_RECOGNITION permission if necessary.
+     */
     public void startStepTracking() {
         if (stepDetectorSensor == null) {
-            Log.e("StepCounter", "步数检测器不可用");
+            Log.e(TAG, "Step detector sensor is not available");
             return;
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACTIVITY_RECOGNITION)
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION)
                     != PackageManager.PERMISSION_GRANTED) {
-                Log.e("StepCounter", "缺少 ACTIVITY_RECOGNITION 权限");
-                ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.ACTIVITY_RECOGNITION}, REQUEST_CODE);
+                Log.e(TAG, "Missing ACTIVITY_RECOGNITION permission");
+                ActivityCompat.requestPermissions(activity,
+                        new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, REQUEST_CODE);
                 return;
             }
         }
 
-        // 注册传感器监听器
+        // Register the sensor listener
         boolean success = sensorManager.registerListener(stepListener, stepDetectorSensor, SensorManager.SENSOR_DELAY_UI);
         if (success) {
-            isTrackingSteps = true; // 设置为正在跟踪
-            stepCount = 0; // 开始新一次跟踪，重置步数
-            Log.d("StepCounter", "步数检测器已注册成功, 开始计步");
+            isTrackingSteps = true;
+            stepCount = 0; // Reset step count for the new tracking session
+            Log.d(TAG, "Step detector registered successfully, tracking started");
         } else {
-            Log.e("StepCounter", "无法注册步数检测器监听器");
+            Log.e(TAG, "Failed to register step detector listener");
         }
     }
 
+    /**
+     * Stops step tracking by unregistering the sensor listener and saving the step count.
+     */
     public void stopStepTracking() {
         if (isTrackingSteps) {
-            // 取消传感器监听器注册
             sensorManager.unregisterListener(stepListener);
-            isTrackingSteps = false; // 设置为停止跟踪
-            savedStepCount += stepCount; // 保存当前步数
-            stepCount = 0; // 重置本次跟踪的步数
-            Log.d("StepCounter", "停止步数追踪, 保存步数: " + savedStepCount);
+            isTrackingSteps = false;
+            savedStepCount += stepCount; // Save the current step count
+            stepCount = 0; // Reset current step count
+            Log.d(TAG, "Step tracking stopped, steps saved: " + savedStepCount);
         }
     }
 
+    /**
+     * Resets the step tracking by clearing all step counts.
+     */
     public void resetStepTracking() {
         isTrackingSteps = false;
-        stepCount = 0; // 重置本次跟踪的步数
-        savedStepCount = 0; // 重置保存的步数
-        Log.d("StepCounter", "步数重置");
+        stepCount = 0; // Reset current step count
+        savedStepCount = 0; // Reset saved step count
+        Log.d(TAG, "Step tracking reset");
     }
 
+    /**
+     * Registers the step listener to start tracking steps.
+     */
     public void registerListener() {
         startStepTracking();
     }
 
+    /**
+     * Unregisters the step listener to stop tracking steps.
+     */
     public void unregisterListener() {
         stopStepTracking();
     }
