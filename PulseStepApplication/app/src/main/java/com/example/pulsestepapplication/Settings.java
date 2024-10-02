@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -18,6 +19,7 @@ public class Settings extends AppCompatActivity {
 
     private ImageView backButton;
     private Button logOutButton;
+    private LinearLayout resetPasswordButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +34,17 @@ public class Settings extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 finish(); // End the Settings activity and return to MainActivity
+            }
+        });
+
+        // Reference to the reset_password redirecting button
+        resetPasswordButton = findViewById(R.id.reset_password);
+        resetPasswordButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                // Finish the current activity and return to the RunSummaryActivity page
+                Intent intent = new Intent(Settings.this, ResetPassword.class);
+                startActivity(intent);
             }
         });
 
