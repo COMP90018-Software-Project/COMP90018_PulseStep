@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
                 switch(item.getItemId()){
-
                     case R.id.workout:
                         replaceFragment(new WorkoutFragment());
                         Log.d("DEBUG", "change to workout");
