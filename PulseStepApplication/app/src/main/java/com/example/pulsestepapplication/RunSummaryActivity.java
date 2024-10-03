@@ -137,40 +137,69 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
      * Displays the trajectory on the Google Map with start and end markers.
      */
     private void displayTrajectoryOnMap() {
+        // Check if the map and trajectory data are valid
         if (googleMap == null || trajectory == null || trajectory.isEmpty()) return;
 
-        // Draw the polyline
+        // Create a PolylineOptions object to draw the polyline segments
         PolylineOptions polylineOptions = new PolylineOptions()
-                .addAll(trajectory)
                 .color(getResources().getColor(R.color.like_orange))
-                .width(10);
+                .width(30);
+
+        // Variables to keep track of the start and end points
+        LatLng startPoint = null;
+        LatLng endPoint = null;
+
+        // Adjust camera bounds to include all points
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+
+        for (LatLng point : trajectory) {
+            if (point == null) {
+                // Draw the previous segment of the polyline
+                googleMap.addPolyline(polylineOptions);
+
+                // Start a new PolylineOptions for the next segment
+                polylineOptions = new PolylineOptions()
+                        .color(getResources().getColor(R.color.like_orange))
+                        .width(30);
+            } else {
+                // Add the point to the current polyline segment
+                polylineOptions.add(point);
+
+                // Set the startPoint if it is the first point
+                if (startPoint == null) {
+                    startPoint = point;
+                }
+
+                // Update the endPoint to the current point
+                endPoint = point;
+
+                // Include the point in the camera bounds
+                builder.include(point);
+            }
+        }
+
+        // Draw the last polyline segment
         googleMap.addPolyline(polylineOptions);
 
-        // Add start and end markers
-        LatLng startPoint = trajectory.get(0);
-        LatLng endPoint = trajectory.get(trajectory.size() - 1);
+        if (startPoint != null) {
+            // Add a marker at the starting point
+            googleMap.addMarker(new MarkerOptions()
+                    .position(startPoint)
+                    .title("Start Point")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
 
-        googleMap.addMarker(new MarkerOptions()
-                .position(startPoint)
-                .title("Start Point")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-
-        googleMap.addMarker(new MarkerOptions()
-                .position(endPoint)
-                .title("End Point")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-
-        // Adjust camera to include all points
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        for (LatLng point : trajectory) {
-            builder.include(point);
+            // Add a marker at the ending point
+            googleMap.addMarker(new MarkerOptions()
+                    .position(endPoint)
+                    .title("End Point")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
         }
-        LatLngBounds bounds = builder.build();
 
-        // Adjust the camera to the calculated bounds before displaying the path
+        // Adjust the camera to include all points in the trajectory
+        LatLngBounds bounds = builder.build();
         googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
 
-        // Hide default background if trajectory is present
+        // Hide the default background if the trajectory is present
         defaultBackground.setVisibility(View.GONE);
     }
 

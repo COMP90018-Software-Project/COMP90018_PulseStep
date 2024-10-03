@@ -250,7 +250,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
      * Checks network connectivity and proceeds based on the network status.
      */
     private void checkNetworkAndProceed() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        /*ConnectivityManager connectivityManager = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager == null) {
             showToast("Unable to retrieve network status");
             proceedToMapActivity(null, null);
@@ -281,6 +281,9 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         } else {
             showToast("Waiting for network connection...");
         }
+
+         */
+        checkLocationAndStartMapActivity();
     }
 
     /**

@@ -53,7 +53,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     // Constants
     private static final int LOCATION_REQUEST_CODE = 1001;
     private static final int ACTIVITY_RECOGNITION_REQUEST_CODE = 1002;
-    private static final float MOVE_ZOOM_LEVEL = 17f;
+    private static final float MOVE_ZOOM_LEVEL = 16f;
     private static final float DEFAULT_ZOOM_LEVEL = 15f;
     private static final String TAG = "GoogleMapActivity";
 
@@ -79,7 +79,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
-    private final int realStep = 1;
+    private final int realStep = -1;
 
     // Step Counter
     private StepCounter stepCounter;
@@ -169,7 +169,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         stepCounter.setStepCounterListener(stepCount -> {
             runOnUiThread(() -> {
                 try {
-                    if (stepCount <= 10) {
+                    if (stepCount < 10) {
                         stepTextView.setText("--");
                     } else {
                         stepTextView.setText(String.valueOf(stepCount));
@@ -220,7 +220,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                         isLocationReady = true;
                     }
 
-                    if (isLocationReady && currentStepCount > realStep) {
+                    if (isLocationReady) {
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         updateUserLocationMarker(currentLatLng);
                         updatePath(currentLatLng);
@@ -230,7 +230,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                                 .tilt(0)                 // Sets tilt to 0 for a 2D view (optional)
                                 .bearing(0)              // Sets bearing to 0 (North)
                                 .build();
-                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 2000, null);
+                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 200, null);
 
                     } else if (isLocationReady) {
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -250,7 +250,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         // Decode and resize custom icon
         Bitmap iconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.img);
         if (iconBitmap != null) {
-            Bitmap resizedBitmap = Bitmap.createScaledBitmap(iconBitmap, 80, 80, false);
+            Bitmap resizedBitmap = Bitmap.createScaledBitmap(iconBitmap, 150, 150, false);
 
             // Remove previous marker
             if (userLocationMarker != null) {
@@ -501,7 +501,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     @SuppressLint("DefaultLocale")
     private void updatePath(LatLng latLng) {
-        if (currentStepCount > realStep) {
+        //if (currentStepCount > realStep) {
             if (!pathPoints.isEmpty()) {
                 LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
                 float[] results = new float[1];
@@ -511,7 +511,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
             pathPoints.add(latLng);
             drawCurrentPolyline();
-        }
+        //}
     }
 
     /**
@@ -519,7 +519,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void drawCurrentPolyline() {
         if (!pathPoints.isEmpty()) {
-            PolylineOptions polylineOptions = new PolylineOptions().addAll(pathPoints).color(getResources().getColor(R.color.like_orange)).width(10);
+            PolylineOptions polylineOptions = new PolylineOptions().addAll(pathPoints).color(getResources().getColor(R.color.like_orange)).width(30);
             if (polyLines.isEmpty() || isPaused) {
                 Polyline polyline = googleMap.addPolyline(polylineOptions);
                 polyLines.add(polyline);
@@ -550,6 +550,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         // Collect trajectory points
         ArrayList<com.google.android.gms.maps.model.LatLng> trajectory = new ArrayList<>();
         for (Polyline polyline : polyLines) {
+            if (!trajectory.isEmpty()) {
+                trajectory.add(null);
+            }
             trajectory.addAll(polyline.getPoints());
         }
 
