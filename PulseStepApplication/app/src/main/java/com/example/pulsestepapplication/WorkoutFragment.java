@@ -370,7 +370,8 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         boolean activityRecognitionGranted = hasActivityRecognitionPermission();
         intent.putExtra("LOCATION_GRANTED", locationGranted);
         intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
-
+        intent.putExtra("LATITUDE", latitude);
+        intent.putExtra("LONGITUDE", longitude);
         startActivity(intent);
     }
 
