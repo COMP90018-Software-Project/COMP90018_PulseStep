@@ -17,12 +17,17 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Dash;
+import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * RunSummaryActivity displays the summary of a run, including distance, time, address, step count,
@@ -136,45 +141,102 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     /**
      * Displays the trajectory on the Google Map with start and end markers.
      */
+    // Check if the map and trajectory data are valid
     private void displayTrajectoryOnMap() {
-        if (googleMap == null || trajectory == null || trajectory.isEmpty()) return;
+    if (googleMap == null || trajectory == null || trajectory.isEmpty()) return;
 
-        // Draw the polyline
-        PolylineOptions polylineOptions = new PolylineOptions()
-                .addAll(trajectory)
-                .color(getResources().getColor(R.color.like_orange))
-                .width(10);
-        googleMap.addPolyline(polylineOptions);
+    // Define a dashed pattern for the disconnected segments
+    List<PatternItem> dashedPattern = Arrays.asList(new Dash(30), new Gap(20));
 
-        // Add start and end markers
-        LatLng startPoint = trajectory.get(0);
-        LatLng endPoint = trajectory.get(trajectory.size() - 1);
+    // Variables to keep track of the start and end points
+    LatLng startPoint = null;
+    LatLng endPoint = null;
 
+    // Adjust camera bounds to include all points
+    LatLngBounds.Builder builder = new LatLngBounds.Builder();
+
+    // Variable to hold the points for the current solid polyline
+    PolylineOptions polylineOptions = new PolylineOptions()
+            .color(getResources().getColor(R.color.like_orange))
+            .width(10);
+
+    // To track the previous point to connect with dashed lines when a break is found
+    LatLng previousPoint = null;
+
+    for (LatLng point : trajectory) {
+        if (point == null) {
+            // If we encounter a break (null) and we have a previous point
+            if (previousPoint != null) {
+                // Look ahead to the next valid point after the null
+                int nextIndex = trajectory.indexOf(point) + 1;
+                if (nextIndex < trajectory.size() && trajectory.get(nextIndex) != null) {
+                    LatLng nextPoint = trajectory.get(nextIndex);
+
+                    // Draw a dashed line connecting the previous point to the next point
+                    PolylineOptions dashedLineOptions = new PolylineOptions()
+                            .add(previousPoint)
+                            .add(nextPoint)
+                            .color(getResources().getColor(R.color.like_orange))
+                            .width(10)
+                            .pattern(dashedPattern);
+                    googleMap.addPolyline(dashedLineOptions);
+                }
+            }
+
+            // Draw the current solid polyline
+            googleMap.addPolyline(polylineOptions);
+
+            // Reset polylineOptions for the next segment
+            polylineOptions = new PolylineOptions()
+                    .color(getResources().getColor(R.color.like_orange))
+                    .width(10);
+
+            // Reset the previousPoint as we encountered a break
+            previousPoint = null;
+        } else {
+            // Add the point to the current polyline segment
+            polylineOptions.add(point);
+
+            // Set the startPoint if it is the first point
+            if (startPoint == null) {
+                startPoint = point;
+            }
+
+            // Update the endPoint to the current point
+            endPoint = point;
+
+            // Include the point in the camera bounds
+            builder.include(point);
+
+            // Update the previous point
+            previousPoint = point;
+        }
+    }
+
+    // Draw the last solid polyline segment
+    googleMap.addPolyline(polylineOptions);
+
+    if (startPoint != null) {
+        // Add a marker at the starting point
         googleMap.addMarker(new MarkerOptions()
                 .position(startPoint)
                 .title("Start Point")
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
 
+        // Add a marker at the ending point
         googleMap.addMarker(new MarkerOptions()
                 .position(endPoint)
                 .title("End Point")
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-
-        // Adjust camera to include all points
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        for (LatLng point : trajectory) {
-            builder.include(point);
-        }
-        LatLngBounds bounds = builder.build();
-
-        // Adjust the camera to the calculated bounds before displaying the path
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
-
-        // Hide default background if trajectory is present
-        defaultBackground.setVisibility(View.GONE);
     }
 
+    // Adjust the camera to include all points in the trajectory
+    LatLngBounds bounds = builder.build();
+    googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
 
+    // Hide the default background if the trajectory is present
+    defaultBackground.setVisibility(View.GONE);
+}
     /**
      * Shows a default background image if no trajectory is available.
      */
