@@ -36,6 +36,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -217,7 +218,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         updateUserLocationMarker(currentLatLng);
                         updatePath(currentLatLng);
-                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, MOVE_ZOOM_LEVEL));
+                        CameraPosition cameraPosition = new CameraPosition.Builder()
+                                .target(currentLatLng)   // Sets the new target location
+                                .zoom(MOVE_ZOOM_LEVEL)   // Sets the zoom level
+                                .tilt(0)                 // Sets tilt to 0 for a 2D view (optional)
+                                .bearing(0)              // Sets bearing to 0 (North)
+                                .build();
+                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 2000, null);
+
                     } else if (isLocationReady) {
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         updateUserLocationMarker(currentLatLng);
@@ -303,7 +311,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         // Set the initial camera position to the user's last known location
         if (initialLatitude != 0.0 && initialLongitude != 0.0) {
             LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, DEFAULT_ZOOM_LEVEL));
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(initialLatLng)   // Set the center of the map
+                    .zoom(DEFAULT_ZOOM_LEVEL) // Set the zoom level
+                    .tilt(0)                // Set tilt to 0 to ensure a 2D view
+                    .build();
+            googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         }
         // Check if location permissions are granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -319,10 +332,16 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private void onLocationPermissionGranted() {
         if (googleMap != null) {
             googleMap.setMyLocationEnabled(true);
+            googleMap.setBuildingsEnabled(false);
             fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
                 if (location != null && (initialLatitude == 0.0 && initialLongitude == 0.0)) {
                     LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM_LEVEL));
+                    CameraPosition cameraPosition = new CameraPosition.Builder()
+                            .target(currentLatLng)   // Set the center of the map
+                            .zoom(DEFAULT_ZOOM_LEVEL) // Set the zoom level
+                            .tilt(0)                // Set tilt to 0 to ensure a 2D view
+                            .build();
+                    googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                 }
             });
         }
@@ -397,6 +416,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private void startTracking() {
         if (googleMap != null) {
             googleMap.setMyLocationEnabled(false);
+            googleMap.setBuildingsEnabled(false);
+
         }
         isTracking = true;
         isPaused = false;
@@ -550,6 +571,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 return;
             }
             googleMap.setMyLocationEnabled(false);
+            googleMap.setBuildingsEnabled(false);
+
         }
     }
 
@@ -716,6 +739,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
         finish();
     }
 
