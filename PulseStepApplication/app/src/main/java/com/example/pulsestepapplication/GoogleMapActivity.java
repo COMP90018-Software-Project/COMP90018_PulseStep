@@ -67,7 +67,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private GoogleMap googleMap;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
-
+    private double initialLatitude;
+    private double initialLongitude;
     // Tracking Variables
     private final List<Polyline> polyLines = new ArrayList<>();
     private final List<LatLng> pathPoints = new ArrayList<>();
@@ -117,7 +118,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             initStepCounter();
         }
-
+        Intent intent = getIntent();
+        initialLatitude = intent.getDoubleExtra("LATITUDE", 0.0);
+        initialLongitude = intent.getDoubleExtra("LONGITUDE", 0.0);
         // Set up map fragment
         setupMapFragment();
 
@@ -184,6 +187,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             Log.e(TAG, "Map fragment is null");
         }
     }
+
 
     /**
      * Sets up the button listeners for pause/resume and show actions.
@@ -291,33 +295,23 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      *
      * @param map The GoogleMap object that is ready to be used.
      */
-    @Override
-    public void onMapReady(@NonNull GoogleMap map) {
+
+    public void onMapReady(GoogleMap map) {
         googleMap = map;
         applyCustomMapStyle();
 
+        // Set the initial camera position to the user's last known location
+        if (initialLatitude != 0.0 && initialLongitude != 0.0) {
+            LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLatLng, DEFAULT_ZOOM_LEVEL));
+        }
         // Check if location permissions are granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             onLocationPermissionGranted();
-        } else {
+        } else if (initialLatitude == 0.0 && initialLongitude == 0.0) {
             showDefaultMap();
         }
-
-        // Set the initial camera position to the user's last known location
-        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-            if (location != null) {
-                LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                // Move camera immediately to the last known location
-                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM_LEVEL));
-            } else {
-                // If no last known location, set a default location to avoid zooming out to the global level
-                LatLng defaultLatLng = new LatLng(0, 0); // Replace with a more appropriate default location if needed
-                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLatLng, DEFAULT_ZOOM_LEVEL));
-            }
-        });
     }
-
-
     /**
      * Handles actions after GPS location permission is granted.
      */
@@ -326,9 +320,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (googleMap != null) {
             googleMap.setMyLocationEnabled(true);
             fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-                if (location != null) {
+                if (location != null && (initialLatitude == 0.0 && initialLongitude == 0.0)) {
                     LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM_LEVEL));
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM_LEVEL));
                 }
             });
         }
@@ -720,4 +714,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             startTracking();
         }
     }
+    @Override
+    public void onBackPressed() {
+        finish();
+    }
+
 }
