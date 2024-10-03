@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    // Add the Google services Gradle plugin
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -14,8 +16,8 @@ android {
         versionCode = 1
         versionName = "1.0"
         ndk {
-            abiFilters.addAll(listOf("x86", "x86_64"))
-//            "armeabi-v7a", "arm64-v8a"
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+//            "armeabi-v7a", "arm64-v8a","x86", "x86_64""
         }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -52,13 +54,20 @@ dependencies {
     implementation("com.github.dhaval2404:imagepicker:2.1")
     implementation("com.google.android.material:material:1.5.0")
     implementation("de.hdodenhof:circleimageview:3.0.0")
+    // Import the BoM for the Firebase platform
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.horizontalcalendar)
     implementation(libs.circleimageview)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
 }
