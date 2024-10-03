@@ -166,14 +166,20 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private void initStepCounter() {
         stepCounter = new StepCounter(this);
-        stepCounter.setStepCounterListener(stepCount -> runOnUiThread(() -> {
-            try {
-                stepTextView.setText(String.valueOf(stepCount));
-                currentStepCount = stepCount;
-            } catch (Exception e) {
-                Log.e(TAG, "Error updating step count", e);
-            }
-        }));
+        stepCounter.setStepCounterListener(stepCount -> {
+            runOnUiThread(() -> {
+                try {
+                    if (stepCount <= 10) {
+                        stepTextView.setText("--");
+                    } else {
+                        stepTextView.setText(String.valueOf(stepCount));
+                    }
+                    currentStepCount = stepCount;
+                } catch (Exception e) {
+                    Log.e(TAG, "Error updating step count", e);
+                }
+            });
+        });
     }
 
     /**

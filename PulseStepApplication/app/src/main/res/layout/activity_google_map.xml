@@ -107,8 +107,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Steps"
-                    android:textSize="12sp"
                     android:textColor="#808080"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <!-- Steps Value -->
@@ -116,7 +116,7 @@
                     android:id="@+id/step_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0"
+                    android:text="--"
                     android:textSize="20sp"
                     android:textColor="@android:color/black"
                     android:textStyle="bold" />
