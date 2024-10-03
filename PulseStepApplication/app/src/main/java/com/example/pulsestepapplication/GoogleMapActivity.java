@@ -501,8 +501,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     @SuppressLint("DefaultLocale")
     private void updatePath(LatLng latLng) {
-        //if (currentStepCount > realStep) {
-            if (!pathPoints.isEmpty()) {
+        if (currentStepCount > realStep || totalDistance > 0.01) {
+            if (!pathPoints.isEmpty() ) {
                 LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
                 float[] results = new float[1];
                 Location.distanceBetween(lastLatLng.latitude, lastLatLng.longitude, latLng.latitude, latLng.longitude, results);
@@ -511,7 +511,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
             pathPoints.add(latLng);
             drawCurrentPolyline();
-        //}
+        }
     }
 
     /**
