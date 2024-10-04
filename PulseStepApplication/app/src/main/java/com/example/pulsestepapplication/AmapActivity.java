@@ -205,7 +205,8 @@ public class AmapActivity extends AppCompatActivity {
         if (aMap == null) return;
         aMap.setMyLocationEnabled(true);
         // 设置地图类型
-        aMap.setMapType(AMap.MAP_TYPE_NORMAL);
+        aMap.setMapType(AMap.MAP_TYPE_NAVI);
+        aMap.setMaxZoomLevel(19.0f);
 
         // 设置定位样式
         myLocationStyle = new MyLocationStyle();

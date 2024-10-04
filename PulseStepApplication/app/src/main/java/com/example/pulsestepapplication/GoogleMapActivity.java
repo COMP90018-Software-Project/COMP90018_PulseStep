@@ -67,8 +67,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     // Constants
     private static final int LOCATION_REQUEST_CODE = 1001;
     private static final int ACTIVITY_RECOGNITION_REQUEST_CODE = 1002;
-    private static final float MOVE_ZOOM_LEVEL = 16f;
+    private static final float MOVE_ZOOM_LEVEL = 17f;
     private static final float DEFAULT_ZOOM_LEVEL = 15f;
+    private static final float MAX_ZOOM_LEVEL = 19f;
     private static final String TAG = "GoogleMapActivity";
 
     // UI Components
@@ -354,7 +355,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     public void onMapReady(GoogleMap map) {
         googleMap = map;
         applyCustomMapStyle();
-
+        googleMap.setMaxZoomPreference(MAX_ZOOM_LEVEL);
         // Set the initial camera position to the user's last known location
         if (initialLatitude != 0.0 && initialLongitude != 0.0) {
             LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
@@ -566,7 +567,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
         float[] results = new float[1];
         Location.distanceBetween(lastLatLng.latitude, lastLatLng.longitude, latLng.latitude, latLng.longitude, results);
-
+        Log.d("DEBUG", "results[0]= " + results[0]);
         // Check if the distance between locations is significant (> 1 meter)
         // and if there has been at least one step taken to avoid drawing when the user is stationary
         if (results[0] > 1.0 || currentStepCount > 0) { // Use 1.0 meters and step count as thresholds
@@ -678,7 +679,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
             address = getAddressFromLatLng(initialLatLng);
         }
-// Prepare data to send
         float distanceInKm = totalDistance / 1000;
         String timeElapsed = timerTextView.getText().toString();
         int stepCount = currentStepCount;
