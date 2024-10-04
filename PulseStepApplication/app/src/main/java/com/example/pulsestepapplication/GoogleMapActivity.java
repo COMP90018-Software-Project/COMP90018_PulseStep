@@ -27,6 +27,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.google.android.gms.common.internal.FallbackServiceBroker;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 
@@ -118,6 +119,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     };
 
     private Marker userLocationMarker;
+    private TextView cTextView;
 
     @SuppressLint("NewApi")
     @Override
@@ -167,11 +169,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         timerTextView = findViewById(R.id.timer_text_view);
         stepTextView = findViewById(R.id.step_text_view);
         avgPaceTextView = findViewById(R.id.avg_text_view);
+        cTextView = findViewById(R.id.calories_text_view);
         backButton = findViewById(R.id.back_button_running_page);
         mapImageView = findViewById(R.id.default_image_view);
 
         // Set click listener for the back button
         backButton.setOnClickListener(v -> navigateToMainActivity());
+        btnPauseResume.setClickable(false);
+        cTextView.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -229,32 +234,33 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                if (!isTracking || isPaused) {
-                    return;
-                }
-
+                // Update location regardless of tracking state to determine when location is ready
                 for (Location location : locationResult.getLocations()) {
                     if (location.hasAccuracy() && location.getAccuracy() < 50.0) {
                         isLocationReady = true;
+                        cTextView.setVisibility(View.GONE);
+                        // Enable the start button when location is ready
+                        btnPauseResume.setClickable(true);
+                        com.google.android.gms.maps.model.LatLng currentLatLng = new com.google.android.gms.maps.model.LatLng(location.getLatitude(), location.getLongitude());
+                        updateUserLocationMarker(currentLatLng);
+                    }else{
+
+                        cTextView.setVisibility(View.VISIBLE);
+
                     }
 
-                    if (isLocationReady) {
-                        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                        updateUserLocationMarker(currentLatLng);
-                        updatePath(currentLatLng);
-                        CameraPosition cameraPosition = new CameraPosition.Builder()
-                                .target(currentLatLng)   // Sets the new target location
-                                .zoom(MOVE_ZOOM_LEVEL)   // Sets the zoom level
-                                .tilt(0)                 // Sets tilt to 0 for a 2D view (optional)
-                                .bearing(0)              // Sets bearing to 0 (North)
-                                .build();
-                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 200, null);
-
-                    } else if (!isLocationReady) {
-
-
-                        //LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                    if (isTracking && !isPaused && isLocationReady) {
+                        com.google.android.gms.maps.model.LatLng currentLatLng = new com.google.android.gms.maps.model.LatLng(location.getLatitude(), location.getLongitude());
                         //updateUserLocationMarker(currentLatLng);
+                        updatePath(currentLatLng);
+                        com.google.android.gms.maps.model.CameraPosition cameraPosition = new com.google.android.gms.maps.model.CameraPosition.Builder()
+                                .target(currentLatLng)
+                                .zoom(MOVE_ZOOM_LEVEL)
+                                .tilt(0)
+                                .bearing(0)
+                                .build();
+                        updateUserLocationMarker(currentLatLng);
+                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 200, null);
                     }
                 }
             }
@@ -347,18 +353,44 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                     .zoom(DEFAULT_ZOOM_LEVEL) // Set the zoom level
                     .tilt(0)                // Set tilt to 0 to ensure a 2D view
                     .build();
+
             googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         }
 
         // Check if location permissions are granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            googleMap.setMyLocationEnabled(true);
+            googleMap.setMyLocationEnabled(false);
             googleMap.setBuildingsEnabled(false);
+            onLocationPermissionGranted();
         } else if (initialLatitude == 0.0 && initialLongitude == 0.0) {
             showDefaultMap();
         }
     }
+    /**
+     * Handles actions after GPS location permission is granted.
+     */
+    @SuppressLint("MissingPermission")
+    private void onLocationPermissionGranted() {
+        if (googleMap != null) {
+            googleMap.setMyLocationEnabled(false);
+            googleMap.setBuildingsEnabled(false);
+            fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                if (location != null && (initialLatitude == 0.0 && initialLongitude == 0.0)) {
+                    com.google.android.gms.maps.model.LatLng currentLatLng = new com.google.android.gms.maps.model.LatLng(location.getLatitude(), location.getLongitude());
+                    com.google.android.gms.maps.model.CameraPosition cameraPosition = new com.google.android.gms.maps.model.CameraPosition.Builder()
+                            .target(currentLatLng)
+                            .zoom(DEFAULT_ZOOM_LEVEL)
+                            .tilt(0)
+                            .build();
+                    updateUserLocationMarker(currentLatLng);
+                    googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                }
+            });
 
+            // Start location updates to determine when location is ready
+            requestLocationUpdates();
+        }
+    }
     /**
      * Checks and requests the activity recognition permission.
      */
@@ -387,6 +419,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Handles the pause/resume button click event.
      */
     private void handlePauseResumeButtonClick() {
+        if (!isLocationReady) {
+            // If location is not ready, show a toast message
+            Toast.makeText(this, "Positioning ...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (isFirstStart) {
             if (checkPermissionsForTracking()) {
                 startTracking();
@@ -398,6 +436,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             pauseTracking();
         }
     }
+
 
     /**
      * Checks all permissions required for tracking.
@@ -451,6 +490,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
             if (location != null) {
                 LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                updateUserLocationMarker(currentLatLng);
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, MOVE_ZOOM_LEVEL));
             }
         });
@@ -492,8 +532,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Requests location updates with high accuracy.
      */
     private void requestLocationUpdates() {
-        LocationRequest locationRequest = new LocationRequest.Builder(10000)
-                .setMinUpdateIntervalMillis(2000)
+        LocationRequest locationRequest = new LocationRequest.Builder(1000)
+                .setMinUpdateIntervalMillis(1000)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
                 .build();
 
