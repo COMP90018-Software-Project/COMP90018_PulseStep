@@ -257,8 +257,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         //updateUserLocationMarker(currentLatLng);
                         googleMap.setMyLocationEnabled(true);
-                    }else{
-                        cTextView.setVisibility(View.VISIBLE);
                     }
 
                     if (isTracking && !isPaused && isLocationReady) {
