@@ -51,6 +51,8 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private int stepCount;
     private ArrayList<LatLng> trajectory;
     private CardView mapCard;
+    private String avgPace;
+    private TextView avgPaceTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +79,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         distanceTextView = findViewById(R.id.run_distance);
         timeTextView = findViewById(R.id.run_summary_time);
         addressTextView = findViewById(R.id.run_summary_address);
+        avgPaceTextView = findViewById(R.id.run_summary_avg_pace);
         stepCountTextView = findViewById(R.id.run_summary_steps);
         defaultBackground = findViewById(R.id.default_background);
         mapCard = findViewById(R.id.map_container);
@@ -92,7 +95,8 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             time = intent.getStringExtra("time");
             stepCount = intent.getIntExtra("stepCount", 0);
             trajectory = intent.getParcelableArrayListExtra("trajectory");
-            address = intent.getStringExtra("address"); // Optional
+            address = intent.getStringExtra("address");
+            avgPace = intent.getStringExtra("avgPave");
         }
     }
 
@@ -104,6 +108,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         timeTextView.setText(time != null ? time : "00:00");
         stepCountTextView.setText(String.valueOf(stepCount));
         addressTextView.setText(address != null ? address : "N/A");
+        avgPaceTextView.setText(avgPace);
     }
 
     /**
@@ -159,7 +164,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     PolylineOptions polylineOptions = new PolylineOptions()
             .color(getResources().getColor(R.color.like_orange))
             .width(10);
-// To track the previous point to connect with dashed lines when a break is found
+        // To track the previous point to connect with dashed lines when a break is found
         LatLng previousPoint = null;
 
         for (int i = 0; i < trajectory.size(); i++) {
