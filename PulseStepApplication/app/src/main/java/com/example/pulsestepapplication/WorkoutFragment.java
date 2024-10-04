@@ -21,6 +21,9 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.MapView;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 
@@ -46,6 +49,8 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
 
     private FusedLocationProviderClient fusedLocationClient;
     private GoogleMap mMap;
+    private MapView amapView;
+    private AMap aMap;
 
     public WorkoutFragment() {
         // Required empty public constructor
@@ -76,7 +81,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
 
         // Initialize map if location permissions are granted
         if (hasLocationPermissions()) {
-            initializeMap();
+            initializeMap(view, savedInstanceState);
         } else {
             Log.d(TAG, "Location permissions not granted; map will not be displayed");
         }
@@ -85,14 +90,105 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
     }
 
     /**
-     * Initializes the Google Map by replacing the map container with a SupportMapFragment.
+     * Initializes the appropriate map based on user's location.
      */
-    private void initializeMap() {
+    private void initializeMap(View view, Bundle savedInstanceState) {
+        // Check if we are in China based on last known location
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        lastLatitude = location.getLatitude();
+                        lastLongitude = location.getLongitude();
+
+                        if (isInChina(lastLatitude, lastLongitude)) {
+                            // Initialize AMap
+                            amapView = new MapView(requireContext());
+                            ViewGroup mapContainer = view.findViewById(R.id.map_container);
+                            mapContainer.addView(amapView);
+                            amapView.onCreate(savedInstanceState);
+                            aMap = amapView.getMap();
+                            configureAMap();
+                        } else {
+                            // Initialize Google Map
+                            SupportMapFragment mapFragment = new SupportMapFragment();
+                            getChildFragmentManager().beginTransaction()
+                                    .replace(R.id.map_container, mapFragment)
+                                    .commit();
+                            mapFragment.getMapAsync(this);
+                        }
+                    } else {
+                        // If location is null, default to Google Map
+                        initializeGoogleMap();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to retrieve location", e);
+                    // If location retrieval fails, default to Google Map
+                    initializeGoogleMap();
+                });
+    }
+
+    /**
+     * Initializes Google Map.
+     */
+    private void initializeGoogleMap() {
         SupportMapFragment mapFragment = new SupportMapFragment();
         getChildFragmentManager().beginTransaction()
                 .replace(R.id.map_container, mapFragment)
                 .commit();
         mapFragment.getMapAsync(this);
+    }
+
+    /**
+     * Configures AMap settings.
+     */
+    private void configureAMap() {
+        // Apply custom map style if needed
+        applyCustomAMapStyle();
+
+        // Move camera to user's location if available
+        if (lastLatitude != null && lastLongitude != null) {
+            com.amap.api.maps.model.LatLng currentLatLng =
+                    new com.amap.api.maps.model.LatLng(lastLatitude, lastLongitude);
+            aMap.moveCamera(com.amap.api.maps.CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+        }
+
+        // Additional AMap settings can be added here
+    }
+
+    /**
+     * Applies custom style to AMap.
+     */
+    private void applyCustomAMapStyle() {
+        try {
+            com.amap.api.maps.model.CustomMapStyleOptions customMapStyleOptions =
+                    new com.amap.api.maps.model.CustomMapStyleOptions();
+
+            // Set style data path (located in assets directory)
+            customMapStyleOptions.setStyleDataPath(getAssetsPath("style/style.data"));
+
+            // If there are extra texture files, set the texture file path
+            customMapStyleOptions.setStyleExtraPath(getAssetsPath("style/style_extra.data"));
+
+            // Apply custom style options to the map
+            aMap.setCustomMapStyle(customMapStyleOptions);
+            aMap.showBuildings(false);
+            aMap.showMapText(false);
+
+            // Enable custom map style
+            aMap.setMapCustomEnable(true);
+
+            Log.d(TAG, "Custom map style applied successfully.");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to apply custom map style", e);
+        }
+    }
+
+    /**
+     * Gets the full path of a file in the assets directory.
+     */
+    private String getAssetsPath(String fileName) {
+        return "file:///android_asset/" + fileName;
     }
 
     /**
@@ -125,7 +221,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                         if (location != null && shouldUpdateMap(location)) {
                             LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                             // Update the map camera position
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f)); // Zoom level 15
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f)); // Zoom level 15
                             // Store the new location
                             lastLatitude = location.getLatitude();
                             lastLongitude = location.getLongitude();

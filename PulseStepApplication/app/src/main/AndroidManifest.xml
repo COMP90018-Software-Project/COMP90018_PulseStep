@@ -76,6 +76,8 @@
         <service android:name="com.amap.api.location.APSService" />
 
         <!-- Activity Declarations -->
+        <activity android:name=".AmapRunSummaryActivity"
+            android:exported="false"/>
         <activity android:name=".AmapActivity"
             android:exported="false"/>
         <activity android:name=".GoogleMapActivity"

@@ -44,7 +44,6 @@ import com.amap.api.maps.model.MyLocationStyle;
 import com.amap.api.maps.model.Polyline;
 import com.amap.api.maps.model.PolylineOptions;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -115,6 +114,7 @@ public class AmapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setupAmapPrivacy();
         setContentView(R.layout.activity_amap);
+
         // 初始化UI组件
         initializeUIComponents();
 
@@ -137,6 +137,7 @@ public class AmapActivity extends AppCompatActivity {
         // 处理传入的权限
         handleIncomingPermissions();
     }
+
     /**
      * 初始化UI组件
      */
