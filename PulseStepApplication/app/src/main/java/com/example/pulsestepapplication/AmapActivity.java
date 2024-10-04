@@ -205,7 +205,8 @@ public class AmapActivity extends AppCompatActivity {
         if (aMap == null) return;
         aMap.setMyLocationEnabled(true);
         // 设置地图类型
-        aMap.setMapType(AMap.MAP_TYPE_NORMAL);
+        aMap.setMapType(AMap.MAP_TYPE_NAVI);
+        aMap.setMaxZoomLevel(19.0f);
 
         // 设置定位样式
         myLocationStyle = new MyLocationStyle();
@@ -520,13 +521,15 @@ public class AmapActivity extends AppCompatActivity {
             Log.d("DEBUG", "Invalid distance detected, setting average pace to default '--'");
         }
 
-        // 收集轨迹点
+
         ArrayList<LatLng> trajectory = new ArrayList<>();
-        for (Polyline polyline : polyLines) {
-            if (!trajectory.isEmpty()) {
+        int polylineCount = polyLines.size();
+        for (int i = 0; i < polylineCount; i++) {
+            Polyline polyline = polyLines.get(i);
+            trajectory.addAll(polyline.getPoints());
+            if (i < polylineCount - 1) {
                 trajectory.add(null);
             }
-            trajectory.addAll(polyline.getPoints());
         }
 
         // 跳转到总结页面
