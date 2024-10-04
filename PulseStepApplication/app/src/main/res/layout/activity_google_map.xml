@@ -5,15 +5,39 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- Toolbar at the top -->
-
-
-    <!-- Google Map Fragment -->
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/google_map"
-        android:layout_marginTop="50dp"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent">
+
+        <!-- Google Map Fragment -->
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/google_map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="65dp" />
+
+        <!-- Centered Rotating ImageView on Top of the Map -->
+        <ImageView
+            android:id="@+id/wait"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="30dp"
+            android:layout_gravity="center"
+            android:tint="@color/like_orange"
+            android:background="@android:color/transparent"
+            app:srcCompat="@android:drawable/stat_notify_sync_noanim" />
+
+        <TextView
+            android:id="@+id/waitText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="60dp"
+            android:layout_gravity="center"
+            android:visibility="visible"
+            android:tint="@color/like_orange"
+            android:text="Find Location ..." />
+    </FrameLayout>
 
     <!-- Toolbar containing the back button and title -->
     <androidx.appcompat.widget.Toolbar
@@ -135,17 +159,17 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Distance"
+                    android:text="Avg Pace"
+                    android:textColor="#808080"
                     android:textSize="12sp"
-                android:textColor="#808080"
-                android:textStyle="bold" />
+                    android:textStyle="bold" />
 
                 <!-- Distance Value -->
                 <TextView
-                    android:id="@+id/distance_text_view"
+                    android:id="@+id/avg_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0.00km"
+                    android:text="--'--''"
                     android:textSize="20sp"
                 android:textColor="@android:color/black"
                 android:textStyle="bold" />
@@ -173,7 +197,7 @@
                     android:id="@+id/calories_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="999"
+                    android:text="0"
                     android:textSize="20sp"
                 android:textColor="@android:color/black"
                 android:textStyle="bold" />
@@ -219,6 +243,9 @@
             android:src="@drawable/start"
             android:layout_centerInParent="true" />
     </RelativeLayout>
+
+
+
 
 
 </RelativeLayout>

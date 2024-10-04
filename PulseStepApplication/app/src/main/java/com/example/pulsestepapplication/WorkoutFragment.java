@@ -1,15 +1,11 @@
 package com.example.pulsestepapplication;
 
 import android.Manifest;
-import android.content.Context;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,10 +26,9 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 
 public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
 
@@ -41,9 +36,9 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE = 2;
     private static final float DISTANCE_THRESHOLD_METERS = 16093.4f; // 10 miles in meters
+
     private Double lastLatitude = null;
     private Double lastLongitude = null;
-
     private static final String TAG = "WorkoutFragment";
 
     private FusedLocationProviderClient fusedLocationClient;
@@ -64,12 +59,6 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
         // Initialize FusedLocationProviderClient for location services
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-        // Initialize map if location permissions are granted
-        if (hasLocationPermissions()) {
-            initializeMap();
-        } else {
-            Log.d(TAG, "Location permissions not granted; map will not be displayed");
-        }
 
         // Set up Run button to initiate permission and network checks
         Button runButton = view.findViewById(R.id.run_button);
@@ -81,6 +70,13 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
             Intent intent = new Intent(getActivity(), JumpActivity.class);
             startActivity(intent);
         });
+
+        // Initialize map if location permissions are granted
+        if (hasLocationPermissions()) {
+            initializeMap();
+        } else {
+            Log.d(TAG, "Location permissions not granted; map will not be displayed");
+        }
 
         return view;
     }
@@ -101,6 +97,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
      *
      * @param googleMap The GoogleMap object that is ready to be used.
      */
+    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
@@ -122,20 +119,15 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         try {
             fusedLocationClient.getLastLocation()
                     .addOnSuccessListener(location -> {
-                        if (location != null) {
+                        if (location != null && shouldUpdateMap(location)) {
                             LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-
-                            // Check if the new location is significantly different
-                            if (shouldUpdateMap(location)) {
-                                // Update the map camera position
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f)); // Zoom level 15
-
-                                // Store the new location
-                                lastLatitude = location.getLatitude();
-                                lastLongitude = location.getLongitude();
-                            }
+                            // Update the map camera position
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f)); // Zoom level 15
+                            // Store the new location
+                            lastLatitude = location.getLatitude();
+                            lastLongitude = location.getLongitude();
                         } else {
-                            // If last known location is null, request a new location
+                            // If last known location is null or doesn't need update, request a new location
                             requestNewLocation();
                         }
                     })
@@ -148,6 +140,13 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
             showToast("Location permission denied");
         }
     }
+
+    /**
+     * Determines whether the map should be updated based on the distance from the last known location.
+     *
+     * @param newLocation The new location to compare.
+     * @return True if the map should be updated, false otherwise.
+     */
     private boolean shouldUpdateMap(Location newLocation) {
         if (lastLatitude == null || lastLongitude == null) {
             // No previous location, so we should update the map
@@ -166,7 +165,6 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         return distanceInMeters > DISTANCE_THRESHOLD_METERS;
     }
 
-
     /**
      * Applies a custom style to the Google Map from a raw resource file.
      */
@@ -184,7 +182,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
     }
 
     /**
-     * Checks if necessary permissions are granted and proceeds to network checks.
+     * Checks if necessary permissions are granted and proceeds to location checks.
      * If permissions are not granted, requests them.
      */
     private void checkPermissionsAndProceed() {
@@ -196,17 +194,12 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
             }, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
             // Location permissions are granted; check activity recognition permissions
-            if (isActivityRecognitionPermissionRequired()) {
-                if (!hasActivityRecognitionPermission()) {
-                    // Request activity recognition permission if required and not granted
-                    requestActivityRecognitionPermission();
-                } else {
-                    // Permissions are granted; proceed to network checks
-                    checkNetworkAndProceed();
-                }
+            if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+                // Request activity recognition permission if required and not granted
+                requestActivityRecognitionPermission();
             } else {
-                // Activity recognition permission not required; proceed to network checks
-                checkNetworkAndProceed();
+                // Permissions are granted; proceed to start map activity
+                checkLocationAndStartMapActivity();
             }
         }
     }
@@ -244,46 +237,6 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
      */
     private void requestActivityRecognitionPermission() {
         requestPermissions(new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE);
-    }
-
-    /**
-     * Checks network connectivity and proceeds based on the network status.
-     */
-    private void checkNetworkAndProceed() {
-        /*ConnectivityManager connectivityManager = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivityManager == null) {
-            showToast("Unable to retrieve network status");
-            proceedToMapActivity(null, null);
-            return;
-        }
-
-        NetworkRequest networkRequest = new NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build();
-
-        connectivityManager.registerNetworkCallback(networkRequest, new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(@NonNull Network network) {
-                Log.d(TAG, "Network is available");
-                requireActivity().runOnUiThread(() -> checkLocationAndStartMapActivity());
-            }
-
-            @Override
-            public void onLost(@NonNull Network network) {
-                Log.d(TAG, "Network lost");
-                requireActivity().runOnUiThread(() -> showToast("Network connection unavailable"));
-            }
-        });
-
-        Network activeNetwork = connectivityManager.getActiveNetwork();
-        if (activeNetwork != null) {
-            checkLocationAndStartMapActivity();
-        } else {
-            showToast("Waiting for network connection...");
-        }
-
-         */
-        checkLocationAndStartMapActivity();
     }
 
     /**
@@ -346,7 +299,6 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
-            //showToast("Location permissions were denied");
             proceedToMapActivity(null, null);
         }
     }
@@ -358,16 +310,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
      * @param longitude The longitude of the user's location, or null if unavailable.
      */
     private void proceedToMapActivity(Double latitude, Double longitude) {
-        Intent intent;
-        if (latitude != null && longitude != null) {
-            if (isInChina(latitude, longitude)) {
-                intent = new Intent(getActivity(), AmapActivity.class);
-            } else {
-                intent = new Intent(getActivity(), GoogleMapActivity.class);
-            }
-        } else {
-            intent = new Intent(getActivity(), GoogleMapActivity.class);
-        }
+        Intent intent = new Intent(getActivity(), GoogleMapActivity.class);
 
         boolean locationGranted = hasLocationPermissions();
         boolean activityRecognitionGranted = hasActivityRecognitionPermission();
@@ -376,17 +319,6 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         intent.putExtra("LATITUDE", latitude);
         intent.putExtra("LONGITUDE", longitude);
         startActivity(intent);
-    }
-
-    /**
-     * Determines if the given location is within China based on latitude and longitude.
-     *
-     * @param latitude  The latitude to check.
-     * @param longitude The longitude to check.
-     * @return True if the location is in China, false otherwise.
-     */
-    private boolean isInChina(double latitude, double longitude) {
-        return latitude >= 18.0 && latitude <= 53.0 && longitude >= 73.0 && longitude <= 135.0;
     }
 
     /**
@@ -415,26 +347,19 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                     (grantResults[0] == PackageManager.PERMISSION_GRANTED ||
                             grantResults[1] == PackageManager.PERMISSION_GRANTED)) {
                 Log.d(TAG, "Location permissions granted");
-                if (isActivityRecognitionPermissionRequired()) {
-                    if (!hasActivityRecognitionPermission()) {
-                        requestActivityRecognitionPermission();
-                    } else {
-                        checkNetworkAndProceed();
-                    }
+                if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+                    requestActivityRecognitionPermission();
                 } else {
-                    checkNetworkAndProceed();
+                    checkLocationAndStartMapActivity();
                 }
             } else {
-                //showToast("Location permissions denied");
                 proceedToMapActivity(null, null);
             }
         } else if (requestCode == ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Activity recognition permission granted");
-            } else {
-                //showToast("Activity recognition permission denied");
             }
-            checkNetworkAndProceed();
+            checkLocationAndStartMapActivity();
         }
     }
 }
