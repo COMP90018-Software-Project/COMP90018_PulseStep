@@ -1,82 +1,97 @@
 package com.example.pulsestepapplication;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.amap.api.maps.AMap;
+import com.amap.api.maps.AMap.OnMyLocationChangeListener;
 import com.amap.api.maps.CameraUpdateFactory;
 import com.amap.api.maps.MapView;
 import com.amap.api.maps.MapsInitializer;
 import com.amap.api.maps.model.BitmapDescriptorFactory;
+import com.amap.api.maps.model.CameraPosition;
+
+import com.amap.api.maps.model.CustomMapStyleOptions;
 import com.amap.api.maps.model.LatLng;
-import com.amap.api.maps.model.LatLngBounds;
+import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
+
 import com.amap.api.maps.model.MyLocationStyle;
 import com.amap.api.maps.model.Polyline;
 import com.amap.api.maps.model.PolylineOptions;
-import com.google.android.gms.location.FusedLocationProviderClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-/**
- * AmapActivity handles the tracking and display of the user's movement using AMap.
- */
 public class AmapActivity extends AppCompatActivity {
 
-    // UI Components
+    // 常量
+    private static final int LOCATION_REQUEST_CODE = 1001;
+    private static final int ACTIVITY_RECOGNITION_REQUEST_CODE = 1002;
+    private static final float MOVE_ZOOM_LEVEL = 16f;
+    private static final float DEFAULT_ZOOM_LEVEL = 15f;
+    private static final String TAG = "AmapActivity";
+
+    // UI组件
+    private ImageButton btnPauseResume;
+    private TextView timerTextView, distanceTextView, stepTextView, avgPaceTextView;
+    private ImageButton btnShow;
+    private ImageView backButton;
+    private ImageView mapImageView;
+
+    // 地图和位置
     private MapView mMapView;
     private AMap aMap;
-    private ImageButton btnPauseResume;
-    private ImageButton btnShow;
-    private TextView timerTextView, stepTextView, distanceTextView;
-    private ImageView backButton;
+    private MyLocationStyle myLocationStyle;
 
-    // Tracking Variables
-    private final List<Polyline> polylines = new ArrayList<>();
-    private final List<LatLng> currentSegmentPoints = new ArrayList<>();
+    private double initialLatitude;
+    private double initialLongitude;
+
+    // 追踪变量
+    private final List<Polyline> polyLines = new ArrayList<>();
+    private final List<LatLng> pathPoints = new ArrayList<>();
     private boolean isTracking = false;
     private boolean isPaused = false;
+    private boolean isFirstStart = true;
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
-    private final int realStep = 1;
-    private boolean isFirstLocationUpdate = true; // Flag to track the first location update
-    private LatLng lastKnownLatLng = null; // To store the last known location
-    private static final float MIN_DISTANCE_CHANGE_FOR_UPDATE = 50; // Minimum distance in meters to consider as a significant change
-    private static final float MIN_ACCURACY_THRESHOLD = 50; // Minimum accuracy in meters to consider the location valid
-
-    // Step Counter and Location
-    private StepCounter stepCounter;
-    private FusedLocationProviderClient fusedLocationClient;
-    private static final int ACTIVITY_RECOGNITION_REQUEST_CODE = 1000;
-    private static final int LOCATION_REQUEST_CODE = 1001;
-    private static final int NETWORK_REQUEST_CODE = 1002;
-    private static final float DEFAULT_ZOOM_LEVEL = 15f;
-    private static final float MOVE_ZOOM_LEVEL = 17f;
     private int currentStepCount = 0;
 
-    // Timer-related
+    // 计步器
+    private StepCounter stepCounter;
+
+    // 计时器变量
     private long startTime = 0L;
     private long pauseTime = 0L;
-    private final Handler timerHandler = new Handler();
+    private final Handler timerHandler = new Handler(Looper.getMainLooper());
+    private long elapsedTime;
     private final Runnable timerRunnable = new Runnable() {
+        @SuppressLint("DefaultLocale")
         @Override
         public void run() {
             long millis = SystemClock.elapsedRealtime() - startTime;
@@ -84,49 +99,71 @@ public class AmapActivity extends AppCompatActivity {
             int minutes = seconds / 60;
             seconds %= 60;
             timerTextView.setText(String.format("%02d:%02d", minutes, seconds));
+            elapsedTime = millis;
             timerHandler.postDelayed(this, 1000);
         }
     };
 
+    private TextView cTextView;
+    private ImageView waitView;
+    private TextView waitTextView;
+
+    @SuppressLint("NewApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setupAmapPrivacy();
-
         setContentView(R.layout.activity_amap);
 
-        // Initialize views
+        // 初始化UI组件
         initializeUIComponents();
 
-        // Initialize map and configure it
-        initializeMapView(savedInstanceState);
-        configureMap();
+        // 获取传递的初始经纬度
+        Intent intent = getIntent();
+        initialLatitude = intent.getDoubleExtra("LATITUDE", 0.0);
+        initialLongitude = intent.getDoubleExtra("LONGITUDE", 0.0);
 
-        // Set up step counter
-        setupStepCounter();
+        // 检查和请求定位权限
+        checkAndRequestLocationPermission();
 
-        // Set up button listeners
+        // 设置按钮监听器
         setupButtonListeners();
+
+        // 如果支持，初始化计步器
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            initStepCounter();
+        }
+
+        // 处理传入的权限
+        handleIncomingPermissions();
     }
 
     /**
-     * Initializes the UI components by finding them via their IDs.
+     * 初始化UI组件
      */
     private void initializeUIComponents() {
-        mMapView = findViewById(R.id.amap_view);
         btnPauseResume = findViewById(R.id.btn_stop);
         btnShow = findViewById(R.id.btn_show);
         timerTextView = findViewById(R.id.timer_text_view);
         stepTextView = findViewById(R.id.step_text_view);
-        distanceTextView = findViewById(R.id.distance_text_view);
+        avgPaceTextView = findViewById(R.id.avg_text_view);
+        cTextView = findViewById(R.id.calories_text_view);
+        waitView = findViewById(R.id.wait);
+        waitTextView = findViewById(R.id.waitText);
         backButton = findViewById(R.id.back_button_running_page);
+        mapImageView = findViewById(R.id.default_image_view);
+        mMapView = findViewById(R.id.amap_view);
 
-        // Set click listener for the back button
+        // 返回按钮点击事件
         backButton.setOnClickListener(v -> navigateToMainActivity());
+        btnPauseResume.setClickable(false);
+        Animation rotateAnimation = AnimationUtils.loadAnimation(this, R.anim.rotate);
+        waitView.startAnimation(rotateAnimation);
+        waitTextView.setVisibility(View.VISIBLE);
     }
 
     /**
-     * Navigates back to the MainActivity.
+     * 导航回主界面
      */
     private void navigateToMainActivity() {
         Intent intent = new Intent(AmapActivity.this, MainActivity.class);
@@ -135,81 +172,150 @@ public class AmapActivity extends AppCompatActivity {
     }
 
     /**
-     * Initializes the MapView and restores its state.
-     *
-     * @param savedInstanceState The saved instance state.
+     * 初始化计步器并设置监听器
      */
-    private void initializeMapView(Bundle savedInstanceState) {
-        mMapView.onCreate(savedInstanceState);
-        aMap = mMapView.getMap();
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void initStepCounter() {
+        stepCounter = new StepCounter(this);
+        stepCounter.setStepCounterListener(stepCount -> {
+            runOnUiThread(() -> {
+                if (stepCount < 10) {
+                    stepTextView.setText("--");
+                } else {
+                    stepTextView.setText(String.valueOf(stepCount));
+                }
+                currentStepCount = stepCount;
+            });
+        });
     }
 
     /**
-     * Configures the AMap with custom styles and location settings.
+     * 初始化地图视图并配置地图
+     */
+    private void initializeMapView() {
+        mMapView.onCreate(null);
+        aMap = mMapView.getMap();
+        configureMap();
+    }
+
+    /**
+     * 配置地图设置
      */
     private void configureMap() {
         if (aMap == null) return;
 
-        // Set map type (e.g., normal, satellite)
+        // 设置地图类型
         aMap.setMapType(AMap.MAP_TYPE_NORMAL);
 
-        // Set up custom location marker style
-        MyLocationStyle myLocationStyle = new MyLocationStyle();
-        myLocationStyle.interval(2000); // Set the location update interval
+        // 设置定位样式
+        myLocationStyle = new MyLocationStyle();
+        myLocationStyle.interval(2000);
 
-        // Set a custom icon for the location marker
+        // 设置自定义定位图标
         Bitmap originalIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.img);
         if (originalIconBitmap != null) {
             Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalIconBitmap, 80, 80, false);
             myLocationStyle.myLocationIcon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
         }
 
-        // Set the accuracy circle color (optional)
-        myLocationStyle.strokeColor(0x00000000); // Transparent color
-        myLocationStyle.radiusFillColor(0x30000000); // Semi-transparent color
+        // 设置精度圈颜色
+        myLocationStyle.strokeColor(0x00000000);
+        myLocationStyle.radiusFillColor(0x30000000);
 
         aMap.setMyLocationStyle(myLocationStyle);
-        aMap.setMyLocationEnabled(true); // Enable location blue dot
 
-        // Hide certain map features (if necessary)
-        aMap.showBuildings(false); // Hide buildings
-        aMap.showMapText(false); // Hide POI names
+        // 隐藏一些地图特征
+        aMap.showBuildings(false);
+        aMap.showMapText(false);
 
-        // Set up the location change listener to update the path
+        // 应用自定义地图样式
+        applyCustomMapStyle();
+
+        // 设置初始相机位置
+        setInitialCameraPosition();
+
+        // 设置定位变化监听器
         aMap.setOnMyLocationChangeListener(location -> {
-            if (location != null) {
+            if (location != null && location.hasAccuracy() && location.getAccuracy() < 20.0) {
                 isLocationReady = true;
-                if (isTracking) {
-                    double latitude = location.getLatitude();
-                    double longitude = location.getLongitude();
-                    LatLng newPoint = new LatLng(latitude, longitude);
-                    updatePath(newPoint);
-                    checkBoundaryAndAdjustZoom(newPoint);
+                waitView.clearAnimation();
+                waitView.setVisibility(View.GONE);
+                waitTextView.setVisibility(View.GONE);
+                btnPauseResume.setClickable(true);
+                LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                aMap.setMyLocationEnabled(true);
+
+                if (isTracking && !isPaused && isLocationReady) {
+                    updatePath(currentLatLng);
+                    CameraPosition cameraPosition = new CameraPosition.Builder()
+                            .target(currentLatLng)
+                            .zoom(MOVE_ZOOM_LEVEL)
+                            .tilt(0)
+                            .bearing(0)
+                            .build();
+                    aMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 200, null);
                 }
             }
         });
     }
 
     /**
-     * Sets up the StepCounter and initializes its listener.
+     * 设置初始相机位置
      */
-    private void setupStepCounter() {
-        if (!checkActivityRecognitionPermission()) {
-            requestActivityRecognitionPermission();
-            return;
-        }
-        stepCounter = new StepCounter(this);
-        stepCounter.setStepCounterListener(stepCount -> runOnUiThread(() -> {
-            stepTextView.setText(String.valueOf(stepCount));
-            currentStepCount = stepCount;
-            if (stepCount > realStep && isLocationReady) {
-                startTracking();
+    private void setInitialCameraPosition() {
+        if (initialLatitude != 0.0 && initialLongitude != 0.0) {
+            LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(initialLatLng)
+                    .zoom(DEFAULT_ZOOM_LEVEL)
+                    .tilt(0)
+                    .build();
+            aMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        } else {
+            // 获取当前位置并设置相机位置
+            Location myLocation = aMap.getMyLocation();
+            if (myLocation != null) {
+                LatLng currentLatLng = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
+                aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM_LEVEL));
             }
-        }));
+        }
     }
 
     /**
-     * Sets up the button listeners for pause/resume and show actions.
+     * 应用自定义地图样式
+     */
+    private void applyCustomMapStyle() {
+        try {
+            // 创建 CustomMapStyleOptions 对象
+            CustomMapStyleOptions customMapStyleOptions = new CustomMapStyleOptions();
+
+            // 设置样式数据文件路径（位于 assets 目录下）
+            customMapStyleOptions.setStyleDataPath(getAssetsPath("style/style.data"));
+
+            // 如果有额外的纹理文件，设置纹理文件路径
+            customMapStyleOptions.setStyleExtraPath(getAssetsPath("style/style_extra.data"));
+
+            // 应用自定义样式选项到地图
+            aMap.setCustomMapStyle(customMapStyleOptions);
+
+            // 启用自定义地图样式
+            aMap.setMapCustomEnable(true);
+
+            Log.d(TAG, "自定义地图样式已成功应用。");
+        } catch (Exception e) {
+            Log.e(TAG, "应用自定义地图样式失败", e);
+        }
+    }
+
+    /**
+     * 获取 assets 目录下文件的完整路径
+     */
+    private String getAssetsPath(String fileName) {
+        return "file:///android_asset/" + fileName;
+    }
+
+    /**
+     * 设置按钮监听器
      */
     private void setupButtonListeners() {
         btnPauseResume.setOnClickListener(v -> handlePauseResumeButtonClick());
@@ -217,211 +323,273 @@ public class AmapActivity extends AppCompatActivity {
     }
 
     /**
-     * Handles the pause/resume button click event.
+     * 处理暂停/继续按钮点击事件
      */
     private void handlePauseResumeButtonClick() {
-        if (!isTracking && !isPaused) {
-            startTracking();
-            btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.pause));
-            btnShow.setVisibility(View.GONE);
-        } else if (isTracking && !isPaused) {
-            pauseTracking();
-            btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.start));
-            btnShow.setVisibility(View.VISIBLE);
-        } else if (isTracking && isPaused) {
+        if (!isLocationReady) {
+            Toast.makeText(this, "定位中...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (isFirstStart) {
+            if (checkPermissionsForTracking()) {
+                startTracking();
+                isFirstStart = false;
+            }
+        } else if (isPaused) {
             resumeTracking();
-            btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.pause));
-            btnShow.setVisibility(View.GONE);
+        } else {
+            pauseTracking();
         }
     }
 
     /**
-     * Starts the tracking process, including location updates and step tracking.
+     * 检查追踪所需的权限
+     *
+     * @return 如果所有必要的权限都被授予，则返回true
      */
+    private boolean checkPermissionsForTracking() {
+        boolean locationGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean stepCounterGranted = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            stepCounterGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !stepCounterGranted) {
+            Toast.makeText(this, "请授予计步器权限以启用步数追踪", Toast.LENGTH_SHORT).show();
+        }
+        if (!locationGranted) {
+            Toast.makeText(this, "请授予定位权限以启用地图功能", Toast.LENGTH_SHORT).show();
+            checkAndRequestLocationPermission(); // 请求定位权限
+        }
+        return stepCounterGranted && locationGranted;
+    }
+
+    /**
+     * 检查并请求定位权限
+     */
+    private void checkAndRequestLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // 请求定位权限
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
+        } else {
+            // 已经拥有定位权限，初始化地图
+            initializeMapView();
+        }
+    }
+
+    /**
+     * 开始追踪，包括位置更新和计步
+     */
+    @SuppressLint({"MissingPermission", "UseCompatLoadingForDrawables"})
     private void startTracking() {
+        if (aMap != null) {
+            aMap.setMyLocationEnabled(true);
+        }
         isTracking = true;
         isPaused = false;
+        pathPoints.clear();
         totalDistance = 0.0f;
-        distanceTextView.setText("0.0 km");
-        currentSegmentPoints.clear();
-        startNewSegment();
         startTime = SystemClock.elapsedRealtime();
         timerHandler.postDelayed(timerRunnable, 0);
-        aMap.setMyLocationEnabled(true);
-        stepCounter.startStepTracking();
+        btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.pause));
+        btnShow.setVisibility(View.GONE);
 
-        // Get current location and focus the map
-        if (aMap.getMyLocation() != null) {
-            LatLng currentLocation = new LatLng(aMap.getMyLocation().getLatitude(), aMap.getMyLocation().getLongitude());
-            aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, MOVE_ZOOM_LEVEL));
+        // 开始计步
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            stepCounter.startStepTracking();
+        }
+
+        // 聚焦到当前位置
+        Location myLocation = aMap.getMyLocation();
+        if (myLocation != null) {
+            LatLng currentLatLng = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
+            aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, MOVE_ZOOM_LEVEL));
         }
     }
 
     /**
-     * Pauses the tracking process.
+     * 恢复追踪
      */
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void resumeTracking() {
+        isPaused = false;
+        startTime += (SystemClock.elapsedRealtime() - pauseTime);
+        timerHandler.postDelayed(timerRunnable, 0);
+        btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.pause));
+        btnShow.setVisibility(View.GONE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            stepCounter.startStepTracking();
+        }
+        pathPoints.clear();
+    }
+
+    /**
+     * 暂停追踪
+     */
+    @SuppressLint("UseCompatLoadingForDrawables")
     private void pauseTracking() {
-        stepCounter.stopStepTracking();
         isPaused = true;
         pauseTime = SystemClock.elapsedRealtime();
         timerHandler.removeCallbacks(timerRunnable);
         btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.start));
         btnShow.setVisibility(View.VISIBLE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            stepCounter.stopStepTracking();
+        }
         drawCurrentPolyline();
     }
 
     /**
-     * Resumes the tracking process after a pause.
-     */
-    private void resumeTracking() {
-        stepCounter.startStepTracking();
-        isPaused = false;
-        startTime += (SystemClock.elapsedRealtime() - pauseTime);
-        timerHandler.postDelayed(timerRunnable, 0);
-        startNewSegment();
-    }
-
-    /**
-     * Starts a new segment for path tracking.
-     */
-    private void startNewSegment() {
-        PolylineOptions polylineOptions = new PolylineOptions().width(10).color(0xFFFF0000);
-        Polyline newPolyline = aMap.addPolyline(polylineOptions);
-        polylines.add(newPolyline);
-        currentSegmentPoints.clear();
-    }
-
-    /**
-     * Updates the path with the new location and calculates the total distance.
+     * 更新路径和计算总距离
      *
-     * @param latLng The new location coordinates.
+     * @param latLng 新的位置坐标
      */
+    @SuppressLint("DefaultLocale")
     private void updatePath(LatLng latLng) {
-        if (!currentSegmentPoints.isEmpty()) {
-            LatLng lastLatLng = currentSegmentPoints.get(currentSegmentPoints.size() - 1);
-            float[] results = new float[1];
-            Location.distanceBetween(lastLatLng.latitude, lastLatLng.longitude, latLng.latitude, latLng.longitude, results);
-            totalDistance += results[0];
-            distanceTextView.setText(String.format("%.2f km", totalDistance / 1000));
-        }
-        currentSegmentPoints.add(latLng);
-        if (!polylines.isEmpty()) {
-            Polyline currentPolyline = polylines.get(polylines.size() - 1);
-            currentPolyline.setPoints(new ArrayList<>(currentSegmentPoints));
-        }
-    }
-
-    /**
-     * Draws the current polyline on the map.
-     */
-    private void drawCurrentPolyline() {
-        if (!currentSegmentPoints.isEmpty()) {
-            PolylineOptions polylineOptions = new PolylineOptions().addAll(currentSegmentPoints).color(getResources().getColor(R.color.like_orange)).width(10);
-            if (polylines.isEmpty() || isPaused) {
-                Polyline polyline = aMap.addPolyline(polylineOptions);
-                polylines.add(polyline);
-            } else {
-                polylines.get(polylines.size() - 1).remove();
-                Polyline polyline = aMap.addPolyline(polylineOptions);
-                polylines.set(polylines.size() - 1, polyline);
-            }
-        }
-    }
-
-    /**
-     * Shows the last tracked path on the map with start and end markers.
-     */
-    private void showLastTrack() {
-        if (polylines.isEmpty()) {
-            Toast.makeText(this, "No track to show", Toast.LENGTH_SHORT).show();
+        if (pathPoints.isEmpty()) {
+            pathPoints.add(latLng);
             return;
         }
 
-        // Prepare data to send
+        LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
+        float[] results = new float[1];
+        Location.distanceBetween(lastLatLng.latitude, lastLatLng.longitude, latLng.latitude, latLng.longitude, results);
+
+        if (results[0] > 1.0 || currentStepCount > 0) {
+            totalDistance += results[0];
+            double totalDistanceKm = totalDistance / 1000.0;
+            double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
+
+            if (totalDistanceKm > 0 && totalTimeMinutes > 0) {
+                double avgPace = totalTimeMinutes / totalDistanceKm;
+                if (avgPace >= 1.0 && avgPace <= 30.0) {
+                    avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
+                } else {
+                    avgPaceTextView.setText("--'--\"");
+                }
+            } else {
+                avgPaceTextView.setText("--'--\"");
+            }
+
+            pathPoints.add(latLng);
+            drawCurrentPolyline();
+        }
+    }
+
+    /**
+     * 绘制当前的折线
+     */
+    private void drawCurrentPolyline() {
+        if (!pathPoints.isEmpty()) {
+            PolylineOptions polylineOptions = new PolylineOptions()
+                    .addAll(pathPoints)
+                    .color(getResources().getColor(R.color.like_orange))
+                    .width(30);
+            if (polyLines.isEmpty() || isPaused) {
+                Polyline polyline = aMap.addPolyline(polylineOptions);
+                polyLines.add(polyline);
+            } else {
+                polyLines.get(polyLines.size() - 1).remove();
+                Polyline polyline = aMap.addPolyline(polylineOptions);
+                polyLines.set(polyLines.size() - 1, polyline);
+            }
+        }
+    }
+
+    /**
+     * 显示最后的轨迹并跳转到总结页面
+     */
+    private void showLastTrack() {
         float distanceInKm = totalDistance / 1000;
         String timeElapsed = timerTextView.getText().toString();
-        String address = "Current Address"; // Replace with actual address if available
         int stepCount = currentStepCount;
 
-        // Collect trajectory points
-        ArrayList<com.amap.api.maps.model.LatLng> trajectory = new ArrayList<>();
-        for (Polyline polyline : polylines) {
+        String avg = "--'--\"";
+        if (distanceInKm > 0) {
+            double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
+            double avgPace = totalTimeMinutes / distanceInKm;
+
+            if (avgPace >= 1.0 && avgPace <= 30.0) {
+                avg = String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60));
+            } else {
+                Log.d("DEBUG", "Abnormal pace detected: " + avgPace + " min/km, ignoring this point.");
+            }
+        } else {
+            Log.d("DEBUG", "Invalid distance detected, setting average pace to default '--'");
+        }
+
+        // 收集轨迹点
+        ArrayList<LatLng> trajectory = new ArrayList<>();
+        for (Polyline polyline : polyLines) {
+            if (!trajectory.isEmpty()) {
+                trajectory.add(null);
+            }
             trajectory.addAll(polyline.getPoints());
         }
 
-        // Create Intent to RunSummaryActivity
+        // 跳转到总结页面
         Intent intent = new Intent(AmapActivity.this, RunSummaryActivity.class);
         intent.putExtra("distance", distanceInKm);
+        intent.putExtra("avgPace", avg);
         intent.putExtra("time", timeElapsed);
-        intent.putExtra("address", address);
-        intent.putExtra("steps", stepCount);
+        intent.putExtra("stepCount", stepCount);
         intent.putParcelableArrayListExtra("trajectory", trajectory);
 
         startActivity(intent);
-        finish(); // Optionally finish the current activity
+        finish();
     }
 
     /**
-     * Checks if the new point is within the current map bounds and adjusts the zoom if necessary.
-     *
-     * @param newPoint The new location point.
+     * 处理传入的权限
      */
-    private void checkBoundaryAndAdjustZoom(LatLng newPoint) {
-        if (!aMap.getProjection().getVisibleRegion().latLngBounds.contains(newPoint)) {
-            aMap.animateCamera(CameraUpdateFactory.newLatLngBounds(getLatLngBounds(), 100));
+    private void handleIncomingPermissions() {
+        boolean activityRecognitionGranted = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            activityRecognitionGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !activityRecognitionGranted) {
+            checkAndRequestStepCounterPermission();
         }
     }
 
     /**
-     * Calculates the LatLngBounds that include all tracked points.
-     *
-     * @return The calculated LatLngBounds.
+     * 检查并请求计步器权限
      */
-    private LatLngBounds getLatLngBounds() {
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        for (Polyline polyline : polylines) {
-            for (LatLng point : polyline.getPoints()) {
-                builder.include(point);
-            }
-        }
-        return builder.build();
-    }
-
-    /**
-     * Removes the user location marker from the map.
-     */
-    private void removeUserLocationMarker() {
-        // Assuming you have a reference to the user location marker, remove it here
-        // Example:
-        // if (userLocationMarker != null) {
-        //     userLocationMarker.remove();
-        // }
-        aMap.setMyLocationEnabled(false);
-    }
-
-    /**
-     * Resets the step counter.
-     */
-    private void resetStepCounter() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
-            stepCounter.resetStepTracking();
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void checkAndRequestStepCounterPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_REQUEST_CODE);
+        } else {
+            onStepCounterPermissionGranted();
         }
     }
 
     /**
-     * Stops the tracking process and resets related variables.
+     * 计步器权限被授予后的操作
      */
-    private void stopTracking() {
-        isTracking = false;
-        isPaused = false;
-        timerHandler.removeCallbacks(timerRunnable);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
-            stepCounter.stopStepTracking();
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void onStepCounterPermissionGranted() {
+        if (stepCounter != null) {
+            stepCounter.startStepTracking();
         }
     }
 
     /**
-     * Applies AMap privacy settings.
+     * 显示默认地图
+     */
+    private void showDefaultMap() {
+        Bitmap defaultBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.bg_workout);
+        if (defaultBitmap != null) {
+            mapImageView.setImageBitmap(defaultBitmap);
+            mapImageView.setVisibility(View.VISIBLE);
+        }
+        stepTextView.setVisibility(View.VISIBLE);
+        timerTextView.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * 设置高德地图隐私
      */
     private void setupAmapPrivacy() {
         MapsInitializer.updatePrivacyShow(this, true, true);
@@ -429,76 +597,7 @@ public class AmapActivity extends AppCompatActivity {
     }
 
     /**
-     * Checks and requests necessary permissions.
-     */
-    private void checkPermissions() {
-        if (!checkNetworkPermission()) {
-            requestNetworkPermission();
-        }
-        if (!checkLocationPermission()) {
-            requestLocationPermission();
-        }
-        if (!checkActivityRecognitionPermission()) {
-            requestActivityRecognitionPermission();
-        }
-    }
-
-    private boolean checkNetworkPermission() {
-        // Placeholder for checking network-related permissions
-        // Android does not directly require permissions for network use, but permissions like ACCESS_NETWORK_STATE can be checked here if needed.
-        return true; // Assume permission is granted for simplicity
-    }
-
-    private boolean checkLocationPermission() {
-        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private boolean checkActivityRecognitionPermission() {
-        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestLocationPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-    }
-
-    private void requestActivityRecognitionPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_REQUEST_CODE);
-    }
-
-    private void requestNetworkPermission() {
-        // Placeholder for requesting network-related permissions if required in the future
-    }
-
-    /**
-     * Handles the result of permission requests.
-     *
-     * @param requestCode  The request code passed in requestPermissions().
-     * @param permissions  The requested permissions.
-     * @param grantResults The grant results for the corresponding permissions.
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                configureMap();
-            } else {
-                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
-            }
-        } else if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                setupStepCounter();
-            } else {
-                Toast.makeText(this, "Activity recognition permission denied", Toast.LENGTH_SHORT).show();
-                Log.e("StepCounter", "Activity recognition permission denied");
-            }
-        }
-    }
-
-    /**
-     * Saves the instance state to handle configuration changes.
-     *
-     * @param outState The Bundle in which to place saved state.
+     * 保存实例状态
      */
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -506,10 +605,44 @@ public class AmapActivity extends AppCompatActivity {
         if (mMapView != null) {
             mMapView.onSaveInstanceState(outState);
         }
+        outState.putBoolean("isTracking", isTracking);
+        outState.putBoolean("isPaused", isPaused);
+        outState.putLong("startTime", startTime);
+        outState.putLong("pauseTime", pauseTime);
     }
 
     /**
-     * Resumes the MapView and handles tracking state.
+     * 恢复实例状态
+     */
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (mMapView != null) {
+            mMapView.onCreate(savedInstanceState);
+        }
+        isTracking = savedInstanceState.getBoolean("isTracking", false);
+        isPaused = savedInstanceState.getBoolean("isPaused", false);
+        startTime = savedInstanceState.getLong("startTime", 0L);
+        pauseTime = savedInstanceState.getLong("pauseTime", 0L);
+
+        if (isTracking && !isPaused) {
+            startTracking();
+        }
+    }
+
+    /**
+     * 在活动开始时恢复计步器监听器
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (isTracking && !isPaused && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
+            stepCounter.registerListener();
+        }
+    }
+
+    /**
+     * 处理活动恢复时的追踪状态
      */
     @Override
     protected void onResume() {
@@ -518,7 +651,6 @@ public class AmapActivity extends AppCompatActivity {
             mMapView.onResume();
         }
 
-        // If tracking is not paused, re-enable map tracking
         if (isTracking && !isPaused) {
             startTracking();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
@@ -534,7 +666,23 @@ public class AmapActivity extends AppCompatActivity {
     }
 
     /**
-     * Pauses the MapView and removes location updates.
+     * 在活动停止时移除位置更新并注销计步器
+     */
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
+            stepCounter.unregisterListener();
+        }
+
+        if (isTracking) {
+            pauseTracking();
+        }
+    }
+
+    /**
+     * 暂停地图视图
      */
     @Override
     protected void onPause() {
@@ -545,7 +693,7 @@ public class AmapActivity extends AppCompatActivity {
     }
 
     /**
-     * Destroys the MapView and cleans up resources.
+     * 销毁地图视图并清理资源
      */
     @Override
     protected void onDestroy() {
@@ -554,5 +702,44 @@ public class AmapActivity extends AppCompatActivity {
             mMapView.onDestroy();
         }
         timerHandler.removeCallbacks(timerRunnable);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
+            stepCounter.unregisterListener();
+        }
+    }
+
+    /**
+     * 处理权限请求结果
+     */
+    @SuppressLint("NewApi")
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                onStepCounterPermissionGranted();
+            } else {
+                Log.e(TAG, "计步器权限被拒绝");
+            }
+        } else if (requestCode == LOCATION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // 定位权限已授予，初始化地图
+                initializeMapView();
+            } else {
+                Log.e(TAG, "定位权限被拒绝");
+                Toast.makeText(this, "定位权限被拒绝，无法使用地图功能", Toast.LENGTH_SHORT).show();
+                showDefaultMap();
+            }
+        }
+    }
+
+    /**
+     * 处理返回按钮按下事件
+     */
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
     }
 }

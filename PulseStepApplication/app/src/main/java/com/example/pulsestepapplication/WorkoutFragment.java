@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -22,8 +23,10 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 
@@ -304,16 +307,36 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
     }
 
     /**
+     * Determines if the given latitude and longitude are within China's boundaries.
+     *
+     * @param latitude  The latitude to check.
+     * @param longitude The longitude to check.
+     * @return True if within China, false otherwise.
+     */
+    private boolean isInChina(double latitude, double longitude) {
+        // China's approximate geographical boundaries
+        return latitude >= 18.0 && latitude <= 54.0 && longitude >= 73.0 && longitude <= 135.0;
+    }
+
+    /**
      * Starts the appropriate map activity based on the user's location and permissions.
      *
      * @param latitude  The latitude of the user's location, or null if unavailable.
      * @param longitude The longitude of the user's location, or null if unavailable.
      */
     private void proceedToMapActivity(Double latitude, Double longitude) {
-        Intent intent = new Intent(getActivity(), GoogleMapActivity.class);
-
         boolean locationGranted = hasLocationPermissions();
         boolean activityRecognitionGranted = hasActivityRecognitionPermission();
+
+        Intent intent;
+        if (latitude != null && longitude != null && isInChina(latitude, longitude)) {
+            intent = new Intent(getActivity(), AmapActivity.class);
+            Log.d(TAG, "Launching AmapActivity");
+        } else {
+            intent = new Intent(getActivity(), GoogleMapActivity.class);
+            Log.d(TAG, "Launching GoogleMapActivity");
+        }
+
         intent.putExtra("LOCATION_GRANTED", locationGranted);
         intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
         intent.putExtra("LATITUDE", latitude);
