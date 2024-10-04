@@ -44,6 +44,7 @@ import com.amap.api.maps.model.MyLocationStyle;
 import com.amap.api.maps.model.Polyline;
 import com.amap.api.maps.model.PolylineOptions;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -114,7 +115,6 @@ public class AmapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setupAmapPrivacy();
         setContentView(R.layout.activity_amap);
-
         // 初始化UI组件
         initializeUIComponents();
 
@@ -137,7 +137,6 @@ public class AmapActivity extends AppCompatActivity {
         // 处理传入的权限
         handleIncomingPermissions();
     }
-
     /**
      * 初始化UI组件
      */
@@ -203,7 +202,7 @@ public class AmapActivity extends AppCompatActivity {
      */
     private void configureMap() {
         if (aMap == null) return;
-
+        aMap.setMyLocationEnabled(true);
         // 设置地图类型
         aMap.setMapType(AMap.MAP_TYPE_NORMAL);
 
@@ -212,11 +211,13 @@ public class AmapActivity extends AppCompatActivity {
         myLocationStyle.interval(2000);
 
         // 设置自定义定位图标
-        Bitmap originalIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.img);
+        /*Bitmap originalIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.img);
         if (originalIconBitmap != null) {
             Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalIconBitmap, 80, 80, false);
             myLocationStyle.myLocationIcon(BitmapDescriptorFactory.fromBitmap(resizedBitmap));
         }
+
+         */
 
         // 设置精度圈颜色
         myLocationStyle.strokeColor(0x00000000);
@@ -528,7 +529,7 @@ public class AmapActivity extends AppCompatActivity {
         }
 
         // 跳转到总结页面
-        Intent intent = new Intent(AmapActivity.this, RunSummaryActivity.class);
+        Intent intent = new Intent(AmapActivity.this, AmapRunSummaryActivity.class);
         intent.putExtra("distance", distanceInKm);
         intent.putExtra("avgPace", avg);
         intent.putExtra("time", timeElapsed);
