@@ -17,6 +17,8 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -92,7 +94,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
-    private final int realStep = -1;
+    private static final int realStep = -1;
+    private static final Double realDistance = 0.05;
     // Geocoder for address conversion
     private Geocoder geocoder;
 
@@ -120,7 +123,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     private Marker userLocationMarker;
     private TextView cTextView;
-
+    private  ImageView waitView;
+    private TextView waitTextView;
     @SuppressLint("NewApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -170,13 +174,18 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         stepTextView = findViewById(R.id.step_text_view);
         avgPaceTextView = findViewById(R.id.avg_text_view);
         cTextView = findViewById(R.id.calories_text_view);
+        waitView = findViewById(R.id.wait);
+        waitTextView = findViewById(R.id.waitText);
         backButton = findViewById(R.id.back_button_running_page);
         mapImageView = findViewById(R.id.default_image_view);
 
         // Set click listener for the back button
         backButton.setOnClickListener(v -> navigateToMainActivity());
         btnPauseResume.setClickable(false);
-        cTextView.setVisibility(View.VISIBLE);
+        Animation rotateAnimation = AnimationUtils.loadAnimation(this, R.anim.rotate);
+        waitView.startAnimation(rotateAnimation);
+        waitTextView.setVisibility(View.VISIBLE);
+
     }
 
     /**
@@ -232,34 +241,37 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void setupLocationCallback() {
         locationCallback = new LocationCallback() {
+
+            @SuppressLint("MissingPermission")
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 // Update location regardless of tracking state to determine when location is ready
                 for (Location location : locationResult.getLocations()) {
-                    if (location.hasAccuracy() && location.getAccuracy() < 50.0) {
+                    if (location.hasAccuracy() && location.getAccuracy() < 20.0) {
                         isLocationReady = true;
-                        cTextView.setVisibility(View.GONE);
+                        waitView.clearAnimation();
+                        waitView.setVisibility(View.GONE);
+                        waitTextView.setVisibility(View.GONE);
                         // Enable the start button when location is ready
                         btnPauseResume.setClickable(true);
-                        com.google.android.gms.maps.model.LatLng currentLatLng = new com.google.android.gms.maps.model.LatLng(location.getLatitude(), location.getLongitude());
-                        updateUserLocationMarker(currentLatLng);
+                        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                        //updateUserLocationMarker(currentLatLng);
+                        googleMap.setMyLocationEnabled(true);
                     }else{
-
                         cTextView.setVisibility(View.VISIBLE);
-
                     }
 
                     if (isTracking && !isPaused && isLocationReady) {
-                        com.google.android.gms.maps.model.LatLng currentLatLng = new com.google.android.gms.maps.model.LatLng(location.getLatitude(), location.getLongitude());
+                        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         //updateUserLocationMarker(currentLatLng);
                         updatePath(currentLatLng);
-                        com.google.android.gms.maps.model.CameraPosition cameraPosition = new com.google.android.gms.maps.model.CameraPosition.Builder()
+                        CameraPosition cameraPosition = new CameraPosition.Builder()
                                 .target(currentLatLng)
                                 .zoom(MOVE_ZOOM_LEVEL)
                                 .tilt(0)
                                 .bearing(0)
                                 .build();
-                        updateUserLocationMarker(currentLatLng);
+                        //updateUserLocationMarker(currentLatLng);
                         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 200, null);
                     }
                 }
@@ -302,7 +314,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         if (locationGranted) {
             if (googleMap != null) {
-                googleMap.setMyLocationEnabled(true);
+                googleMap.setMyLocationEnabled(false);
                 googleMap.setBuildingsEnabled(false);
             }
 
@@ -382,7 +394,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                             .zoom(DEFAULT_ZOOM_LEVEL)
                             .tilt(0)
                             .build();
-                    updateUserLocationMarker(currentLatLng);
+                    //updateUserLocationMarker(currentLatLng);
                     googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                 }
             });
@@ -465,16 +477,13 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     @SuppressLint({"MissingPermission", "UseCompatLoadingForDrawables"})
     private void startTracking() {
         if (googleMap != null) {
-            googleMap.setMyLocationEnabled(false);
+            googleMap.setMyLocationEnabled(true);
             googleMap.setBuildingsEnabled(false);
         }
         isTracking = true;
         isPaused = false;
         pathPoints.clear();
         totalDistance = 0.0f;
-
-        avgPaceTextView.setText("--");
-
         startTime = SystemClock.elapsedRealtime();
         timerHandler.postDelayed(timerRunnable, 0);
         btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.pause));
@@ -490,7 +499,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
             if (location != null) {
                 LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                updateUserLocationMarker(currentLatLng);
+                //updateUserLocationMarker(currentLatLng);
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, MOVE_ZOOM_LEVEL));
             }
         });
@@ -532,7 +541,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Requests location updates with high accuracy.
      */
     private void requestLocationUpdates() {
-        LocationRequest locationRequest = new LocationRequest.Builder(1000)
+        LocationRequest locationRequest = new LocationRequest.Builder(3000)
                 .setMinUpdateIntervalMillis(1000)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
                 .build();
@@ -549,21 +558,50 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     @SuppressLint("DefaultLocale")
     private void updatePath(LatLng latLng) {
-        if (currentStepCount > realStep || totalDistance > 0.01) {
-            if (!pathPoints.isEmpty()) {
-                LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
-                float[] results = new float[1];
-                Location.distanceBetween(lastLatLng.latitude, lastLatLng.longitude, latLng.latitude, latLng.longitude, results);
-                totalDistance += results[0];
-                double totalDistanceKm = totalDistance / 1000.0;
-                double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
+        // If pathPoints is empty, we are processing the first location point
+        if (pathPoints.isEmpty()) {
+            pathPoints.add(latLng); // Add the first point directly but don't draw yet
+            return; // Skip drawing to wait for the next point
+        }
+
+        // Calculate the distance between the current point and the last added point
+        LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
+        float[] results = new float[1];
+        Location.distanceBetween(lastLatLng.latitude, lastLatLng.longitude, latLng.latitude, latLng.longitude, results);
+
+        // Check if the distance between locations is significant (> 1 meter)
+        // and if there has been at least one step taken to avoid drawing when the user is stationary
+        if (results[0] > 1.0 || currentStepCount > 0) { // Use 1.0 meters and step count as thresholds
+            // Update total distance only if the user has moved more than 1 meter
+            totalDistance += results[0];
+            double totalDistanceKm = totalDistance / 1000.0;
+            double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
+
+            // Ensure that distance and time are both valid before calculating pace
+            if (totalDistanceKm > 0 && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
-                avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
+
+                // Check if the calculated pace is within a reasonable range
+                if (avgPace >= 2.0 && avgPace <= 25.0) { // Pace range is limited to valid values
+                    avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
+                } else {
+                    Log.d("DEBUG", "Ignoring abnormal pace: " + avgPace);
+                    avgPaceTextView.setText("--'--\""); // Display default value for invalid pace data
+                }
+            } else {
+                Log.d("DEBUG", "Ignoring invalid distance or time for pace calculation.");
+                avgPaceTextView.setText("--'--\""); // Display default value for invalid pace data
             }
+
+            // Only add the current point to pathPoints and draw the line if it meets criteria
             pathPoints.add(latLng);
             drawCurrentPolyline();
+        } else {
+            Log.d("DEBUG", "Skipped drawing due to small movement or no steps.");
         }
     }
+
+
 
     /**
      * Draws the current polyline on the map.
@@ -587,7 +625,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * @param latLng The LatLng object representing the location.
      * @return A string containing the country and city, or "Unknown Location" if not available.
      */
-    private String getAddressFromLatLng(com.google.android.gms.maps.model.LatLng latLng) {
+    private String getAddressFromLatLng(LatLng latLng) {
         String address = "Unknown Location";
 
         // Ensure Geocoder is initialized
@@ -637,31 +675,61 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         // Get the last location's address
         String address = "Unknown Location";
-        if (!pathPoints.isEmpty()) {
-            com.google.android.gms.maps.model.LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
-            address = getAddressFromLatLng(lastLatLng);
+        if (initialLatitude != 0.0 && initialLongitude != 0.0) {
+            LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
+            address = getAddressFromLatLng(initialLatLng);
         }
-        // Prepare data to send
+// Prepare data to send
         float distanceInKm = totalDistance / 1000;
         String timeElapsed = timerTextView.getText().toString();
         int stepCount = currentStepCount;
-        double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
-        double avgPace = totalTimeMinutes / distanceInKm;
-        String avg=String.format("%d'%02d\" /km", (int) avgPace, (int) ((avgPace * 60) % 60));
 
-        if (!pathPoints.isEmpty()) {
-            LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
-            address = getAddressFromLatLng(lastLatLng);
+        String avg = "--";
+        if (distanceInKm > 0) { // Ensure there is a valid distance to avoid division by zero
+            double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
+            double avgPace = totalTimeMinutes / distanceInKm;
+
+            if (avgPace >= 2.0 && avgPace <= 25.0) { // Check if the pace is within a valid range
+                avg = String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60));
+            } else {
+                Log.d("DEBUG", "Abnormal pace detected: " + avgPace + " min/km, ignoring this point.");
+            }
+        } else {
+            Log.d("DEBUG", "Invalid distance detected, setting average pace to default '--'");
         }
-
         // Collect trajectory points
         ArrayList<LatLng> trajectory = new ArrayList<>();
+        LatLng previousPoint = null;
+
         for (Polyline polyline : polyLines) {
-            if (!trajectory.isEmpty()) {
-                trajectory.add(null);
+            List<LatLng> points = polyline.getPoints();
+            for (LatLng point : points) {
+                if (previousPoint == null) {
+                    // This is the first point, so set it as the previous point and continue without adding it yet
+                    previousPoint = point;
+                    continue;
+                }
+
+                // Calculate distance from the previous point
+                float[] results = new float[1];
+                Location.distanceBetween(previousPoint.latitude, previousPoint.longitude, point.latitude, point.longitude, results);
+
+                if (results[0] < 1.0) {
+                    // If the distance is less than 1 meter, add null to indicate a break
+                    trajectory.add(null);
+                } else {
+                    // If distance is valid, add the point to the trajectory
+                    trajectory.add(point);
+                    // Update previousPoint only when a point is added to avoid redundant checks on skipped points
+                    previousPoint = point;
+                }
             }
-            trajectory.addAll(polyline.getPoints());
+
+            if (!trajectory.isEmpty()) {
+                trajectory.add(null); // Add null to indicate a break between polylines
+            }
         }
+
 
         // Create Intent to RunSummaryActivity
         Intent intent = new Intent(GoogleMapActivity.this, RunSummaryActivity.class);

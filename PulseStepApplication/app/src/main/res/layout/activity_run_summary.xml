@@ -41,6 +41,7 @@
     <!-- Run Unit -->
     <TextView
         android:id="@+id/run_distance"
+        android:includeFontPadding="false"
         android:layout_width="224dp"
         android:layout_height="100dp"
         android:layout_marginTop="1dp"
@@ -50,7 +51,7 @@
         android:textColor="@android:color/black"
         android:textSize="85sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.05"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/run_summary_title" />
 
@@ -60,7 +61,6 @@
         android:id="@+id/run_unit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="-10dp"
         android:fontFamily="@font/inter_medium"
         android:gravity="center"
         android:text="Kilometers"
@@ -70,19 +70,36 @@
         app:layout_constraintHorizontal_bias="0.07"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/run_distance" />
-    <TextView
-        android:id="@+id/run_summary_address"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
+        android:orientation="horizontal"
         android:gravity="center"
-        android:text="Country"
-        android:textColor="@color/gray"
-        android:textSize="15sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.07"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/run_unit" />
+        app:layout_constraintTop_toBottomOf="@+id/run_unit">
+
+        <!-- Icon for Address -->
+        <ImageView
+            android:id="@+id/icon_address"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_location"
+            android:layout_marginEnd="8dp"
+            android:tint="@color/gray" />
+        <!-- Address Text -->
+        <TextView
+            android:id="@+id/run_summary_address"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/inter_medium"
+            android:gravity="center"
+            android:text="Country"
+            android:textColor="@color/gray"
+            android:textSize="15sp" />
+
+    </LinearLayout>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/map_container"
@@ -189,8 +206,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <!-- Calories Section -->
@@ -240,7 +257,7 @@
                     android:src="@drawable/ic_avg_pace" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="263dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:paddingStart="8dp"
@@ -252,7 +269,7 @@
                     android:id="@+id/run_summary_steps"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="00"
+                    android:text="0"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
             </LinearLayout>

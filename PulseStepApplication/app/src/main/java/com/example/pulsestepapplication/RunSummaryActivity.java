@@ -2,7 +2,9 @@ package com.example.pulsestepapplication;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -11,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
+import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -53,6 +56,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private CardView mapCard;
     private String avgPace;
     private TextView avgPaceTextView;
+    private Button finishButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +74,18 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
 
         // Initialize and set up the map
         setupMap(savedInstanceState);
+
+        finishButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(RunSummaryActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtra("fragment", "WorkoutFragment"); // 可选：传递参数以指示返回到WorkoutFragment
+                startActivity(intent);
+                finish();
+            }
+        });
+
     }
 
     /**
@@ -83,6 +99,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         stepCountTextView = findViewById(R.id.run_summary_steps);
         defaultBackground = findViewById(R.id.default_background);
         mapCard = findViewById(R.id.map_container);
+        finishButton = findViewById(R.id.bt_finish_run);
     }
 
     /**
@@ -96,7 +113,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             stepCount = intent.getIntExtra("stepCount", 0);
             trajectory = intent.getParcelableArrayListExtra("trajectory");
             address = intent.getStringExtra("address");
-            avgPace = intent.getStringExtra("avgPave");
+            avgPace = intent.getStringExtra("avgPace");
         }
     }
 
@@ -104,6 +121,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
      * Displays the retrieved data on the UI components.
      */
     private void displayData() {
+        Log.d("DEBUG", "Average Pace: " + avgPace);
         distanceTextView.setText(String.format("%.2f", distance));
         timeTextView.setText(time != null ? time : "00:00");
         stepCountTextView.setText(String.valueOf(stepCount));
@@ -142,87 +160,73 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             showDefaultBackground();
         }
     }
-
     /**
      * Displays the trajectory on the Google Map with start and end markers.
      */
-    // Check if the map and trajectory data are valid
     private void displayTrajectoryOnMap() {
-    if (googleMap == null || trajectory == null || trajectory.isEmpty()) return;
+        if (googleMap == null || trajectory == null || trajectory.isEmpty()) return;
 
-    // Define a dashed pattern for the disconnected segments
-    List<PatternItem> dashedPattern = Arrays.asList(new Dash(30), new Gap(20));
+        // Define a dashed pattern for gaps in the trajectory
+        List<PatternItem> dashedPattern = Arrays.asList(new Dash(30), new Gap(20));
 
-    // Variables to keep track of the start and end points
-    LatLng startPoint = null;
-    LatLng endPoint = null;
+        LatLng startPoint = null;
+        LatLng endPoint = null;
 
-    // Adjust camera bounds to include all points
-    LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        // Builder to adjust camera bounds to include all points
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
-    // Variable to hold the points for the current solid polyline
-    PolylineOptions polylineOptions = new PolylineOptions()
-            .color(getResources().getColor(R.color.like_orange))
-            .width(10);
-        // To track the previous point to connect with dashed lines when a break is found
-        LatLng previousPoint = null;
+        // Polyline options for the current solid segment
+        PolylineOptions polylineOptions = new PolylineOptions()
+                .color(getResources().getColor(R.color.like_orange))
+                .width(10);
 
+        // Iterate over the trajectory
         for (int i = 0; i < trajectory.size(); i++) {
             LatLng point = trajectory.get(i);
-            if (point == null) {
-                // If we encounter a break (null) and we have a previous point
-                if (previousPoint != null) {
-                    // Look ahead to the next valid point after the null
-                    int nextIndex = i + 1;
-                    while (nextIndex < trajectory.size() && trajectory.get(nextIndex) == null) {
-                        nextIndex++;
-                    }
-                    if (nextIndex < trajectory.size()) {
-                        LatLng nextPoint = trajectory.get(nextIndex);
 
-                        // Draw a dashed line connecting the previous point to the next point
-                        PolylineOptions dashedLineOptions = new PolylineOptions()
-                                .add(previousPoint)
-                                .add(nextPoint)
-                                .color(getResources().getColor(R.color.like_orange))
-                                .width(10)
-                                .pattern(dashedPattern);
-                        googleMap.addPolyline(dashedLineOptions);
-                    }
+            if (point == null) {
+                // If a break is encountered, draw the current solid polyline if it has points
+                if (!polylineOptions.getPoints().isEmpty()) {
+                    googleMap.addPolyline(polylineOptions);
+                    polylineOptions = new PolylineOptions()
+                            .color(getResources().getColor(R.color.like_orange))
+                            .width(10);
                 }
 
-                // Draw the current solid polyline
-                googleMap.addPolyline(polylineOptions);
-
-                // Reset polylineOptions for the next segment
-                polylineOptions = new PolylineOptions()
-                        .color(getResources().getColor(R.color.like_orange))
-                        .width(10);
-
-                // Reset the previousPoint as we encountered a break
-                previousPoint = null;
+                // Attempt to draw a dashed line between previous and next valid points
+                LatLng previousPoint = null;
+                for (int j = i - 1; j >= 0; j--) {
+                    previousPoint = trajectory.get(j);
+                    if (previousPoint != null) break;
+                }
+                LatLng nextPoint = null;
+                for (int j = i + 1; j < trajectory.size(); j++) {
+                    nextPoint = trajectory.get(j);
+                    if (nextPoint != null) break;
+                }
+                if (previousPoint != null && nextPoint != null) {
+                    // Draw a dashed line connecting previousPoint and nextPoint
+                    PolylineOptions dashedLineOptions = new PolylineOptions()
+                            .add(previousPoint)
+                            .add(nextPoint)
+                            .color(getResources().getColor(R.color.like_orange))
+                            .width(10)
+                            .pattern(dashedPattern);
+                    googleMap.addPolyline(dashedLineOptions);
+                }
             } else {
-                // Add the point to the current polyline segment
+                // Add point to the current solid polyline
                 polylineOptions.add(point);
-
-                // Set the startPoint if it is the first point
                 if (startPoint == null) {
                     startPoint = point;
                 }
-
-                // Update the endPoint to the current point
                 endPoint = point;
-
-                // Include the point in the camera bounds
                 builder.include(point);
-
-                // Update the previous point
-                previousPoint = point;
             }
         }
 
-        // Draw the last solid polyline segment
-        if (polylineOptions.getPoints().size() > 0) {
+        // Draw the last solid polyline if it has points
+        if (!polylineOptions.getPoints().isEmpty()) {
             googleMap.addPolyline(polylineOptions);
         }
 
