@@ -30,13 +30,12 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
-public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
+public class WorkoutFragment extends Fragment {
 
     // Permission request codes
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -51,6 +50,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
     private GoogleMap mMap;
     private MapView amapView;
     private AMap aMap;
+    private boolean isUsingAmap = false;
 
     public WorkoutFragment() {
         // Required empty public constructor
@@ -92,6 +92,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
     /**
      * Initializes the appropriate map based on user's location.
      */
+    @SuppressLint("MissingPermission")
     private void initializeMap(View view, Bundle savedInstanceState) {
         // Check if we are in China based on last known location
         fusedLocationClient.getLastLocation()
@@ -102,28 +103,29 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
 
                         if (isInChina(lastLatitude, lastLongitude)) {
                             // Initialize AMap
+                            isUsingAmap = true;
                             amapView = new MapView(requireContext());
                             ViewGroup mapContainer = view.findViewById(R.id.map_container);
                             mapContainer.addView(amapView);
                             amapView.onCreate(savedInstanceState);
                             aMap = amapView.getMap();
-                            configureAMap();
+                            configureMap();
+                            onMapReady();
                         } else {
                             // Initialize Google Map
-                            SupportMapFragment mapFragment = new SupportMapFragment();
-                            getChildFragmentManager().beginTransaction()
-                                    .replace(R.id.map_container, mapFragment)
-                                    .commit();
-                            mapFragment.getMapAsync(this);
+                            isUsingAmap = false;
+                            initializeGoogleMap();
                         }
                     } else {
                         // If location is null, default to Google Map
+                        isUsingAmap = false;
                         initializeGoogleMap();
                     }
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to retrieve location", e);
                     // If location retrieval fails, default to Google Map
+                    isUsingAmap = false;
                     initializeGoogleMap();
                 });
     }
@@ -136,51 +138,72 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
         getChildFragmentManager().beginTransaction()
                 .replace(R.id.map_container, mapFragment)
                 .commit();
-        mapFragment.getMapAsync(this);
+        mapFragment.getMapAsync(googleMap -> {
+            mMap = googleMap;
+            configureMap();
+            onMapReady();
+        });
     }
 
     /**
-     * Configures AMap settings.
+     * Configures map settings based on which map is being used.
      */
-    private void configureAMap() {
-        // Apply custom map style if needed
-        applyCustomAMapStyle();
+    @SuppressLint("MissingPermission")
+    private void configureMap() {
+        // Apply custom map style
+        applyCustomMapStyle();
 
-        // Move camera to user's location if available
-        if (lastLatitude != null && lastLongitude != null) {
-            com.amap.api.maps.model.LatLng currentLatLng =
-                    new com.amap.api.maps.model.LatLng(lastLatitude, lastLongitude);
-            aMap.moveCamera(com.amap.api.maps.CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
-        }
-
-        // Additional AMap settings can be added here
-    }
-
-    /**
-     * Applies custom style to AMap.
-     */
-    private void applyCustomAMapStyle() {
-        try {
-            com.amap.api.maps.model.CustomMapStyleOptions customMapStyleOptions =
-                    new com.amap.api.maps.model.CustomMapStyleOptions();
-
-            // Set style data path (located in assets directory)
-            customMapStyleOptions.setStyleDataPath(getAssetsPath("style/style.data"));
-
-            // If there are extra texture files, set the texture file path
-            customMapStyleOptions.setStyleExtraPath(getAssetsPath("style/style_extra.data"));
-
-            // Apply custom style options to the map
-            aMap.setCustomMapStyle(customMapStyleOptions);
+        if (isUsingAmap) {
+            // Additional AMap settings can be added here
+            // For example, disable buildings and map text if needed
             aMap.showBuildings(false);
             aMap.showMapText(false);
+        } else {
+            // Configure Google Map settings
+            if (hasLocationPermissions()) {
+                mMap.setMyLocationEnabled(false);
+            }
+        }
+    }
 
-            // Enable custom map style
-            aMap.setMapCustomEnable(true);
+    /**
+     * Applies custom style to the map, depending on which map is in use.
+     */
+    private void applyCustomMapStyle() {
+        if (isUsingAmap) {
+            // Apply custom style to AMap
+            try {
+                com.amap.api.maps.model.CustomMapStyleOptions customMapStyleOptions =
+                        new com.amap.api.maps.model.CustomMapStyleOptions();
 
-            Log.d(TAG, "Custom map style applied successfully.");
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to apply custom map style", e);
+                // Set style data path (located in assets directory)
+                customMapStyleOptions.setStyleDataPath(getAssetsPath("style/style.data"));
+
+                // If there are extra texture files, set the texture file path
+                customMapStyleOptions.setStyleExtraPath(getAssetsPath("style/style_extra.data"));
+
+                // Apply custom style options to the map
+                aMap.setCustomMapStyle(customMapStyleOptions);
+
+                // Enable custom map style
+                aMap.setMapCustomEnable(true);
+
+                Log.d(TAG, "Custom map style applied successfully to AMap.");
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to apply custom map style to AMap", e);
+            }
+        } else {
+            // Apply custom style to Google Map
+            try {
+                boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.workout));
+                if (!success) {
+                    Log.e(TAG, "Map style parsing failed.");
+                } else {
+                    Log.d(TAG, "Custom map style applied successfully to Google Map.");
+                }
+            } catch (Resources.NotFoundException e) {
+                Log.e(TAG, "Map style resource not found", e);
+            }
         }
     }
 
@@ -192,22 +215,10 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
     }
 
     /**
-     * Called when the Google Map is ready. Configures map settings and retrieves the user's location.
-     *
-     * @param googleMap The GoogleMap object that is ready to be used.
+     * Called when the map is ready (either AMap or Google Map).
      */
-    @SuppressLint("MissingPermission")
-    @Override
-    public void onMapReady(@NonNull GoogleMap googleMap) {
-        mMap = googleMap;
-
-        // Disable default location layer to hide the blue dot
-        if (hasLocationPermissions()) {
-            mMap.setMyLocationEnabled(false);
-        }
-
-        // Apply custom map style and center the map on the user's location
-        applyCustomMapStyle();
+    private void onMapReady() {
+        // Get user's location and move camera
         getUserLocationAndZoom();
     }
 
@@ -219,12 +230,19 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
             fusedLocationClient.getLastLocation()
                     .addOnSuccessListener(location -> {
                         if (location != null && shouldUpdateMap(location)) {
-                            LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                            // Update the map camera position
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f)); // Zoom level 15
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            if (isUsingAmap) {
+                                com.amap.api.maps.model.LatLng currentLatLng =
+                                        new com.amap.api.maps.model.LatLng(latitude, longitude);
+                                aMap.moveCamera(com.amap.api.maps.CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                            } else {
+                                LatLng currentLatLng = new LatLng(latitude, longitude);
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                            }
                             // Store the new location
-                            lastLatitude = location.getLatitude();
-                            lastLongitude = location.getLongitude();
+                            lastLatitude = latitude;
+                            lastLongitude = longitude;
                         } else {
                             // If last known location is null or doesn't need update, request a new location
                             requestNewLocation();
@@ -233,6 +251,41 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to retrieve location", e);
                         showToast("Unable to get current location");
+                    });
+        } catch (SecurityException e) {
+            Log.e(TAG, "Permission error", e);
+            showToast("Location permission denied");
+        }
+    }
+
+    /**
+     * Requests a new high-accuracy location from the location provider.
+     */
+    private void requestNewLocation() {
+        try {
+            fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
+                    .addOnSuccessListener(location -> {
+                        if (location != null) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            if (isUsingAmap) {
+                                com.amap.api.maps.model.LatLng currentLatLng =
+                                        new com.amap.api.maps.model.LatLng(latitude, longitude);
+                                aMap.moveCamera(com.amap.api.maps.CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                            } else {
+                                LatLng currentLatLng = new LatLng(latitude, longitude);
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                            }
+                            // Store the new location
+                            lastLatitude = latitude;
+                            lastLongitude = longitude;
+                        } else {
+                            showToast("Unable to retrieve current location");
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to retrieve current location", e);
+                        showToast("Unable to retrieve current location");
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
@@ -262,22 +315,6 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
 
         // Return true if the distance is greater than the threshold
         return distanceInMeters > DISTANCE_THRESHOLD_METERS;
-    }
-
-    /**
-     * Applies a custom style to the Google Map from a raw resource file.
-     */
-    private void applyCustomMapStyle() {
-        try {
-            boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.workout));
-            if (!success) {
-                Log.e(TAG, "Map style parsing failed.");
-            } else {
-                Log.d(TAG, "Map style applied successfully.");
-            }
-        } catch (Resources.NotFoundException e) {
-            Log.e(TAG, "Map style resource not found", e);
-        }
     }
 
     /**
@@ -360,7 +397,7 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                             proceedToMapActivity(latitude, longitude);
                         } else {
                             Log.d(TAG, "Last known location is null; requesting new location");
-                            requestNewLocation();
+                            requestNewLocationForActivity();
                         }
                     })
                     .addOnFailureListener(e -> {
@@ -375,9 +412,9 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
     }
 
     /**
-     * Requests a new high-accuracy location from the location provider.
+     * Requests a new high-accuracy location from the location provider for starting map activity.
      */
-    private void requestNewLocation() {
+    private void requestNewLocationForActivity() {
         try {
             fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
                     .addOnSuccessListener(location -> {
@@ -479,6 +516,41 @@ public class WorkoutFragment extends Fragment implements OnMapReadyCallback {
                 Log.d(TAG, "Activity recognition permission granted");
             }
             checkLocationAndStartMapActivity();
+        }
+    }
+
+    /**
+     * Lifecycle methods to manage MapView's state.
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (isUsingAmap && amapView != null) {
+            amapView.onResume();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (isUsingAmap && amapView != null) {
+            amapView.onPause();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (isUsingAmap && amapView != null) {
+            amapView.onDestroy();
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (isUsingAmap && amapView != null) {
+            amapView.onSaveInstanceState(outState);
         }
     }
 }
