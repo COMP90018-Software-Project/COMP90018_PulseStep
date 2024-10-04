@@ -574,13 +574,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             totalDistance += results[0];
             double totalDistanceKm = totalDistance / 1000.0;
             double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
-
+            Log.d("DEBUG", "totalDistanceKm: " + totalDistanceKm);
+            Log.d("DEBUG", "totalTimeMinutes: " + elapsedTime);
             // Ensure that distance and time are both valid before calculating pace
             if (totalDistanceKm > 0 && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
-
+                Log.d("DEBUG", "avgPace: " + avgPace);
                 // Check if the calculated pace is within a reasonable range
-                if (avgPace >= 2.0 && avgPace <= 25.0) { // Pace range is limited to valid values
+                if (avgPace >= 1.0 && avgPace <= 30.0) { // Pace range is limited to valid values
                     avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
                 } else {
                     Log.d("DEBUG", "Ignoring abnormal pace: " + avgPace);
@@ -682,12 +683,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         String timeElapsed = timerTextView.getText().toString();
         int stepCount = currentStepCount;
 
-        String avg = "--";
+        String avg = "--'--\"";
         if (distanceInKm > 0) { // Ensure there is a valid distance to avoid division by zero
             double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
             double avgPace = totalTimeMinutes / distanceInKm;
 
-            if (avgPace >= 2.0 && avgPace <= 25.0) { // Check if the pace is within a valid range
+            if (avgPace >= 1.0 && avgPace <= 30.0) { // Check if the pace is within a valid range
                 avg = String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60));
             } else {
                 Log.d("DEBUG", "Abnormal pace detected: " + avgPace + " min/km, ignoring this point.");
@@ -697,38 +698,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
         // Collect trajectory points
         ArrayList<LatLng> trajectory = new ArrayList<>();
-        LatLng previousPoint = null;
-
         for (Polyline polyline : polyLines) {
-            List<LatLng> points = polyline.getPoints();
-            for (LatLng point : points) {
-                if (previousPoint == null) {
-                    // This is the first point, so set it as the previous point and continue without adding it yet
-                    previousPoint = point;
-                    continue;
-                }
-
-                // Calculate distance from the previous point
-                float[] results = new float[1];
-                Location.distanceBetween(previousPoint.latitude, previousPoint.longitude, point.latitude, point.longitude, results);
-
-                if (results[0] < 1.0) {
-                    // If the distance is less than 1 meter, add null to indicate a break
-                    trajectory.add(null);
-                } else {
-                    // If distance is valid, add the point to the trajectory
-                    trajectory.add(point);
-                    // Update previousPoint only when a point is added to avoid redundant checks on skipped points
-                    previousPoint = point;
-                }
-            }
-
             if (!trajectory.isEmpty()) {
-                trajectory.add(null); // Add null to indicate a break between polylines
+                trajectory.add(null);
             }
+            trajectory.addAll(polyline.getPoints());
         }
-
-
         // Create Intent to RunSummaryActivity
         Intent intent = new Intent(GoogleMapActivity.this, RunSummaryActivity.class);
         intent.putExtra("distance", distanceInKm);
