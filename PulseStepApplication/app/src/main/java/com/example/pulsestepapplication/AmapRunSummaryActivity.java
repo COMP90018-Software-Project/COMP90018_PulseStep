@@ -138,46 +138,11 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
         mapView.onCreate(savedInstanceState);
         aMap = mapView.getMap();
 
-        // 应用自定义地图样式（如果有）
-        applyCustomMapStyle();
-
         if (trajectory != null && !trajectory.isEmpty()) {
             displayTrajectoryOnMap();
         } else {
             showDefaultBackground();
         }
-    }
-
-    /**
-     * 应用自定义地图样式
-     */
-    private void applyCustomMapStyle() {
-        try {
-            CustomMapStyleOptions customMapStyleOptions = new CustomMapStyleOptions();
-
-            // 设置样式数据文件路径（位于 assets 目录下）
-            customMapStyleOptions.setStyleDataPath(getAssetsPath("style/style.data"));
-
-            // 如果有额外的纹理文件，设置纹理文件路径
-            customMapStyleOptions.setStyleExtraPath(getAssetsPath("style/style_extra.data"));
-
-            // 应用自定义样式选项到地图
-            aMap.setCustomMapStyle(customMapStyleOptions);
-
-            // 启用自定义地图样式
-            aMap.setMapCustomEnable(true);
-
-            Log.d(TAG, "自定义地图样式已成功应用。");
-        } catch (Exception e) {
-            Log.e(TAG, "应用自定义地图样式失败", e);
-        }
-    }
-
-    /**
-     * 获取 assets 目录下文件的完整路径
-     */
-    private String getAssetsPath(String fileName) {
-        return "file:///android_asset/" + fileName;
     }
 
     /**
