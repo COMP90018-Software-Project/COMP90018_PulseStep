@@ -1,18 +1,42 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-
-    <!-- 高德地图 MapView -->
-
-    <com.amap.api.maps.MapView
-        android:id="@+id/amap_view"
-        android:layout_marginTop="50dp"
+    <!-- Toolbar at the top -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="1dp" />
+        android:layout_height="match_parent">
+
+
+        <com.amap.api.maps.MapView
+            android:id="@+id/amap_view"
+            android:layout_marginTop="50dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="1dp" />
+        <!-- Centered Rotating ImageView on Top of the Map -->
+        <ImageView
+            android:id="@+id/wait"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="30dp"
+            android:layout_gravity="center"
+            android:tint="@color/like_orange"
+            android:background="@android:color/transparent"
+            app:srcCompat="@android:drawable/stat_notify_sync_noanim" />
+
+        <TextView
+            android:id="@+id/waitText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="60dp"
+            android:layout_gravity="center"
+            android:visibility="visible"
+            android:tint="@color/like_orange"
+            android:text="Find Location ..." />
+    </FrameLayout>
 
     <!-- Toolbar containing the back button and title -->
     <androidx.appcompat.widget.Toolbar
@@ -48,6 +72,15 @@
             android:paddingTop="8dp" />
 
     </androidx.appcompat.widget.Toolbar>
+    <ImageView
+        android:id="@+id/default_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/bg_workout"
+        android:visibility="gone"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="-50dp"/>
+
     <!-- Card-like bottom layout for displaying time, steps, distance, and calories -->
     <LinearLayout
         android:id="@+id/card_layout"
@@ -97,8 +130,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Steps"
-                    android:textSize="12sp"
                     android:textColor="#808080"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <!-- Steps Value -->
@@ -106,7 +139,7 @@
                     android:id="@+id/step_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0"
+                    android:text="--"
                     android:textSize="20sp"
                     android:textColor="@android:color/black"
                     android:textStyle="bold" />
@@ -125,17 +158,17 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Distance"
-                    android:textSize="12sp"
+                    android:text="Avg Pace"
                     android:textColor="#808080"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <!-- Distance Value -->
                 <TextView
-                    android:id="@+id/distance_text_view"
+                    android:id="@+id/avg_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0.00km"
+                    android:text="--'--''"
                     android:textSize="20sp"
                     android:textColor="@android:color/black"
                     android:textStyle="bold" />
@@ -163,7 +196,7 @@
                     android:id="@+id/calories_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="999"
+                    android:text="0"
                     android:textSize="20sp"
                     android:textColor="@android:color/black"
                     android:textStyle="bold" />
@@ -196,7 +229,7 @@
             android:src="@drawable/ic_finish"
             android:layout_centerVertical="true"
             android:layout_toStartOf="@id/btn_stop"
-            android:layout_marginEnd="80dp"
+            android:layout_marginHorizontal="70dp"
             android:contentDescription="Finish"
             android:visibility="gone" /> <!-- Set to 'gone' initially -->
 
@@ -209,5 +242,9 @@
             android:src="@drawable/start"
             android:layout_centerInParent="true" />
     </RelativeLayout>
+
+
+
+
 
 </RelativeLayout>

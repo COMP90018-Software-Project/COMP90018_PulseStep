@@ -69,14 +69,19 @@
             android:value="@integer/google_play_services_version" /> <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" /> <!-- AMap Location Service -->
-        <service android:name="com.amap.api.location.APSService" /> <!-- Activity Declarations -->
-        <activity
-            android:name=".AmapActivity"
-            android:exported="false" />
-        <activity
-            android:name=".GoogleMapActivity"
-            android:exported="false" />
+            android:value="${MAPS_API_KEY}" />
+
+        <!-- AMap Location Service -->
+        <service android:name="com.amap.api.location.APSService" />
+
+        <!-- Activity Declarations -->
+        <activity android:name=".AmapRunSummaryActivity"
+            android:exported="false"/>
+        <activity android:name=".AmapActivity"
+            android:exported="false"/>
+        <activity android:name=".GoogleMapActivity"
+            android:exported="false"/>
+
         <activity
             android:name=".ResetPassword"
             android:exported="false"
