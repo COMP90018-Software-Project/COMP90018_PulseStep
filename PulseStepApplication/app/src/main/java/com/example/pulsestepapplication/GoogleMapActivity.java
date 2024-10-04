@@ -698,12 +698,15 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
         // Collect trajectory points
         ArrayList<LatLng> trajectory = new ArrayList<>();
-        for (Polyline polyline : polyLines) {
-            if (!trajectory.isEmpty()) {
+        int polylineCount = polyLines.size();
+        for (int i = 0; i < polylineCount; i++) {
+            Polyline polyline = polyLines.get(i);
+            trajectory.addAll(polyline.getPoints());
+            if (i < polylineCount - 1) {
                 trajectory.add(null);
             }
-            trajectory.addAll(polyline.getPoints());
         }
+
         // Create Intent to RunSummaryActivity
         Intent intent = new Intent(GoogleMapActivity.this, RunSummaryActivity.class);
         intent.putExtra("distance", distanceInKm);

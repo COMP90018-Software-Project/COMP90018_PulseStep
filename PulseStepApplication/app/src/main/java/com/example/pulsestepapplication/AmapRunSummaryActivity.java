@@ -191,14 +191,15 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
                 }
                 if (previousPoint != null && nextPoint != null) {
                     // Draw a dashed line connecting previousPoint and nextPoint
-                    PolylineOptions dashedLineOptions = new PolylineOptions()
-                            .add(previousPoint)
-                            .add(nextPoint)
-                            .color(getResources().getColor(R.color.like_orange))
-                            .width(10)
-                            .setDottedLine(true);
-                    aMap.addPolyline(dashedLineOptions);
-                }
+                    if (trajectory.indexOf(nextPoint) != trajectory.size() - 1) {
+                        PolylineOptions dashedLineOptions = new PolylineOptions()
+                                .add(previousPoint)
+                                .add(nextPoint)
+                                .color(getResources().getColor(R.color.like_orange))
+                                .width(10)
+                                .setDottedLine(true);
+                        aMap.addPolyline(dashedLineOptions);
+                    }}
             } else {
                 // Add point to the current solid polyline
                 polylineOptions.add(point);
