@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -45,8 +47,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -80,7 +84,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
     private final int realStep = -1;
-
+    // Geocoder for address conversion
+    private Geocoder geocoder;
     // Step Counter
     private StepCounter stepCounter;
 
@@ -108,7 +113,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_google_map);
-
+        // Initialize Geocoder
+        if (Geocoder.isPresent()) {
+            geocoder = new Geocoder(this, Locale.getDefault());
+        } else {
+            Log.e(TAG, "Geocoder not available on this device.");
+        }
         // Initialize UI components
         initializeUIComponents();
 
@@ -530,7 +540,54 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         }
     }
+    /**
+     * Converts a LatLng point to a human-readable address string.
+     *
+     * @param latLng The LatLng object representing the location.
+     * @return A string containing the country and city, or "Unknown Location" if not available.
+     */
+    private String getAddressFromLatLng(com.google.android.gms.maps.model.LatLng latLng) {
+        String address = "Unknown Location";
 
+        // Ensure Geocoder is initialized
+        if (geocoder == null) {
+            if (Geocoder.isPresent()) {
+                geocoder = new Geocoder(this, Locale.getDefault());
+            } else {
+                Log.e(TAG, "Geocoder not available.");
+                return address;
+            }
+        }
+
+        try {
+            // Get address from latitude and longitude
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+
+            if (addresses != null && !addresses.isEmpty()) {
+                Address addr = addresses.get(0);
+                String country = addr.getCountryName(); // Country
+                String city = addr.getLocality();       // City
+
+                if (country != null && city != null) {
+                    address = country + ", " + city;
+                } else if (country != null) {
+                    address = country;
+                } else if (city != null) {
+                    address = city;
+                }
+            } else {
+                Log.e(TAG, "No address found for the location.");
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Geocoder IOException: " + e.getMessage());
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "Invalid latitude or longitude values.");
+            e.printStackTrace();
+        }
+
+        return address;
+    }
     /**
      * Shows the last tracked path on the map with start and end markers.
      */
@@ -540,11 +597,15 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             return;
         }
          */
-
+        // Get the last location's address
+        String address = "Unknown Location";
+        if (!pathPoints.isEmpty()) {
+            com.google.android.gms.maps.model.LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
+            address = getAddressFromLatLng(lastLatLng);
+        }
         // Prepare data to send
         float distanceInKm = totalDistance / 1000;
         String timeElapsed = timerTextView.getText().toString();
-        String address = "Current Address"; // Replace with actual address if available
         int stepCount = currentStepCount;
 
         // Collect trajectory points
