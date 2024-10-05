@@ -194,10 +194,9 @@ public class AmapActivity extends AppCompatActivity {
         backButton = findViewById(R.id.back_button_running_page);
         mapImageView = findViewById(R.id.default_image_view);
         mMapView = findViewById(R.id.amap_view);
-
+        mMapView.setVisibility(View.GONE);
         // Set click listener for the back button
         backButton.setOnClickListener(v -> navigateToMainActivity());
-        btnPauseResume.setClickable(false);
 
         if (isMapMode) {
             // Start animation if in Map mode
@@ -208,7 +207,6 @@ public class AmapActivity extends AppCompatActivity {
             // Hide waiting animation in No-map mode
             waitView.setVisibility(View.GONE);
             waitTextView.setVisibility(View.GONE);
-            btnPauseResume.setClickable(true);
         }
     }
 
@@ -336,11 +334,8 @@ public class AmapActivity extends AppCompatActivity {
                 waitView.clearAnimation();
                 waitView.setVisibility(View.GONE);
                 waitTextView.setVisibility(View.GONE);
-                // Enable the start button when location is ready
-                btnPauseResume.setClickable(true);
-                btnPauseResume.setEnabled(true);
+                mMapView.setVisibility(View.VISIBLE);
                 LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-
                 if (isTracking && !isPaused && isLocationReady) {
                     updatePath(currentLatLng);
                     CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -638,7 +633,6 @@ public class AmapActivity extends AppCompatActivity {
                 isLocationReady = false;
                 waitView.setVisibility(View.VISIBLE);
                 waitTextView.setVisibility(View.VISIBLE);
-                btnPauseResume.setEnabled(false);
                 // Restart location updates
                 setupMapListeners();
             }
