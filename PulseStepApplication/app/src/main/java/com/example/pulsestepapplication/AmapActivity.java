@@ -47,7 +47,7 @@ public class AmapActivity extends AppCompatActivity {
     private static final float MOVE_ZOOM_LEVEL = 16f;
     private static final float DEFAULT_ZOOM_LEVEL = 15f;
     private static final String TAG = "AmapActivity";
-
+    private double userWeight;
     // UI Components
     private ImageButton btnPauseResume;
     private TextView timerTextView, stepTextView, avgPaceTextView;
@@ -116,7 +116,7 @@ public class AmapActivity extends AppCompatActivity {
         // Get the mode from the intent
         Intent intent = getIntent();
         isMapMode = intent.getBooleanExtra("MAP_MODE", true); // default to Map mode
-
+        userWeight = intent.getDoubleExtra("weight", 70.0);
         // Initialize UI components
         initializeUIComponents();
 
@@ -489,6 +489,10 @@ public class AmapActivity extends AppCompatActivity {
 
             if (totalDistanceKm > 0 && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
+                double elapsedTimeInMinutes = elapsedTime / 60000.0;
+                double metValue = 8.0; //
+                double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
+                cTextView.setText(String.format("%.2f kcal", caloriesBurned));
                 if (avgPace >= 1.0 && avgPace <= 30.0) {
                     avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
                 } else {
@@ -515,6 +519,10 @@ public class AmapActivity extends AppCompatActivity {
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
         if (distanceKm > 0 && totalTimeMinutes > 0) {
             double avgPace = totalTimeMinutes / distanceKm;
+            double elapsedTimeInMinutes = elapsedTime / 60000.0;
+            double metValue = 8.0; //
+            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
+            cTextView.setText(String.format("%.2f kcal", caloriesBurned));
             // Update avgPaceTextView
             runOnUiThread(() -> {
                 avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
@@ -525,7 +533,11 @@ public class AmapActivity extends AppCompatActivity {
             });
         }
     }
+    private double calculateCalories(double weight, double durationInMinutes, double metValue) {
 
+        double durationInHours = durationInMinutes / 60.0;
+        return metValue * weight * durationInHours;
+    }
     /**
      * Draws the current polyline on the map.
      */
