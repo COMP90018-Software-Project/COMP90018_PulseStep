@@ -527,6 +527,11 @@ public class WorkoutFragment extends Fragment {
 
         intent.putExtra("LOCATION_GRANTED", locationGranted);
         intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
+        if (locationGranted && activityRecognitionGranted){
+            intent.putExtra("MAP_MODE", true);
+        }else if (!locationGranted && activityRecognitionGranted){
+            intent.putExtra("MAP_MODE", false);
+        }
         intent.putExtra("LATITUDE", latitude);
         intent.putExtra("LONGITUDE", longitude);
         startActivity(intent);
