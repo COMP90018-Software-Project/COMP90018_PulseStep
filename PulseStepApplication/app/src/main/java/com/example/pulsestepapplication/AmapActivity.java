@@ -76,6 +76,9 @@ public class AmapActivity extends AppCompatActivity {
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
+    private static final Double realDistance = 0.05;
+    private static final double metValue = 8.0;
+    private static final double locationAccuracy = 50.0;
 
     // Step Counter
     private StepCounter stepCounter;
@@ -335,7 +338,7 @@ public class AmapActivity extends AppCompatActivity {
     private void setupMapListeners() {
         // Set location change listener
         aMap.setOnMyLocationChangeListener(location -> {
-            if (location != null && location.hasAccuracy() && location.getAccuracy() < 20.0) {
+            if (location != null && location.hasAccuracy() && location.getAccuracy() < locationAccuracy) {
                 isLocationReady = true;
                 waitView.clearAnimation();
                 waitView.setVisibility(View.GONE);
@@ -495,12 +498,11 @@ public class AmapActivity extends AppCompatActivity {
             double totalDistanceKm = totalDistance / 1000.0;
             double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
 
-            if (totalDistanceKm > 0 && totalTimeMinutes > 0) {
+            if (totalDistanceKm > realDistance && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
                 double elapsedTimeInMinutes = elapsedTime / 60000.0;
-                double metValue = 8.0; //
                 double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-                cTextView.setText(String.format("%d kcal", Math.round(caloriesBurned)));
+                cTextView.setText(String.format("%d", Math.round(caloriesBurned)));
                 if (avgPace >= 1.0 && avgPace <= 30.0) {
                     avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
                 } else {
@@ -526,12 +528,11 @@ public class AmapActivity extends AppCompatActivity {
         float distance = currentStepCount * averageStepLength; // in meters
         double distanceKm = distance / 1000.0;
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
-        if (distanceKm > 0 && totalTimeMinutes > 0) {
+        if (distanceKm > realDistance && totalTimeMinutes > 0) {
             double avgPace = totalTimeMinutes / distanceKm;
             double elapsedTimeInMinutes = elapsedTime / 60000.0;
-            double metValue = 8.0; //
             double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-            cTextView.setText(String.format("%d kcal", Math.round(caloriesBurned)));
+            cTextView.setText(String.format("%d", Math.round(caloriesBurned)));
             // Update avgPaceTextView
             runOnUiThread(() -> {
                 avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));

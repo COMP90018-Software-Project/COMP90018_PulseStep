@@ -123,7 +123,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginEnd="40dp"
+                android:layout_marginEnd="20dp"
                 android:gravity="center_horizontal">
 
                 <!-- Steps Title -->
@@ -152,7 +152,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginEnd="40dp"
+                android:layout_marginEnd="20dp"
                 android:gravity="center_horizontal">
 
                 <!-- Distance Title -->
