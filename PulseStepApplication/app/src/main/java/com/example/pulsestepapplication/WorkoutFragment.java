@@ -86,7 +86,7 @@ public class WorkoutFragment extends Fragment {
 
         // Initialize map if location permissions are granted
         if (hasLocationPermissions()) {
-            initializeMap(view, savedInstanceState, null);
+            initializeMap(view, savedInstanceState);
         } else {
             Log.d(TAG, "Location permissions not granted; map will not be displayed");
         }
