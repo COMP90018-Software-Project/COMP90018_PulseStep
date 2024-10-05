@@ -35,7 +35,7 @@
             android:layout_gravity="center"
             android:visibility="visible"
             android:tint="@color/like_orange"
-            android:text="Find Location ..." />
+            android:text=" " />
     </FrameLayout>
 
     <!-- Toolbar containing the back button and title -->
@@ -223,15 +223,16 @@
         <!-- Show Button -->
         <ImageButton
             android:id="@+id/btn_show"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="@drawable/circular_button"
             android:src="@drawable/ic_finish"
             android:layout_centerVertical="true"
-            android:layout_toStartOf="@id/btn_stop"
-            android:layout_marginHorizontal="70dp"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="20dp"
             android:contentDescription="Finish"
-            android:visibility="gone" /> <!-- Set to 'gone' initially -->
+            android:visibility="gone"/>
+ <!-- Set to 'gone' initially -->
 
         <!-- Stop Button -->
         <ImageButton
