@@ -46,7 +46,7 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
     private TextView addressTextView;
     private TextView stepCountTextView;
     private ImageView defaultBackground;
-
+    private TextView caloriesTextView;
     // Tracking Data
     private float distance; // in kilometers
     private String time; // formatted as "MM:SS"
@@ -59,6 +59,7 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
     private Button finishButton;
 
     private static final String TAG = "AmapRunSummaryActivity";
+    private String calories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +97,7 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
         addressTextView = findViewById(R.id.run_summary_address);
         avgPaceTextView = findViewById(R.id.run_summary_avg_pace);
         stepCountTextView = findViewById(R.id.run_summary_steps);
+        caloriesTextView = findViewById(R.id.run_summary_calories);
         defaultBackground = findViewById(R.id.default_background);
         mapCard = findViewById(R.id.map_container);
         finishButton = findViewById(R.id.bt_finish_run);
@@ -114,6 +116,7 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
             trajectory = intent.getParcelableArrayListExtra("trajectory");
             address = intent.getStringExtra("address");
             avgPace = intent.getStringExtra("avgPace");
+            calories = intent.getStringExtra("calories");
         }
     }
 
@@ -127,6 +130,7 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
         stepCountTextView.setText(String.valueOf(stepCount));
         addressTextView.setText(address != null ? address : "N/A");
         avgPaceTextView.setText(avgPace);
+        caloriesTextView.setText(calories);
     }
 
     /**
@@ -152,6 +156,8 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
      * Displays the trajectory on the map.
      */
     private void displayTrajectoryOnMap() {
+        boolean hasNulls = trajectory.contains(null);
+        Log.d("displayTrajectoryOnMap", "Trajectory contains nulls: " + hasNulls);
         if (aMap == null || trajectory == null || trajectory.isEmpty()) return;
 
         // Define dashed line style
@@ -212,7 +218,7 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
                         PolylineOptions dashedLineOptions = new PolylineOptions()
                                 .add(previousPoint)
                                 .add(nextPoint)
-                                .color(getResources().getColor(R.color.like_orange))
+                                .color(getResources().getColor(R.color.red))
                                 .width(10)
                                 .setDottedLine(true);
                         aMap.addPolyline(dashedLineOptions);
