@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -56,6 +57,9 @@ public class WorkoutFragment extends Fragment {
     private AMap aMap;
     private boolean isUsingAmap = false;
 
+    private String userName;
+    private int userAge;
+    private double userWeight;
     public WorkoutFragment() {
         // Required empty public constructor
     }
@@ -63,12 +67,25 @@ public class WorkoutFragment extends Fragment {
     /**
      * Inflates the fragment layout, initializes location services, and sets up button listeners.
      */
+    @SuppressLint("SetTextI18n")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
+        // Get the arguments passed from MainActivity
+        Bundle args = getArguments();
+        if (args != null) {
+            userName = args.getString("name");
+            userAge = args.getInt("age");
+            userWeight = args.getDouble("weight");
+        }
+        //greeting_text
+        TextView greetingText = view.findViewById(R.id.greeting_text);
+        greetingText.setText("Hi, " + userName);
+
+
         // Initialize FusedLocationProviderClient for location services
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
 
@@ -534,6 +551,10 @@ public class WorkoutFragment extends Fragment {
         }
         intent.putExtra("LATITUDE", latitude);
         intent.putExtra("LONGITUDE", longitude);
+
+        intent.putExtra("name", userName);
+        intent.putExtra("age", userAge);
+        intent.putExtra("weight", userWeight);
         startActivity(intent);
     }
 

@@ -46,6 +46,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private TextView addressTextView;
     private TextView stepCountTextView;
     private ImageView defaultBackground;
+    private TextView caloriesTextView;
 
     // Tracking Data
     private float distance; // in kilometers
@@ -57,6 +58,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private String avgPace;
     private TextView avgPaceTextView;
     private Button finishButton;
+    private String calories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +100,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         avgPaceTextView = findViewById(R.id.run_summary_avg_pace);
         stepCountTextView = findViewById(R.id.run_summary_steps);
         defaultBackground = findViewById(R.id.default_background);
+        caloriesTextView = findViewById(R.id.run_summary_calories);
         mapCard = findViewById(R.id.map_container);
         finishButton = findViewById(R.id.bt_finish_run);
     }
@@ -114,6 +117,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             trajectory = intent.getParcelableArrayListExtra("trajectory");
             address = intent.getStringExtra("address");
             avgPace = intent.getStringExtra("avgPace");
+            calories = intent.getStringExtra("calories");
         }
     }
 
@@ -127,6 +131,8 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         stepCountTextView.setText(String.valueOf(stepCount));
         addressTextView.setText(address != null ? address : "N/A");
         avgPaceTextView.setText(avgPace);
+        caloriesTextView.setText(calories);
+
     }
 
     /**
