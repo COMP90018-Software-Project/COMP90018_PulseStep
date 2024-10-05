@@ -430,7 +430,18 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Handles the pause/resume button click event.
      */
     private void handlePauseResumeButtonClick() {
-        if (!isLocationReady) {
+        boolean stepCounterGranted = false;
+        boolean locationPremission = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            stepCounterGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            locationPremission=true;
+        }
+        if (!stepCounterGranted){
+            Toast.makeText(this, "Please turn on Active", Toast.LENGTH_SHORT).show();
+            return;
+        } else if (!isLocationReady && locationPremission) {
             // If location is not ready, show a toast message
             Toast.makeText(this, "Positioning ...", Toast.LENGTH_SHORT).show();
             return;
@@ -463,7 +474,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !stepCounterGranted) {
             Toast.makeText(this, "Please grant step counter permission to enable step tracking", Toast.LENGTH_SHORT).show();
         }
-        if (!locationGranted) {
+        if (!locationGranted && !stepCounterGranted) {
             Toast.makeText(this, "Please grant location permission to enable map functionality", Toast.LENGTH_SHORT).show();
         }
         // Return whether all required permissions have been granted
@@ -475,7 +486,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     @SuppressLint({"MissingPermission", "UseCompatLoadingForDrawables"})
     private void startTracking() {
-        if (googleMap != null) {
+        if (googleMap != null && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             googleMap.setMyLocationEnabled(true);
             googleMap.setBuildingsEnabled(false);
         }
