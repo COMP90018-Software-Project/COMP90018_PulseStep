@@ -3,15 +3,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_workout"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/constraint_layout"
     tools:context=".WorkoutFragment">
-    <!-- Default background container -->
+    <!-- fragment_workout.xml -->
     <FrameLayout
         android:id="@+id/map_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent">
+
+        <!-- Placeholder ImageView -->
+        <ImageView
+            android:id="@+id/map_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:src="@drawable/bg_workout" />
+
+        <!-- The map will be added programmatically and will appear above this ImageView -->
+    </FrameLayout>
+
     <!-- Greeting text   -->
     <TextView
         android:id="@+id/greeting_text"
