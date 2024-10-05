@@ -601,7 +601,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 double elapsedTimeInMinutes = elapsedTime / 60000.0;
                 double metValue = 8.0;
                 double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-                cTextView.setText(String.format("%.2f kcal", caloriesBurned));
+                cTextView.setText(String.format("%d kcal", Math.round(caloriesBurned)));
                 // Check if the calculated pace is within a reasonable range
                 if (avgPace >= 1.0 && avgPace <= 30.0) {
                     avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
@@ -634,7 +634,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             double elapsedTimeInMinutes = elapsedTime / 60000.0;
             double metValue = 8.0; //
             double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-            cTextView.setText(String.format("%.2f kcal", caloriesBurned));
+            cTextView.setText(String.format("%d kcal", Math.round(caloriesBurned)));
             // Update avgPaceTextView
             runOnUiThread(() -> {
                 avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));

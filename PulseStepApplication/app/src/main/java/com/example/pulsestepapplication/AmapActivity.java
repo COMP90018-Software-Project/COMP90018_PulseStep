@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,8 +38,10 @@ import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Polyline;
 import com.amap.api.maps.model.PolylineOptions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class AmapActivity extends AppCompatActivity {
 
@@ -65,6 +69,7 @@ public class AmapActivity extends AppCompatActivity {
     // Tracking Variables
     private final List<Polyline> polyLines = new ArrayList<>();
     private final List<LatLng> pathPoints = new ArrayList<>();
+    private final List<LatLng> trajectory = new ArrayList<>();
     private boolean isTracking = false;
     private boolean isPaused = false;
     private boolean isFirstStart = true;
@@ -105,6 +110,7 @@ public class AmapActivity extends AppCompatActivity {
 
     // Mode flag: true for Map mode, false for No-map mode
     private boolean isMapMode;
+    private Geocoder geocoder;
 
     @SuppressLint("NewApi")
     @Override
@@ -464,6 +470,7 @@ public class AmapActivity extends AppCompatActivity {
         if (isMapMode) {
             drawCurrentPolyline();
         }
+        trajectory.add(null);
     }
 
     /**
@@ -475,6 +482,7 @@ public class AmapActivity extends AppCompatActivity {
     private void updatePath(LatLng latLng) {
         if (pathPoints.isEmpty()) {
             pathPoints.add(latLng);
+            trajectory.add(latLng);
             return;
         }
 
@@ -492,7 +500,7 @@ public class AmapActivity extends AppCompatActivity {
                 double elapsedTimeInMinutes = elapsedTime / 60000.0;
                 double metValue = 8.0; //
                 double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-                cTextView.setText(String.format("%.2f kcal", caloriesBurned));
+                cTextView.setText(String.format("%d kcal", Math.round(caloriesBurned)));
                 if (avgPace >= 1.0 && avgPace <= 30.0) {
                     avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
                 } else {
@@ -503,6 +511,7 @@ public class AmapActivity extends AppCompatActivity {
             }
 
             pathPoints.add(latLng);
+            trajectory.add(latLng);
             drawCurrentPolyline();
         }
     }
@@ -522,7 +531,7 @@ public class AmapActivity extends AppCompatActivity {
             double elapsedTimeInMinutes = elapsedTime / 60000.0;
             double metValue = 8.0; //
             double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-            cTextView.setText(String.format("%.2f kcal", caloriesBurned));
+            cTextView.setText(String.format("%d kcal", Math.round(caloriesBurned)));
             // Update avgPaceTextView
             runOnUiThread(() -> {
                 avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
@@ -557,7 +566,54 @@ public class AmapActivity extends AppCompatActivity {
             }
         }
     }
+    /**
+     * Converts a LatLng point to a human-readable address string.
+     *
+     * @param latLng The LatLng object representing the location.
+     * @return A string containing the country and city, or "Unknown Location" if not available.
+     */
+    private String getAddressFromLatLng(com.google.android.gms.maps.model.LatLng latLng) {
+        String address = "Unknown Location";
 
+        // Ensure Geocoder is initialized
+        if (geocoder == null) {
+            if (Geocoder.isPresent()) {
+                geocoder = new Geocoder(this, Locale.getDefault());
+            } else {
+                Log.e(TAG, "Geocoder not available.");
+                return address;
+            }
+        }
+
+        try {
+            // Get address from latitude and longitude
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+
+            if (addresses != null && !addresses.isEmpty()) {
+                Address addr = addresses.get(0);
+                String country = addr.getCountryName(); // Country
+                String city = addr.getLocality();       // City
+
+                if (country != null && city != null) {
+                    address = country + ", " + city;
+                } else if (country != null) {
+                    address = country;
+                } else if (city != null) {
+                    address = city;
+                }
+            } else {
+                Log.e(TAG, "No address found for the location.");
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Geocoder IOException: " + e.getMessage());
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "Invalid latitude or longitude values.");
+            e.printStackTrace();
+        }
+
+        return address;
+    }
     /**
      * Shows the last tracked path and navigates to the summary page.
      */
@@ -575,6 +631,12 @@ public class AmapActivity extends AppCompatActivity {
         String timeElapsed = timerTextView.getText().toString();
         int stepCount = currentStepCount;
 
+        // Get the last location's address
+        String address = "Unknown Location";
+        if (isMapMode && initialLatitude != 0.0 && initialLongitude != 0.0) {
+            com.google.android.gms.maps.model.LatLng initialLatLng = new com.google.android.gms.maps.model.LatLng(initialLatitude, initialLongitude);
+            address = getAddressFromLatLng(initialLatLng);
+        }
         String avg = avgPaceTextView.getText().toString();
 
         // Create Intent to Summary Activity
@@ -582,20 +644,15 @@ public class AmapActivity extends AppCompatActivity {
         intent.putExtra("distance", distanceInKm);
         intent.putExtra("avgPace", avg);
         intent.putExtra("time", timeElapsed);
+        intent.putExtra("address", address);
         intent.putExtra("stepCount", stepCount);
         intent.putExtra("MODE", isMapMode ? "MAP" : "NO_MAP");
+        intent.putExtra("calories", cTextView.getText().toString());
 
         if (isMapMode) {
-            ArrayList<LatLng> trajectory = new ArrayList<>();
-            int polylineCount = polyLines.size();
-            for (int i = 0; i < polylineCount; i++) {
-                Polyline polyline = polyLines.get(i);
-                trajectory.addAll(polyline.getPoints());
-                if (i < polylineCount - 1) {
-                    trajectory.add(null);
-                }
-            }
-            intent.putParcelableArrayListExtra("trajectory", trajectory);
+            // Collect trajectory points
+            ArrayList<LatLng> trajectoryList = new ArrayList<>(trajectory);
+            intent.putParcelableArrayListExtra("trajectory", trajectoryList);
         }
 
         startActivity(intent);
