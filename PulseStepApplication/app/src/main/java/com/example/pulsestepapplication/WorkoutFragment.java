@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -22,6 +23,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.amap.api.maps.AMap;
+import com.amap.api.maps.AMapOptions;
 import com.amap.api.maps.MapView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -30,8 +32,10 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 
+import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
 
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
@@ -79,11 +83,21 @@ public class WorkoutFragment extends Fragment {
             startActivity(intent);
         });
 
-        // Initialize map if location permissions are granted
-        if (hasLocationPermissions()) {
-            initializeMap(view, savedInstanceState);
-        } else {
+        // The placeholder image is already in the layout (map_placeholder)
+        // We will initialize the map after getting location permissions and user's location
+        View placeholder = view.findViewById(R.id.map_placeholder);
+        if (!hasLocationPermissions()) {
+            if (placeholder != null) {
+                placeholder.setVisibility(View.VISIBLE);
+            } else {
+                Log.e(TAG, "No placeholder image found");
+            }
             Log.d(TAG, "Location permissions not granted; map will not be displayed");
+        } else {
+            if (placeholder != null) {
+                placeholder.setVisibility(View.GONE);
+            }
+            initializeMap(view, savedInstanceState);
         }
 
         return view;
@@ -94,7 +108,7 @@ public class WorkoutFragment extends Fragment {
      */
     @SuppressLint("MissingPermission")
     private void initializeMap(View view, Bundle savedInstanceState) {
-        // Check if we are in China based on last known location
+        // Obtain user's location before initializing the map
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
                     if (location != null) {
@@ -102,39 +116,82 @@ public class WorkoutFragment extends Fragment {
                         lastLongitude = location.getLongitude();
 
                         if (isInChina(lastLatitude, lastLongitude)) {
-                            // Initialize AMap
+                            // Initialize AMap with user's location
                             isUsingAmap = true;
-                            amapView = new MapView(requireContext());
-                            ViewGroup mapContainer = view.findViewById(R.id.map_container);
-                            mapContainer.addView(amapView);
-                            amapView.onCreate(savedInstanceState);
-                            aMap = amapView.getMap();
-                            configureMap();
-                            onMapReady();
+                            initializeAMapWithLocation(view, savedInstanceState, lastLatitude, lastLongitude);
                         } else {
-                            // Initialize Google Map
+                            // Initialize Google Map with user's location
                             isUsingAmap = false;
-                            initializeGoogleMap();
+                            initializeGoogleMapWithLocation(lastLatitude, lastLongitude);
                         }
                     } else {
-                        // If location is null, default to Google Map
-                        isUsingAmap = false;
-                        initializeGoogleMap();
+                        // Request new location if last known location is null
+                        requestNewLocationForMapInitialization(view, savedInstanceState);
                     }
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to retrieve location", e);
-                    // If location retrieval fails, default to Google Map
-                    isUsingAmap = false;
-                    initializeGoogleMap();
+                    // Keep the placeholder image visible
                 });
     }
 
-    /**
-     * Initializes Google Map.
-     */
-    private void initializeGoogleMap() {
-        SupportMapFragment mapFragment = new SupportMapFragment();
+    private void requestNewLocationForMapInitialization(View view, Bundle savedInstanceState) {
+        if (ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        lastLatitude = location.getLatitude();
+                        lastLongitude = location.getLongitude();
+
+                        if (isInChina(lastLatitude, lastLongitude)) {
+                            // Initialize AMap with user's location
+                            isUsingAmap = true;
+                            initializeAMapWithLocation(view, savedInstanceState, lastLatitude, lastLongitude);
+                        } else {
+                            // Initialize Google Map with user's location
+                            isUsingAmap = false;
+                            initializeGoogleMapWithLocation(lastLatitude, lastLongitude);
+                        }
+                    } else {
+                        // Keep the placeholder image visible
+                        showToast("Unable to retrieve current location");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to retrieve location", e);
+                    // Keep the placeholder image visible
+                });
+    }
+
+    private void initializeAMapWithLocation(View view, Bundle savedInstanceState, Double latitude, Double longitude) {
+        AMapOptions aOptions = new AMapOptions();
+        if (latitude != null && longitude != null) {
+            com.amap.api.maps.model.CameraPosition cp = new com.amap.api.maps.model.CameraPosition(
+                    new com.amap.api.maps.model.LatLng(latitude, longitude), 18f, 0, 0);
+            aOptions.camera(cp);
+        }
+        amapView = new MapView(requireContext(), aOptions);
+        ViewGroup mapContainer = view.findViewById(R.id.map_container);
+        // Add the map view to the container
+        mapContainer.addView(amapView);
+        amapView.onCreate(savedInstanceState);
+        aMap = amapView.getMap();
+
+        configureMap();
+        onMapReady();
+    }
+
+    private void initializeGoogleMapWithLocation(Double latitude, Double longitude) {
+        GoogleMapOptions options = new GoogleMapOptions();
+        if (latitude != null && longitude != null) {
+            LatLng lastLatLng = new LatLng(latitude, longitude);
+            options.camera(CameraPosition.fromLatLngZoom(lastLatLng, 18f));
+        }
+        SupportMapFragment mapFragment = SupportMapFragment.newInstance(options);
+        // Replace the placeholder with the map fragment
         getChildFragmentManager().beginTransaction()
                 .replace(R.id.map_container, mapFragment)
                 .commit();
@@ -152,10 +209,7 @@ public class WorkoutFragment extends Fragment {
     private void configureMap() {
         // Apply custom map style
         applyCustomMapStyle();
-
         if (isUsingAmap) {
-            // Additional AMap settings can be added here
-            // For example, disable buildings and map text if needed
             aMap.showBuildings(false);
             aMap.showMapText(false);
         } else {
@@ -218,7 +272,8 @@ public class WorkoutFragment extends Fragment {
      * Called when the map is ready (either AMap or Google Map).
      */
     private void onMapReady() {
-        // Get user's location and move camera
+        // Hide the placeholder image
+        // Proceed with map setup
         getUserLocationAndZoom();
     }
 
@@ -472,6 +527,11 @@ public class WorkoutFragment extends Fragment {
 
         intent.putExtra("LOCATION_GRANTED", locationGranted);
         intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
+        if (locationGranted && activityRecognitionGranted){
+            intent.putExtra("MAP_MODE", true);
+        }else if (!locationGranted && activityRecognitionGranted){
+            intent.putExtra("MAP_MODE", false);
+        }
         intent.putExtra("LATITUDE", latitude);
         intent.putExtra("LONGITUDE", longitude);
         startActivity(intent);
@@ -507,6 +567,11 @@ public class WorkoutFragment extends Fragment {
                     requestActivityRecognitionPermission();
                 } else {
                     checkLocationAndStartMapActivity();
+                }
+                // Re-initialize the map now that permissions are granted
+                View view = getView();
+                if (view != null) {
+                    initializeMap(view, null);
                 }
             } else {
                 proceedToMapActivity(null, null);
