@@ -88,8 +88,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private double initialLongitude;
 
     // Tracking Variables
+    // Tracking Variables
     private final List<Polyline> polyLines = new ArrayList<>();
     private final List<LatLng> pathPoints = new ArrayList<>();
+    private final List<LatLng> trajectory = new ArrayList<>();
     private boolean isTracking = false;
     private boolean isPaused = false;
     private boolean isFirstStart = true;
@@ -98,6 +100,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private int currentStepCount = 0;
     private static final int realStep = -1;
     private static final Double realDistance = 0.05;
+    private static final double metValue = 8.0;
+    private static final double locationAccuracy = 50.0;
     // Geocoder for address conversion
     private Geocoder geocoder;
 
@@ -283,7 +287,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         stepCounter = new StepCounter(this);
         stepCounter.setStepCounterListener(stepCount -> {
             runOnUiThread(() -> {
-                if (stepCount < 10) {
+                if (stepCount < 5) {
                     stepTextView.setText("--");
                 } else {
                     stepTextView.setText(String.valueOf(stepCount));
@@ -325,7 +329,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 // Update location regardless of tracking state to determine when location is ready
                 for (Location location : locationResult.getLocations()) {
-                    if (location.hasAccuracy() && location.getAccuracy() < 50.0) {
+                    if (location.hasAccuracy() && location.getAccuracy() < locationAccuracy) {
                         isLocationReady = true;
                         waitView.clearAnimation();
                         waitView.setVisibility(View.GONE);
@@ -549,6 +553,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (isMapMode) {
             drawCurrentPolyline();
         }
+        trajectory.add(null);
     }
 
     /**
@@ -576,6 +581,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         // If pathPoints is empty, we are processing the first location point
         if (pathPoints.isEmpty()) {
             pathPoints.add(latLng); // Add the first point directly but don't draw yet
+            trajectory.add(latLng);
             return; // Skip drawing to wait for the next point
         }
 
@@ -592,12 +598,11 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
 
             // Ensure that distance and time are both valid before calculating pace
-            if (totalDistanceKm > 0 && totalTimeMinutes > 0) {
+            if (totalDistanceKm > realDistance && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
                 double elapsedTimeInMinutes = elapsedTime / 60000.0;
-                double metValue = 8.0; //
                 double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-                cTextView.setText(String.format("%.2f kcal", caloriesBurned));
+                cTextView.setText(String.format("%d", Math.round(caloriesBurned)));
                 // Check if the calculated pace is within a reasonable range
                 if (avgPace >= 1.0 && avgPace <= 30.0) {
                     avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
@@ -610,6 +615,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
             // Only add the current point to pathPoints and draw the line if it meets criteria
             pathPoints.add(latLng);
+            trajectory.add(latLng);
             drawCurrentPolyline();
         }
     }
@@ -624,12 +630,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         float distance = currentStepCount * averageStepLength; // in meters
         double distanceKm = distance / 1000.0;
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
-        if (distanceKm > 0 && totalTimeMinutes > 0) {
+        if (distanceKm > realDistance && totalTimeMinutes > 0) {
             double avgPace = totalTimeMinutes / distanceKm;
             double elapsedTimeInMinutes = elapsedTime / 60000.0;
-            double metValue = 8.0; //
+
             double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-            cTextView.setText(String.format("%.2f kcal", caloriesBurned));
+            cTextView.setText(String.format("%d", Math.round(caloriesBurned)));
             // Update avgPaceTextView
             runOnUiThread(() -> {
                 avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
@@ -746,16 +752,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         if (isMapMode) {
             // Collect trajectory points
-            ArrayList<LatLng> trajectory = new ArrayList<>();
-            int polylineCount = polyLines.size();
-            for (int i = 0; i < polylineCount; i++) {
-                Polyline polyline = polyLines.get(i);
-                trajectory.addAll(polyline.getPoints());
-                if (i < polylineCount - 1) {
-                    trajectory.add(null);
-                }
-            }
-            intent.putParcelableArrayListExtra("trajectory", trajectory);
+            ArrayList<LatLng> trajectoryList = new ArrayList<>(trajectory);
+            intent.putParcelableArrayListExtra("trajectory", trajectoryList);
         }
 
         startActivity(intent);
@@ -843,7 +841,13 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             stepCounter.registerListener();
         }
     }
-
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
+            stepCounter.unregisterListener();
+        }
+    }
     /**
      * Handles tracking state and permission changes when the activity resumes.
      */
