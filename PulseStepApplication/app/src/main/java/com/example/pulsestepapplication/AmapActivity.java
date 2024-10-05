@@ -338,6 +338,7 @@ public class AmapActivity extends AppCompatActivity {
                 waitTextView.setVisibility(View.GONE);
                 // Enable the start button when location is ready
                 btnPauseResume.setClickable(true);
+                btnPauseResume.setEnabled(true);
                 LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
 
                 if (isTracking && !isPaused && isLocationReady) {
@@ -637,7 +638,7 @@ public class AmapActivity extends AppCompatActivity {
                 isLocationReady = false;
                 waitView.setVisibility(View.VISIBLE);
                 waitTextView.setVisibility(View.VISIBLE);
-                btnPauseResume.setClickable(false);
+                btnPauseResume.setEnabled(false);
                 // Restart location updates
                 setupMapListeners();
             }

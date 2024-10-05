@@ -36,6 +36,12 @@ public class MainActivity extends AppCompatActivity {
         workoutFragment = new WorkoutFragment();
         activeFragment = workoutFragment; // Set the initial fragment to workoutFragment
 
+        Bundle args = new Bundle();
+        args.putString("name", "Jackie");
+        args.putInt("age", 66);
+        args.putDouble("weight", 66.6);
+        workoutFragment.setArguments(args);
+
         // Use add() to add the initial Fragment and display it
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.frameLayout, workoutFragment, "workout")

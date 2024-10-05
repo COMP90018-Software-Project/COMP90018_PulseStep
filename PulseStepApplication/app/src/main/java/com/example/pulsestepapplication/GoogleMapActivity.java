@@ -70,7 +70,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private static final float DEFAULT_ZOOM_LEVEL = 15f;
     private static final float MAX_ZOOM_LEVEL = 19f;
     private static final String TAG = "GoogleMapActivity";
-
+    private String userName;
+    private int userAge;
+    private double userWeight;
     // UI Components
     private ImageButton btnPauseResume;
     private TextView timerTextView, stepTextView, avgPaceTextView;
@@ -125,7 +127,21 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             timerHandler.postDelayed(this, 1000);
         }
     };
-
+    private static final int LOCATION_TIMEOUT = 10000;
+    private final Handler locationTimeoutHandler = new Handler(Looper.getMainLooper());
+    private final Runnable locationTimeoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!isLocationReady) {
+                isLocationReady = true;
+                waitView.clearAnimation();
+                waitView.setVisibility(View.GONE);
+                waitTextView.setVisibility(View.GONE);
+                btnPauseResume.setClickable(true);
+                Toast.makeText(GoogleMapActivity.this, "Unable to get accurate location", Toast.LENGTH_LONG).show();
+            }
+        }
+    };
     private Marker userLocationMarker;
     private TextView cTextView;
     private ImageView waitView;
@@ -143,6 +159,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         // Get the mode from the intent
         Intent intent = getIntent();
         isMapMode = intent.getBooleanExtra("MAP_MODE", true); // default to Map mode
+        userName = intent.getStringExtra("name");
+        userAge = intent.getIntExtra("age", 25);
+        userWeight = intent.getDoubleExtra("weight", 70.0);
 
         // Initialize UI components
         initializeUIComponents();
@@ -233,7 +252,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         // Set click listener for the back button
         backButton.setOnClickListener(v -> navigateToMainActivity());
-        btnPauseResume.setClickable(false);
 
         if (isMapMode) {
             // Start animation if in Map mode
@@ -307,19 +325,22 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 // Update location regardless of tracking state to determine when location is ready
                 for (Location location : locationResult.getLocations()) {
-                    if (location.hasAccuracy() && location.getAccuracy() < 20.0) {
+                    if (location.hasAccuracy() && location.getAccuracy() < 50.0) {
                         isLocationReady = true;
                         waitView.clearAnimation();
                         waitView.setVisibility(View.GONE);
                         waitTextView.setVisibility(View.GONE);
                         // Enable the start button when location is ready
+                        btnPauseResume.setEnabled(true);
                         btnPauseResume.setClickable(true);
+                        locationTimeoutHandler.removeCallbacks(locationTimeoutRunnable);
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         googleMap.setMyLocationEnabled(true);
                     } else {
                         // If location is not ready, keep trying
                         if (!isLocationReady) {
                             Log.d(TAG, "Location not ready, keep trying...");
+
                         }
                     }
 
@@ -416,7 +437,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     @SuppressLint("MissingPermission")
     private void onLocationPermissionGranted() {
         if (googleMap != null) {
-            googleMap.setMyLocationEnabled(true);
+            googleMap.setMyLocationEnabled(false);
             googleMap.setBuildingsEnabled(false);
 
             // Start location updates to determine when location is ready
@@ -442,7 +463,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             // Map mode
             if (!isLocationReady) {
                 // If location is not ready, show a toast message
-                Toast.makeText(this, "定位中...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Getting accurate positioning", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -541,6 +562,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+            locationTimeoutHandler.postDelayed(locationTimeoutRunnable, LOCATION_TIMEOUT);
         }
     }
 
@@ -572,7 +594,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             // Ensure that distance and time are both valid before calculating pace
             if (totalDistanceKm > 0 && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
-
+                double elapsedTimeInMinutes = elapsedTime / 60000.0;
+                double metValue = 8.0; //
+                double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
+                cTextView.setText(String.format("%.2f kcal", caloriesBurned));
                 // Check if the calculated pace is within a reasonable range
                 if (avgPace >= 1.0 && avgPace <= 30.0) {
                     avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
@@ -601,6 +626,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
         if (distanceKm > 0 && totalTimeMinutes > 0) {
             double avgPace = totalTimeMinutes / distanceKm;
+            double elapsedTimeInMinutes = elapsedTime / 60000.0;
+            double metValue = 8.0; //
+            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
+            cTextView.setText(String.format("%.2f kcal", caloriesBurned));
             // Update avgPaceTextView
             runOnUiThread(() -> {
                 avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60)));
@@ -712,6 +741,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         intent.putExtra("time", timeElapsed);
         intent.putExtra("address", address);
         intent.putExtra("stepCount", stepCount);
+        intent.putExtra("calories", cTextView.getText().toString());
         intent.putExtra("MODE", isMapMode ? "MAP" : "NO_MAP");
 
         if (isMapMode) {
@@ -731,7 +761,11 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         startActivity(intent);
         finish();
     }
+    private double calculateCalories(double weight, double durationInMinutes, double metValue) {
 
+        double durationInHours = durationInMinutes / 60.0;
+        return metValue * weight * durationInHours;
+    }
     /**
      * Displays a default map image when location permission is not granted or in No-map mode.
      */
@@ -760,7 +794,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             // Check if location permission has been revoked
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // Permission revoked, switch to No-map mode or handle accordingly
-                Toast.makeText(this, "定位权限已被禁用，切换到无地图模式", Toast.LENGTH_SHORT).show();
                 isMapMode = false;
                 if (googleMap != null) {
                     googleMap.clear();
@@ -771,11 +804,11 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 if (googleMap == null) {
                     setupMapFragment();
                 }
-                googleMap.setMyLocationEnabled(true);
+                //googleMap.setMyLocationEnabled(true);
                 isLocationReady = false;
                 waitView.setVisibility(View.VISIBLE);
                 waitTextView.setVisibility(View.VISIBLE);
-                btnPauseResume.setClickable(false);
+                //btnPauseResume.setEnabled(false);
                 // Restart location updates
                 setupLocationCallback();
                 requestLocationUpdates();
@@ -785,7 +818,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
                 // Permission revoked, navigate back to Workout page
-                Toast.makeText(this, "计步器权限已被禁用", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "activity recognition permission is required", Toast.LENGTH_SHORT).show();
                 navigateToWorkoutPage();
             }
         }

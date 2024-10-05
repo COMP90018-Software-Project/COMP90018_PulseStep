@@ -148,29 +148,41 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
     /**
      * Displays the trajectory on the AMap with start and end markers.
      */
+    /**
+     * Displays the trajectory on the map.
+     */
     private void displayTrajectoryOnMap() {
         if (aMap == null || trajectory == null || trajectory.isEmpty()) return;
 
-        // Define a dashed pattern for gaps in the trajectory
+        // Define dashed line style
         List<PatternItem> dashedPattern = Arrays.asList(new Dash(30), new Gap(20));
 
         LatLng startPoint = null;
         LatLng endPoint = null;
 
-        // Builder to adjust camera bounds to include all points
+        // Used to adjust the camera view to include all points
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
-        // Polyline options for the current solid segment
+        // PolylineOptions for the current solid line segment
         PolylineOptions polylineOptions = new PolylineOptions()
                 .color(getResources().getColor(R.color.like_orange))
                 .width(10);
 
-        // Iterate over the trajectory
+        // **New: Find the index of the last non-null point**
+        int lastValidPointIndex = -1;
+        for (int i = trajectory.size() - 1; i >= 0; i--) {
+            if (trajectory.get(i) != null) {
+                lastValidPointIndex = i;
+                break;
+            }
+        }
+
+        // Traverse the trajectory
         for (int i = 0; i < trajectory.size(); i++) {
             LatLng point = trajectory.get(i);
 
             if (point == null) {
-                // If a break is encountered, draw the current solid polyline if it has points
+                // If encountering a break point, draw the current solid line segment
                 if (!polylineOptions.getPoints().isEmpty()) {
                     aMap.addPolyline(polylineOptions);
                     polylineOptions = new PolylineOptions()
@@ -178,20 +190,25 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
                             .width(10);
                 }
 
-                // Attempt to draw a dashed line between previous and next valid points
+                // Attempt to draw a dashed line between previousPoint and nextPoint
                 LatLng previousPoint = null;
                 for (int j = i - 1; j >= 0; j--) {
                     previousPoint = trajectory.get(j);
                     if (previousPoint != null) break;
                 }
                 LatLng nextPoint = null;
+                int nextPointIndex = -1; // **New: Record the index of nextPoint**
                 for (int j = i + 1; j < trajectory.size(); j++) {
                     nextPoint = trajectory.get(j);
-                    if (nextPoint != null) break;
+                    if (nextPoint != null) {
+                        nextPointIndex = j; // Get the index of nextPoint
+                        break;
+                    }
                 }
+
                 if (previousPoint != null && nextPoint != null) {
-                    // Draw a dashed line connecting previousPoint and nextPoint
-                    if (trajectory.indexOf(nextPoint) != trajectory.size() - 1) {
+                    // **Draw dashed line only if nextPoint is not the endpoint**
+                    if (nextPointIndex < lastValidPointIndex) {
                         PolylineOptions dashedLineOptions = new PolylineOptions()
                                 .add(previousPoint)
                                 .add(nextPoint)
@@ -199,9 +216,10 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
                                 .width(10)
                                 .setDottedLine(true);
                         aMap.addPolyline(dashedLineOptions);
-                    }}
+                    }
+                }
             } else {
-                // Add point to the current solid polyline
+                // Add the point to the current solid line segment
                 polylineOptions.add(point);
                 if (startPoint == null) {
                     startPoint = point;
@@ -211,32 +229,33 @@ public class AmapRunSummaryActivity extends AppCompatActivity {
             }
         }
 
-        // Draw the last solid polyline if it has points
+        // Draw the last solid line segment
         if (!polylineOptions.getPoints().isEmpty()) {
             aMap.addPolyline(polylineOptions);
         }
 
         if (startPoint != null) {
-            // Add a marker at the starting point
+            // Add start point marker
             aMap.addMarker(new MarkerOptions()
                     .position(startPoint)
                     .title("Start Point")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
 
-            // Add a marker at the ending point
+            // Add end point marker
             aMap.addMarker(new MarkerOptions()
                     .position(endPoint)
                     .title("End Point")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
         }
 
-        // Adjust the camera to include all points in the trajectory
+        // Adjust camera view
         LatLngBounds bounds = builder.build();
         aMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
 
-        // Hide the default background if the trajectory is present
+        // Hide default background (if any)
         defaultBackground.setVisibility(View.GONE);
     }
+
 
     /**
      * Shows a default background image if no trajectory is available.
