@@ -88,8 +88,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private double initialLongitude;
 
     // Tracking Variables
+    // Tracking Variables
     private final List<Polyline> polyLines = new ArrayList<>();
     private final List<LatLng> pathPoints = new ArrayList<>();
+    private final List<LatLng> trajectory = new ArrayList<>();
     private boolean isTracking = false;
     private boolean isPaused = false;
     private boolean isFirstStart = true;
@@ -549,6 +551,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (isMapMode) {
             drawCurrentPolyline();
         }
+        trajectory.add(null);
     }
 
     /**
@@ -576,6 +579,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         // If pathPoints is empty, we are processing the first location point
         if (pathPoints.isEmpty()) {
             pathPoints.add(latLng); // Add the first point directly but don't draw yet
+            trajectory.add(latLng);
             return; // Skip drawing to wait for the next point
         }
 
@@ -595,7 +599,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             if (totalDistanceKm > 0 && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
                 double elapsedTimeInMinutes = elapsedTime / 60000.0;
-                double metValue = 8.0; //
+                double metValue = 8.0;
                 double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
                 cTextView.setText(String.format("%.2f kcal", caloriesBurned));
                 // Check if the calculated pace is within a reasonable range
@@ -610,6 +614,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
             // Only add the current point to pathPoints and draw the line if it meets criteria
             pathPoints.add(latLng);
+            trajectory.add(latLng);
             drawCurrentPolyline();
         }
     }
@@ -746,16 +751,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         if (isMapMode) {
             // Collect trajectory points
-            ArrayList<LatLng> trajectory = new ArrayList<>();
-            int polylineCount = polyLines.size();
-            for (int i = 0; i < polylineCount; i++) {
-                Polyline polyline = polyLines.get(i);
-                trajectory.addAll(polyline.getPoints());
-                if (i < polylineCount - 1) {
-                    trajectory.add(null);
-                }
-            }
-            intent.putParcelableArrayListExtra("trajectory", trajectory);
+            ArrayList<LatLng> trajectoryList = new ArrayList<>(trajectory);
+            intent.putParcelableArrayListExtra("trajectory", trajectoryList);
         }
 
         startActivity(intent);
@@ -843,7 +840,13 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             stepCounter.registerListener();
         }
     }
-
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && stepCounter != null) {
+            stepCounter.unregisterListener();
+        }
+    }
     /**
      * Handles tracking state and permission changes when the activity resumes.
      */
