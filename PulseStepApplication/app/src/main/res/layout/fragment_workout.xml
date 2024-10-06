@@ -20,8 +20,17 @@
             android:scaleType="centerCrop"
             android:visibility="gone"
             android:src="@drawable/bg_workout" />
-
-        <!-- The map will be added programmatically and will appear above this ImageView -->
+        <ProgressBar
+            android:id="@+id/map_progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="40dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:visibility="gone"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/bar_orange"
+            android:backgroundTint="@color/bar_orange" />
+     <!-- The map will be added programmatically and will appear above this ImageView -->
     </FrameLayout>
 
     <!-- Greeting text   -->
