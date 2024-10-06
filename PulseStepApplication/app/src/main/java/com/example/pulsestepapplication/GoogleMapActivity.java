@@ -99,7 +99,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
     private static final int realStep = -1;
-    private static final Double realDistance = 0.05;
+    private static final Double realDistance = 0.01;
     private static final double metValue = 8.0;
     private static final double locationAccuracy = 50.0;
     // Geocoder for address conversion
@@ -560,12 +560,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Requests location updates with high accuracy.
      */
     private void requestLocationUpdates() {
-        LocationRequest locationRequest = new LocationRequest.Builder(3000)
-                .setMinUpdateIntervalMillis(1000)
+        LocationRequest locationRequest = new LocationRequest.Builder(5000)
+                .setMinUpdateIntervalMillis(3000)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                .setMinUpdateDistanceMeters(5)
                 .build();
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
             locationTimeoutHandler.postDelayed(locationTimeoutRunnable, LOCATION_TIMEOUT);
         }
@@ -652,7 +654,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void drawCurrentPolyline() {
         if (!pathPoints.isEmpty()) {
-            PolylineOptions polylineOptions = new PolylineOptions().addAll(pathPoints).color(getResources().getColor(R.color.like_orange)).width(30);
+            PolylineOptions polylineOptions = new PolylineOptions().addAll(pathPoints).color(getResources().getColor(R.color.like_orange)).width(20);
             if (polyLines.isEmpty() || isPaused) {
                 Polyline polyline = googleMap.addPolyline(polylineOptions);
                 polyLines.add(polyline);

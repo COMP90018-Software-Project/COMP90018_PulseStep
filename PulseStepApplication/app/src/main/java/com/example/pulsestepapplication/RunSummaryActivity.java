@@ -114,7 +114,11 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             distance = intent.getFloatExtra("distance", 0.0f);
             time = intent.getStringExtra("time");
             stepCount = intent.getIntExtra("stepCount", 0);
-            trajectory = intent.getParcelableArrayListExtra("trajectory");
+            if(distance > 0.01){
+                trajectory = intent.getParcelableArrayListExtra("trajectory");
+            }else{
+                trajectory = null;
+            }
             address = intent.getStringExtra("address");
             avgPace = intent.getStringExtra("avgPace");
             calories = intent.getStringExtra("calories");
