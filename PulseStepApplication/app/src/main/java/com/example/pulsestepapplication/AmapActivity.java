@@ -76,7 +76,7 @@ public class AmapActivity extends AppCompatActivity {
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
-    private static final Double realDistance = 0.05;
+    private static final Double realDistance = 0.01;
     private static final double metValue = 8.0;
     private static final double locationAccuracy = 50.0;
 
@@ -556,7 +556,7 @@ public class AmapActivity extends AppCompatActivity {
             PolylineOptions polylineOptions = new PolylineOptions()
                     .addAll(pathPoints)
                     .color(getResources().getColor(R.color.like_orange))
-                    .width(30);
+                    .width(20);
             if (polyLines.isEmpty() || isPaused) {
                 Polyline polyline = aMap.addPolyline(polylineOptions);
                 polyLines.add(polyline);
