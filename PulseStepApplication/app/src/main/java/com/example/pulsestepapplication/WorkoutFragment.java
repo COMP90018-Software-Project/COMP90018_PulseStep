@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,6 +57,7 @@ public class WorkoutFragment extends Fragment {
     private MapView amapView;
     private AMap aMap;
     private boolean isUsingAmap = false;
+    private ProgressBar mapProgressBar;
 
     private String userName;
     private int userAge;
@@ -74,7 +76,7 @@ public class WorkoutFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
-
+        mapProgressBar = view.findViewById(R.id.map_progress_bar);
         // Get the arguments passed from MainActivity
         Bundle args = getArguments();
         if (args != null) {
@@ -85,8 +87,10 @@ public class WorkoutFragment extends Fragment {
             boolean locationGranted = args.getBoolean("locationGranted", false);
             // Initialize map based on location permission status
             if (locationGranted) {
+                mapProgressBar.setVisibility(View.VISIBLE);
                 // Initialize FusedLocationProviderClient for location services
                 fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+
                 // Initialize the map
                 initializeMap(view, savedInstanceState);
             } else {
@@ -108,7 +112,6 @@ public class WorkoutFragment extends Fragment {
                     Log.e(TAG, "No placeholder image found");
                 }
                 Log.d(TAG, "Location permissions not granted; map will not be displayed");
-
             }
         }
 
@@ -314,6 +317,9 @@ public class WorkoutFragment extends Fragment {
      */
     private void onMapReady() {
         // Hide the placeholder image
+        if (mapProgressBar != null) {
+            mapProgressBar.setVisibility(View.GONE);
+        }
         // Proceed with map setup
         getUserLocationAndZoom();
     }
