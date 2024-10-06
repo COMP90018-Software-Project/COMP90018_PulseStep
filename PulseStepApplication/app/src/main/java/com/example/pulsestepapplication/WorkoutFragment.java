@@ -74,24 +74,54 @@ public class WorkoutFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
+
         // Get the arguments passed from MainActivity
         Bundle args = getArguments();
         if (args != null) {
             userName = args.getString("name");
             userAge = args.getInt("age");
             userWeight = args.getDouble("weight");
+            // Get location permission status
+            boolean locationGranted = args.getBoolean("locationGranted", false);
+            // Initialize map based on location permission status
+            if (locationGranted) {
+                // Initialize FusedLocationProviderClient for location services
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+                // Initialize the map
+                initializeMap(view, savedInstanceState);
+            } else {
+                // Show placeholder or notify the user that location permission is not granted
+                View placeholder = view.findViewById(R.id.map_placeholder);
+                if (placeholder != null) {
+                    placeholder.setVisibility(View.VISIBLE);
+                }
+                showToast("Location permissions not granted");
+            }
+        }else{
+            // We will initialize the map after getting location permissions and user's location
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+            View placeholder = view.findViewById(R.id.map_placeholder);
+            if (!hasLocationPermissions()) {
+                if (placeholder != null) {
+                    placeholder.setVisibility(View.VISIBLE);
+                } else {
+                    Log.e(TAG, "No placeholder image found");
+                }
+                Log.d(TAG, "Location permissions not granted; map will not be displayed");
+
+            }
         }
+
         //greeting_text
         TextView greetingText = view.findViewById(R.id.greeting_text);
         greetingText.setText("Hi, " + userName);
 
-
-        // Initialize FusedLocationProviderClient for location services
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-
         // Set up Run button to initiate permission and network checks
         Button runButton = view.findViewById(R.id.run_button);
-        runButton.setOnClickListener(v -> checkPermissionsAndProceed());
+        runButton.setOnClickListener(v -> {
+            // When the user clicks the Run button, check and request activity recognition permission, then start the map activity
+            checkActivityRecognitionPermissionAndProceed();
+        });
 
         // Set up Jump button to navigate to JumpActivity
         Button jumpButton = view.findViewById(R.id.jump_button);
@@ -100,25 +130,19 @@ public class WorkoutFragment extends Fragment {
             startActivity(intent);
         });
 
-        // The placeholder image is already in the layout (map_placeholder)
-        // We will initialize the map after getting location permissions and user's location
-        View placeholder = view.findViewById(R.id.map_placeholder);
-        if (!hasLocationPermissions()) {
-            if (placeholder != null) {
-                placeholder.setVisibility(View.VISIBLE);
-            } else {
-                Log.e(TAG, "No placeholder image found");
-            }
-            Log.d(TAG, "Location permissions not granted; map will not be displayed");
-        } else {
-            if (placeholder != null) {
-                placeholder.setVisibility(View.GONE);
-            }
-            initializeMap(view, savedInstanceState);
-        }
-
         return view;
     }
+    private void checkActivityRecognitionPermissionAndProceed() {
+        if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+            requestActivityRecognitionPermission();
+        } else if (hasActivityRecognitionPermission()) {
+            checkLocationAndStartMapActivity();
+        } else {
+            // Permission is required but was denied
+            showToast("Activity recognition permission is required.");
+        }
+    }
+
 
     /**
      * Initializes the appropriate map based on user's location.
@@ -600,8 +624,14 @@ public class WorkoutFragment extends Fragment {
         } else if (requestCode == ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Activity recognition permission granted");
+                // Proceed to start the map activity
+                checkLocationAndStartMapActivity();
+            } else {
+                Log.d(TAG, "Activity recognition permission denied");
+                // Show a message to the user
+                showToast("Activity recognition permission is required.");
+
             }
-            checkLocationAndStartMapActivity();
         }
     }
 
