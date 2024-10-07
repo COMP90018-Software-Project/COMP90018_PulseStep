@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/constraint_layout"
+    tools:context=".WorkoutFragment">
+    <!-- fragment_workout.xml -->
+    <FrameLayout
+        android:id="@+id/map_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Placeholder ImageView -->
+        <ImageView
+            android:id="@+id/map_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:src="@drawable/bg_workout" />
+
+        <!-- The map will be added programmatically and will appear above this ImageView -->
+    </FrameLayout>
+
+    <!-- Greeting text   -->
+    <TextView
+        android:id="@+id/greeting_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="72dp"
+        android:text="Hi, XXX"
+        android:fontFamily="@font/inter_semi_bold"
+        android:textSize="30dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Date text   -->
+    <TextView
+        android:id="@+id/date_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="52dp"
+        android:text="Monday - Sep 16"
+        android:textSize="18dp"
+        android:fontFamily="@font/inter_regular"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/greeting_text" />
+
+    <!--Run button -->
+    <Button
+        android:id="@+id/run_button"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="92dp"
+        android:background="@drawable/bg_ripple"
+        android:stateListAnimator="@drawable/bt_state_animator"
+        android:text="Run"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        android:fontFamily="@font/inter_black_italic"
+        android:letterSpacing="-0.06"
+        android:textAllCaps="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/greeting_text" />
+
+    <!--Jump button -->
+    <Button
+        android:id="@+id/jump_button"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="76dp"
+        android:background="@drawable/bg_ripple"
+        android:stateListAnimator="@drawable/bt_state_animator"
+        android:text="Jump"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        android:fontFamily="@font/inter_black_italic"
+        android:letterSpacing="-0.06"
+        android:textAllCaps="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/run_button" />
+</androidx.constraintlayout.widget.ConstraintLayout>

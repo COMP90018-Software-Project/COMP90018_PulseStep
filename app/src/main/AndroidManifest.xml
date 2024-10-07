@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Network Permissions -->
+    <!-- Required to access the internet -->
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- Required to access network state for network-based location -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- Location Permissions -->
+    <!-- Allows access to approximate location; essential for GPS-based location features -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- Allows access to precise location data using GPS -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- Allows applications to request updates from the A-GPS module -->
+    <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" /> <!-- Device and Carrier Information Permissions -->
+    <!-- Allows access to device and carrier information for troubleshooting and network-based location -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" /> <!-- Wi-Fi Permissions -->
+    <!-- Allows access to Wi-Fi network information for network-based location -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- Allows modification of Wi-Fi state for network-based location -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" /> <!-- Storage Permissions -->
+    <!--
+ Allows reading and writing to external storage for data caching and search result caching.
+         If not granted, data will be written to private directories.
+    -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- For Android 11 and above: Allows comprehensive management of external storage (use with caution) -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" /> <!-- Bluetooth Permissions -->
+    <!-- Allows access to Bluetooth information for indoor positioning -->
+    <uses-permission android:name="android.permission.BLUETOOTH" /> <!-- Allows management of Bluetooth settings -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" /> <!-- Step counter Permissions -->
+    <!-- Allows recognition of user activities (required for step counting) -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" /> <!-- Allows access to body sensors (required for step counting) -->
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PulseStepApplication"
+        tools:targetApi="31">
+        <activity
+            android:name=".PersonalDetails"
+            android:exported="false" />
+        <activity
+            android:name=".SetPassword"
+            android:exported="false" />
+        <activity
+            android:name=".Registration"
+            android:exported="false" />
+        <activity
+            android:name=".Password"
+            android:exported="false" />
+        <activity
+            android:name=".Login"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity> <!-- AMap API Key -->
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="e4e9e19d62fb6fad695ed6ddf95b5227" /> <!-- Google Play Services Version -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" /> <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <!-- AMap Location Service -->
+        <service android:name="com.amap.api.location.APSService" />
+
+        <!-- Activity Declarations -->
+        <activity android:name=".AmapRunSummaryActivity"
+            android:exported="false"/>
+        <activity android:name=".AmapActivity"
+            android:exported="false"/>
+        <activity android:name=".GoogleMapActivity"
+            android:exported="false"/>
+
+        <activity
+            android:name=".ResetPassword"
+            android:exported="false"
+            android:theme="@style/Theme.PulseStepApplication" />
+        <activity
+            android:name=".Settings"
+            android:exported="false"
+            android:theme="@style/Theme.PulseStepApplication" />
+        <activity
+            android:name=".JumpSummaryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PulseStepApplication" />
+        <activity
+            android:name=".JumpActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PulseStepApplication" />
+        <activity
+            android:name=".RunSummaryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PulseStepApplication" />
+        <activity
+            android:name=".RunningActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PulseStepApplication" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service android:name=".service.TrackingService" />
+    </application>
+
+</manifest>

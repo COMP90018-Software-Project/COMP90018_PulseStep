@@ -1,0 +1,251 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Toolbar at the top -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <com.amap.api.maps.MapView
+            android:id="@+id/amap_view"
+            android:layout_marginTop="50dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="1dp" />
+        <!-- Centered Rotating ImageView on Top of the Map -->
+        <ImageView
+            android:id="@+id/wait"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="30dp"
+            android:layout_gravity="center"
+            android:tint="@color/like_orange"
+            android:background="@android:color/transparent"
+            app:srcCompat="@android:drawable/stat_notify_sync_noanim" />
+
+        <TextView
+            android:id="@+id/waitText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="60dp"
+            android:layout_gravity="center"
+            android:visibility="visible"
+            android:tint="@color/like_orange"
+            android:text=" " />
+    </FrameLayout>
+
+    <!-- Toolbar containing the back button and title -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar_run"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/back_button_running_page"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Back"
+            android:src="@drawable/ic_back_arrow"
+            android:layout_gravity="start"
+            android:paddingStart="8dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"/>
+
+        <TextView
+            android:id="@+id/run"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Run"
+            android:textColor="@color/black"
+            android:fontFamily="@font/overpass_bold"
+            android:paddingLeft="10dp"
+            android:textSize="20sp"
+            android:layout_gravity="center"
+            android:paddingTop="8dp" />
+
+    </androidx.appcompat.widget.Toolbar>
+    <ImageView
+        android:id="@+id/default_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/bg_workout"
+        android:visibility="gone"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="-50dp"/>
+
+    <!-- Card-like bottom layout for displaying time, steps, distance, and calories -->
+    <LinearLayout
+        android:id="@+id/card_layout"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:paddingTop="16dp"
+        android:paddingBottom="10dp"
+        android:layout_marginHorizontal="50dp"
+        android:layout_marginBottom="100dp"
+        android:backgroundTint="#FFFFFF"
+        android:background="@drawable/rounded_background"
+        >
+
+        <!-- Timer TextView -->
+        <TextView
+            android:id="@+id/timer_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textSize="40sp"
+            android:textStyle="bold"
+            android:layout_marginTop="25dp"
+            android:textColor="@android:color/black"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Steps, Distance, and Calories TextViews -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginEnd="20dp"
+                android:gravity="center_horizontal">
+
+                <!-- Steps Title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Steps"
+                    android:textColor="#808080"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <!-- Steps Value -->
+                <TextView
+                    android:id="@+id/step_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="20sp"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- Distance Container -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginEnd="20dp"
+                android:gravity="center_horizontal">
+
+                <!-- Distance Title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Avg Pace"
+                    android:textColor="#808080"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <!-- Distance Value -->
+                <TextView
+                    android:id="@+id/avg_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--'--''"
+                    android:textSize="20sp"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- Calories Container -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <!-- Calories Title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Calories"
+                    android:textSize="12sp"
+                    android:textColor="#808080"
+                    android:textStyle="bold" />
+
+                <!-- Calories Value -->
+                <TextView
+                    android:id="@+id/calories_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="20sp"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Buttons placed above the card layout -->
+    <RelativeLayout
+        android:id="@+id/button_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@id/card_layout"
+        android:layout_marginBottom="-35dp"
+        android:paddingHorizontal="10dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginRight="50dp">
+
+        <!-- Show Button -->
+        <ImageButton
+            android:id="@+id/btn_show"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/circular_button"
+            android:src="@drawable/ic_finish"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="20dp"
+            android:contentDescription="Finish"
+            android:visibility="gone"/>
+ <!-- Set to 'gone' initially -->
+
+        <!-- Stop Button -->
+        <ImageButton
+            android:id="@+id/btn_stop"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:background="@drawable/circular_button"
+            android:src="@drawable/start"
+            android:layout_centerInParent="true" />
+    </RelativeLayout>
+
+
+
+
+
+</RelativeLayout>

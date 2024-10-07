@@ -1,0 +1,15 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.PulseStepApplication" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="materialButtonStyle">@style/bt_workout</item>
+    </style>
+
+    <style name="Theme.PulseStepApplication" parent="Base.Theme.PulseStepApplication" />
+
+    <!-- 自定义按钮样式 -->
+    <style name="bt_workout" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@null</item> <!-- 防止背景色被主题覆盖 -->
+    </style>
+</resources>
