@@ -41,6 +41,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
+import java.util.Objects;
+
 public class WorkoutFragment extends Fragment {
 
     // Permission request codes
@@ -486,7 +488,9 @@ public class WorkoutFragment extends Fragment {
             proceedToMapActivity(null, null);
             return;
         }
-
+        if (fusedLocationClient == null) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        }
         Log.d(TAG, "Attempting to get last known location");
 
         try {
