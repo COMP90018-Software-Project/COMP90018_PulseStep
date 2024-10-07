@@ -70,6 +70,7 @@ public class RankingFragment extends Fragment {
                 setUpTargetPickerDialog();
             }
         });
+
         return view;
     }
 
