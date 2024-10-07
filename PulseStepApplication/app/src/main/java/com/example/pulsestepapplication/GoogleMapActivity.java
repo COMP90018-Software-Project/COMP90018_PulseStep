@@ -561,9 +561,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void requestLocationUpdates() {
         LocationRequest locationRequest = new LocationRequest.Builder(5000)
-                .setMinUpdateIntervalMillis(3000)
+                .setMinUpdateIntervalMillis(2000)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .setMinUpdateDistanceMeters(5)
+                .setMinUpdateDistanceMeters(2)
                 .build();
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
