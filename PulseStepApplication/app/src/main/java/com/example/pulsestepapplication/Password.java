@@ -23,6 +23,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class Password extends AppCompatActivity {
 
@@ -34,6 +35,7 @@ public class Password extends AppCompatActivity {
     private FirebaseAuth mAuth; // Firebase Authentication 实例
     private String email; // 保存从上一个页面传递的电子邮件
     private ProgressDialog progressDialog; // ProgressDialog 用于显示加载框
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +44,8 @@ public class Password extends AppCompatActivity {
 
         // 初始化 Firebase Auth
         mAuth = FirebaseAuth.getInstance();
+        // 获取 Firestore 实例
+        db = FirebaseFirestore.getInstance();
 
         passwordEditText = findViewById(R.id.passwordEditText);
         signInButton = findViewById(R.id.signInButton);
@@ -111,10 +115,24 @@ public class Password extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         // 登录成功
                         Toast.makeText(Password.this, "Login successful", Toast.LENGTH_SHORT).show();
-                        // 跳转到主页面或其他页面
-                        Intent intent = new Intent(Password.this, MainActivity.class);
-                        startActivity(intent);
-                        finish();
+                        // 获取当前用户的 UID
+                        String userId = mAuth.getCurrentUser().getUid();
+                        // 从 Firestore 中获取用户信息
+                        db.collection("users").document(userId).get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                            if (documentSnapshot.exists()) {
+                                                // 获取用户的全名
+                                                String fullName = documentSnapshot.getString("fullName");
+                                                // 显示登录成功信息和全名
+                                                Toast.makeText(Password.this, "Login successful. Welcome " + fullName, Toast.LENGTH_SHORT).show();
+                                                // 跳转到主页面或其他页面
+                                                Intent intent = new Intent(Password.this, MainActivity.class);
+                                                intent.putExtra("FULL_NAME", fullName); // 传递全名到下一个页面
+                                                intent.putExtra("USER_ID", userId); // 传递 UID 到下一个页面
+                                                startActivity(intent);
+                                                finish();
+                                            }
+                                        });
                     } else {
                         // 登录失败
                         if (task.getException() instanceof FirebaseAuthInvalidUserException) {

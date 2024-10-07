@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -22,6 +23,9 @@ import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import com.example.pulsestepapplication.databinding.ActivityMainBinding;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
@@ -29,12 +33,14 @@ public class MainActivity extends AppCompatActivity {
     // Cache the WorkoutFragment instance
     private Fragment workoutFragment;
     private Fragment activeFragment; // The currently displayed Fragment
-
+    private String userId; // 保存从上一个页面传递的电子邮件
+    private String fullName;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
 
         if (!hasLocationPermissions()) {
             requestPermissions(new String[]{
@@ -70,10 +76,12 @@ public class MainActivity extends AppCompatActivity {
         // Create WorkoutFragment instance
         workoutFragment = new WorkoutFragment();
         activeFragment = workoutFragment; // Set the initial fragment to workoutFragment
-
+        // 获取从上一个页面传递的uid
+        userId = getIntent().getStringExtra("USER_ID");
+        fullName = getIntent().getStringExtra("FULL_NAME");
         // Pass arguments, including location permission status
         Bundle args = new Bundle();
-        args.putString("name", "Jackie");
+        args.putString("name", fullName);
         args.putInt("age", 66);
         args.putDouble("weight", 66.6);
         args.putBoolean("locationGranted", locationGranted); // Pass location permission status
