@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_run_summary"
-    tools:context=".RunSummaryActivity">
+    tools:context=".AmapRunSummaryActivity">
 
     <!-- Default Background Image -->
     <ImageView
@@ -118,12 +118,11 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.5">
 
-        <!-- Google Map Fragment -->
-        <fragment
-            android:id="@+id/map_fragment_summary"
-            android:name="com.google.android.gms.maps.SupportMapFragment"
+        <com.amap.api.maps.MapView
+            android:id="@+id/map_view_summary"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
     </androidx.cardview.widget.CardView>
 
 

@@ -1,6 +1,7 @@
 package com.example.pulsestepapplication;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,45 +10,43 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
-import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.CameraUpdateFactory;
+import com.amap.api.maps.MapView;
+import com.amap.api.maps.MapsInitializer;
+import com.amap.api.maps.model.BitmapDescriptorFactory;
+import com.amap.api.maps.model.CustomMapStyleOptions;
+import com.amap.api.maps.model.LatLng;
+
+import com.amap.api.maps.model.LatLngBounds;
+import com.amap.api.maps.model.MarkerOptions;
+import com.amap.api.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.Dash;
 import com.google.android.gms.maps.model.Gap;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
-import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * RunSummaryActivity displays the summary of a run, including distance, time, address, step count,
- * and the trajectory on a Google Map.
+ * AmapRunSummaryActivity displays the summary of a run, including distance, time, address, step count,
+ * and the trajectory on an AMap.
  */
-public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class AmapRunSummaryActivity extends AppCompatActivity {
 
     // UI Components
-    private GoogleMap googleMap;
-    private SupportMapFragment mapFragment;
+    private AMap aMap;
+    private MapView mapView;
     private TextView distanceTextView;
     private TextView timeTextView;
     private TextView addressTextView;
     private TextView stepCountTextView;
     private ImageView defaultBackground;
     private TextView caloriesTextView;
-
     // Tracking Data
     private float distance; // in kilometers
     private String time; // formatted as "MM:SS"
@@ -58,12 +57,15 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private String avgPace;
     private TextView avgPaceTextView;
     private Button finishButton;
+
+    private static final String TAG = "AmapRunSummaryActivity";
     private String calories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_run_summary);
+        setupAmapPrivacy();
+        setContentView(R.layout.activity_amap_run_summary);
 
         // Initialize UI components
         initializeUIComponents();
@@ -77,17 +79,13 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         // Initialize and set up the map
         setupMap(savedInstanceState);
 
-        finishButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(RunSummaryActivity.this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                intent.putExtra("fragment", "WorkoutFragment"); // 可选：传递参数以指示返回到WorkoutFragment
-                startActivity(intent);
-                finish();
-            }
+        finishButton.setOnClickListener(v -> {
+            Intent intent = new Intent(AmapRunSummaryActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.putExtra("fragment", "WorkoutFragment");
+            startActivity(intent);
+            finish();
         });
-
     }
 
     /**
@@ -99,10 +97,11 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         addressTextView = findViewById(R.id.run_summary_address);
         avgPaceTextView = findViewById(R.id.run_summary_avg_pace);
         stepCountTextView = findViewById(R.id.run_summary_steps);
-        defaultBackground = findViewById(R.id.default_background);
         caloriesTextView = findViewById(R.id.run_summary_calories);
+        defaultBackground = findViewById(R.id.default_background);
         mapCard = findViewById(R.id.map_container);
         finishButton = findViewById(R.id.bt_finish_run);
+        mapView = findViewById(R.id.map_view_summary);
     }
 
     /**
@@ -136,33 +135,16 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         addressTextView.setText(address != null ? address : "N/A");
         avgPaceTextView.setText(avgPace);
         caloriesTextView.setText(calories);
-
     }
 
     /**
-     * Sets up the Google Map.
+     * Sets up the AMap.
      *
      * @param savedInstanceState The saved instance state.
      */
     private void setupMap(Bundle savedInstanceState) {
-        mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map_fragment_summary);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        } else {
-            Toast.makeText(this, "Error initializing map.", Toast.LENGTH_SHORT).show();
-            showDefaultBackground();
-        }
-    }
-
-    /**
-     * Callback when the Google Map is ready to be used.
-     *
-     * @param map The GoogleMap instance.
-     */
-    @Override
-    public void onMapReady(GoogleMap map) {
-        googleMap = map;
+        mapView.onCreate(savedInstanceState);
+        aMap = mapView.getMap();
 
         if (trajectory != null && !trajectory.isEmpty()) {
             displayTrajectoryOnMap();
@@ -170,98 +152,105 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             showDefaultBackground();
         }
     }
+
     /**
-     * Displays the trajectory on the Google Map with start and end markers.
+     * Displays the trajectory on the AMap with start and end markers.
      */
     private void displayTrajectoryOnMap() {
-        if (googleMap == null || trajectory == null || trajectory.isEmpty()) return;
-
-        // Define a dashed pattern for gaps in the trajectory
-        List<PatternItem> dashedPattern = Arrays.asList(new Dash(30), new Gap(20));
+        // Ensure that the map and trajectory data are available
+        if (aMap == null || trajectory == null || trajectory.isEmpty()) return;
 
         LatLng startPoint = null;
         LatLng endPoint = null;
 
-        // Builder to adjust camera bounds to include all points
+        // Builder to adjust the camera bounds to include all trajectory points
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
-        // Polyline options for the current solid segment
-        PolylineOptions polylineOptions = new PolylineOptions()
-                .color(getResources().getColor(R.color.like_orange))
-                .width(10);
+        // Initialize PolylineOptions for the current solid segment
+        PolylineOptions solidLineOptions = new PolylineOptions()
+                .color(getResources().getColor(R.color.like_orange)) // Set the color for the polyline
+                .width(10); // Set the width of the polyline
 
-        // Iterate over the trajectory
+        // Iterate over the trajectory list
         for (int i = 0; i < trajectory.size(); i++) {
             LatLng point = trajectory.get(i);
 
             if (point == null) {
-                // If a break is encountered, draw the current solid polyline if it has points
-                if (!polylineOptions.getPoints().isEmpty()) {
-                    googleMap.addPolyline(polylineOptions);
-                    polylineOptions = new PolylineOptions()
+                // Encountered a break in the trajectory, draw the current solid polyline if it has points
+                if (!solidLineOptions.getPoints().isEmpty()) {
+                    aMap.addPolyline(solidLineOptions); // Add the solid polyline to the map
+                    // Reset PolylineOptions for the next solid segment
+                    solidLineOptions = new PolylineOptions()
                             .color(getResources().getColor(R.color.like_orange))
                             .width(10);
                 }
 
-                // Attempt to draw a dashed line between previous and next valid points
+                // Attempt to draw a dashed line between the previous and next valid points
                 LatLng previousPoint = null;
+                // Find the previous non-null point
                 for (int j = i - 1; j >= 0; j--) {
                     previousPoint = trajectory.get(j);
                     if (previousPoint != null) break;
                 }
+
                 LatLng nextPoint = null;
+                // Find the next non-null point
                 for (int j = i + 1; j < trajectory.size(); j++) {
                     nextPoint = trajectory.get(j);
                     if (nextPoint != null) break;
                 }
+
                 if (previousPoint != null && nextPoint != null) {
-                    // Draw a dashed line connecting previousPoint and nextPoint
+                    // Ensure that the nextPoint is not the last point in the trajectory to avoid connecting to the endpoint
                     if (trajectory.indexOf(nextPoint) != trajectory.size() - 1) {
+                        // Create PolylineOptions for the dashed line
                         PolylineOptions dashedLineOptions = new PolylineOptions()
-                                .add(previousPoint)
-                                .add(nextPoint)
-                                .color(getResources().getColor(R.color.like_orange))
-                                .width(10)
-                                .pattern(dashedPattern);
-                        googleMap.addPolyline(dashedLineOptions);
-                    }}
-            } else {
-                // Add point to the current solid polyline
-                polylineOptions.add(point);
-                if (startPoint == null) {
-                    startPoint = point;
+                                .add(previousPoint) // Start point of the dashed line
+                                .add(nextPoint)     // End point of the dashed line
+                                .color(getResources().getColor(R.color.like_orange)) // Set the color
+                                .width(10) // Set the width
+                                .setDottedLine(true);// Apply the dashed pattern
+                        aMap.addPolyline(dashedLineOptions); // Add the dashed polyline to the map
+                    }
                 }
-                endPoint = point;
-                builder.include(point);
+            } else {
+                // Add the current point to the solid polyline
+                solidLineOptions.add(point);
+                if (startPoint == null) {
+                    startPoint = point; // Set the start point if it's the first point
+                }
+                endPoint = point; // Update the end point to the current point
+                builder.include(point); // Include the point in the LatLngBounds builder
             }
         }
 
         // Draw the last solid polyline if it has points
-        if (!polylineOptions.getPoints().isEmpty()) {
-            googleMap.addPolyline(polylineOptions);
+        if (!solidLineOptions.getPoints().isEmpty()) {
+            aMap.addPolyline(solidLineOptions);
         }
 
         if (startPoint != null) {
-            // Add a marker at the starting point
-            googleMap.addMarker(new MarkerOptions()
+            // Add a marker at the starting point with a green icon
+            aMap.addMarker(new MarkerOptions()
                     .position(startPoint)
                     .title("Start Point")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
 
-            // Add a marker at the ending point
-            googleMap.addMarker(new MarkerOptions()
+            // Add a marker at the ending point with a red icon
+            aMap.addMarker(new MarkerOptions()
                     .position(endPoint)
                     .title("End Point")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
         }
 
-        // Adjust the camera to include all points in the trajectory
+        // Adjust the camera to include all points within the trajectory
         LatLngBounds bounds = builder.build();
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+        aMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100)); // 100 is the padding in pixels
 
-        // Hide the default background if the trajectory is present
+        // Hide the default background view if the trajectory is present
         defaultBackground.setVisibility(View.GONE);
     }
+
 
 
     /**
@@ -274,37 +263,31 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     }
 
     /**
-     * Lifecycle methods to manage MapFragment's state.
+     * Lifecycle methods to manage MapView's state.
      */
     @Override
     protected void onResume() {
         super.onResume();
-        if (mapFragment != null) {
-            mapFragment.onResume();
-        }
+        mapView.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mapFragment != null) {
-            mapFragment.onPause();
-        }
+        mapView.onPause();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mapFragment != null) {
-            mapFragment.onDestroy();
-        }
+        mapView.onDestroy();
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (mapFragment != null) {
-            mapFragment.onSaveInstanceState(outState);
-        }
+    /**
+     * 设置高德地图隐私
+     */
+    private void setupAmapPrivacy() {
+        MapsInitializer.updatePrivacyShow(this, true, true);
+        MapsInitializer.updatePrivacyAgree(this, true);
     }
 }
