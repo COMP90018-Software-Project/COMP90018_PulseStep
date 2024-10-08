@@ -1063,9 +1063,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 // Background location permission denied
                 hasDeniedBackgroundPermission = true;
                 sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, true).apply();
-                Toast.makeText(this, "Background location permission denied, the app will stop tracking in the background.", Toast.LENGTH_LONG).show();
+                //Toast.makeText(this, "Background location permission denied, the app will stop tracking in the background.", Toast.LENGTH_LONG).show();
                 // Show guidance dialog, guiding the user to manually grant permission in settings
-                showPermissionDeniedDialog();
+                //showPermissionDeniedDialog();
                 updateGrantPermissionsButton();
 
             }
