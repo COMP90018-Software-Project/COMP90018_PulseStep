@@ -56,4 +56,7 @@
     <string name="reset_password_context">Your password has been successfully reset. click confirm to set a new password</string>
     <string name="set_new_password_context">Create a new password. Ensure it differs from previous ones for security</string>
     <string name="successfully_reset_password">Congratulations!\nYour password has been changed.\nClick continue to login.</string>
+    <!-- Switch rank list button    -->
+    <string name="bt_daily">Daily</string>
+    <string name="bt_monthly">Monthly</string>
 </resources>
