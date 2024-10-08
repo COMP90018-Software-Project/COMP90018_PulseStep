@@ -97,6 +97,7 @@
         <activity android:name=".NoMapActivity"
             android:exported="false"/>
         <activity android:name=".AmapRunSummaryActivity"
+            android:exported="false"/>
         <activity android:name=".AmapActivity"
             android:exported="false"/>
         <activity android:name=".GoogleMapActivity"
