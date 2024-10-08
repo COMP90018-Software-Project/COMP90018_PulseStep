@@ -144,6 +144,8 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp"
+            android:backgroundTint="#FFFFFF"
+            android:background="@drawable/rounded_background"
             >
 
             <!-- Time Section -->

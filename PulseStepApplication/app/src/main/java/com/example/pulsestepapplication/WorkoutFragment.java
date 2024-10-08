@@ -14,7 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +21,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.amap.api.maps.AMap;
@@ -47,6 +47,7 @@ public class WorkoutFragment extends Fragment {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE = 2;
     private static final float DISTANCE_THRESHOLD_METERS = 16093.4f; // 10 miles in meters
+    private static final int BACKGROUND_PERMISSION_REQUEST_CODE = 3;
 
     private Double lastLatitude = null;
     private Double lastLongitude = null;
@@ -100,18 +101,7 @@ public class WorkoutFragment extends Fragment {
                     placeholder.setVisibility(View.VISIBLE);
                 }
                 showToast("Location permissions not granted");
-            }
-        }else{
-            // We will initialize the map after getting location permissions and user's location
-            fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-            View placeholder = view.findViewById(R.id.map_placeholder);
-            if (!hasLocationPermissions()) {
-                if (placeholder != null) {
-                    placeholder.setVisibility(View.VISIBLE);
-                } else {
-                    Log.e(TAG, "No placeholder image found");
-                }
-                Log.d(TAG, "Location permissions not granted; map will not be displayed");
+                //proceedToNoMapActivity();
             }
         }
 
@@ -137,15 +127,46 @@ public class WorkoutFragment extends Fragment {
     }
     private void checkActivityRecognitionPermissionAndProceed() {
         if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+            // Request activity recognition permission
             requestActivityRecognitionPermission();
-        } else if (hasActivityRecognitionPermission()) {
-            checkLocationAndStartMapActivity();
         } else {
-            // Permission is required but was denied
-            showToast("Activity recognition permission is required.");
+            // Activity recognition permission granted, continue to check location permissions
+            checkLocationPermissionAndProceed();
         }
     }
 
+    private void checkLocationPermissionAndProceed() {
+        if (!hasLocationPermissions()) {
+            // Request location permissions
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            }, LOCATION_PERMISSION_REQUEST_CODE);
+        } else {
+            // Location permissions granted, check if background location permission is needed
+            checkBackgroundLocationPermission();
+        }
+    }
+
+    private void checkBackgroundLocationPermission() {
+        if (!hasBackgroundLocationPermission()) {
+            // Request background location permission
+            requestBackgroundPermission();
+        } else {
+            // No need for background permission or already granted, enter map mode
+            checkLocationAndStartMapActivity();
+        }
+    }
+
+    private boolean hasBackgroundLocationPermission() {
+        // Check if background permission is granted
+        return ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestBackgroundPermission() {
+        // Request background location permission
+        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_PERMISSION_REQUEST_CODE);
+    }
 
     /**
      * Initializes the appropriate map based on user's location.
@@ -483,10 +504,12 @@ public class WorkoutFragment extends Fragment {
     private void checkLocationAndStartMapActivity() {
         if (!hasLocationPermissions()) {
             showToast("Location permissions not granted");
-            proceedToMapActivity(null, null);
+            proceedToNoMapActivity();
             return;
         }
-
+        if (fusedLocationClient == null) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        }
         Log.d(TAG, "Attempting to get last known location");
 
         try {
@@ -505,11 +528,11 @@ public class WorkoutFragment extends Fragment {
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to get location", e);
                         showToast("Unable to retrieve current location");
-                        proceedToMapActivity(null, null);
+                        proceedToNoMapActivity();
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
-            proceedToMapActivity(null, null);
+            proceedToNoMapActivity();
         }
     }
 
@@ -527,17 +550,17 @@ public class WorkoutFragment extends Fragment {
                             proceedToMapActivity(latitude, longitude);
                         } else {
                             showToast("Unable to retrieve current location");
-                            proceedToMapActivity(null, null);
+                            proceedToNoMapActivity();
                         }
                     })
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to retrieve current location", e);
                         showToast("Unable to retrieve current location");
-                        proceedToMapActivity(null, null);
+                        proceedToNoMapActivity();
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
-            proceedToMapActivity(null, null);
+            proceedToNoMapActivity();
         }
     }
 
@@ -565,7 +588,7 @@ public class WorkoutFragment extends Fragment {
 
         Intent intent;
         if (latitude != null && longitude != null && isInChina(latitude, longitude)) {
-            intent = new Intent(getActivity(), AmapActivity.class);
+            intent = new Intent(getActivity(), GoogleMapActivity.class);
             Log.d(TAG, "Launching AmapActivity");
         } else {
             intent = new Intent(getActivity(), GoogleMapActivity.class);
@@ -587,7 +610,33 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("weight", userWeight);
         startActivity(intent);
     }
+    /**
+     * Starts the appropriate map activity based on the user's location and permissions.
+     */
+    private void proceedToNoMapActivity() {
+        boolean locationGranted = hasLocationPermissions();
+        boolean activityRecognitionGranted = hasActivityRecognitionPermission();
 
+        Intent intent;
+        intent = new Intent(getActivity(), NoMapActivity.class);
+        Log.d(TAG, "Launching NoMapActivity");
+
+
+        intent.putExtra("LOCATION_GRANTED", locationGranted);
+        intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
+        if (locationGranted && activityRecognitionGranted){
+            intent.putExtra("MAP_MODE", true);
+        }else if (!locationGranted && activityRecognitionGranted){
+            intent.putExtra("MAP_MODE", false);
+        }
+        intent.putExtra("LATITUDE", (Double) null);
+        intent.putExtra("LONGITUDE", (Double) null);
+
+        intent.putExtra("name", userName);
+        intent.putExtra("age", userAge);
+        intent.putExtra("weight", userWeight);
+        startActivity(intent);
+    }
     /**
      * Displays a short toast message to the user.
      *
@@ -625,7 +674,7 @@ public class WorkoutFragment extends Fragment {
                     initializeMap(view, null);
                 }
             } else {
-                proceedToMapActivity(null, null);
+                proceedToNoMapActivity();
             }
         } else if (requestCode == ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
