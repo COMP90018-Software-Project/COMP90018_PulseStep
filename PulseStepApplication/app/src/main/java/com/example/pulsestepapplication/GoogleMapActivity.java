@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -22,7 +24,11 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
@@ -433,27 +439,65 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
-    /**
-     * 显示后台定位权限的解释对话框
-     */
     private void showBackgroundPermissionRationale() {
-        new AlertDialog.Builder(this)
-                .setTitle("后台定位权限")
-                .setMessage("为了在应用程序后台运行时继续跟踪您的位置，需要授予后台定位权限。")
-                .setPositiveButton("允许", (dialog, which) -> {
-                    // 请求后台定位权限
-                    ActivityCompat.requestPermissions(GoogleMapActivity.this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_REQUEST_CODE);
-                })
-                .setNegativeButton("拒绝", (dialog, which) -> {
-                    // 用户拒绝权限请求，设置标志位
-                    hasDeniedBackgroundPermission = true;
-                    sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, true).apply();
-                    Toast.makeText(GoogleMapActivity.this, "后台定位权限被拒绝，应用将在后台停止跟踪。", Toast.LENGTH_LONG).show();
-                })
-                .create()
-                .show();
-    }
+        // Inflate the custom dialog layout
+        View dialogView = getLayoutInflater().inflate(R.layout.custom_dialog, null);
 
+        // Initialize the dialog builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.CustomAlertDialog);
+        builder.setView(dialogView);
+        builder.setCancelable(false); // Prevent dismissal on outside touch
+
+        // Create the AlertDialog
+        AlertDialog dialog = builder.create();
+
+        // Initialize buttons
+        Button btnAllow = dialogView.findViewById(R.id.btn_positive);
+        Button btnDeny = dialogView.findViewById(R.id.btn_negative);
+
+        // Set click listeners
+        btnAllow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ActivityCompat.requestPermissions(GoogleMapActivity.this,
+                        new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                        BACKGROUND_LOCATION_REQUEST_CODE);
+                dialog.dismiss();
+            }
+        });
+
+        btnDeny.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hasDeniedBackgroundPermission = true;
+                sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, true).apply();
+                Toast.makeText(GoogleMapActivity.this,
+                        "Background location permission denied. The app will stop tracking in the background.",
+                        Toast.LENGTH_LONG).show();
+                dialog.dismiss();
+            }
+        });
+
+        // Show the dialog before modifying window attributes
+        dialog.show();
+
+        // Modify the dialog window to position it at the bottom
+        Window window = dialog.getWindow();
+        if (window != null) {
+            // Remove default background to apply custom background with rounded corners
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+            // Set dialog to match parent width
+            WindowManager.LayoutParams params = window.getAttributes();
+            params.width = WindowManager.LayoutParams.MATCH_PARENT;
+            //params.height = 700;
+            params.gravity = Gravity.BOTTOM;
+            window.setAttributes(params);
+
+            // Optional: Add animations
+            window.getAttributes().windowAnimations = R.style.DialogAnimation; // Define in styles.xml
+        }
+    }
     /**
      * 显示权限被拒绝后的对话框，引导用户前往设置手动授予权限
      */
