@@ -38,7 +38,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/bt_daily"
-                    android:textColor="@drawable/bt_text_color_slector"
+                    android:textColor="@drawable/bt_text_color_selector"
                     app:strokeColor="@color/white"
                     android:textStyle="bold"
                     />
@@ -48,7 +48,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/bt_monthly"
-                    android:textColor="@drawable/bt_text_color_slector"
+                    android:textColor="@drawable/bt_text_color_selector"
                     app:strokeColor="@color/white"
                     android:textStyle="bold"
                     />
