@@ -141,8 +141,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 waitView.clearAnimation();
                 waitView.setVisibility(View.GONE);
                 waitTextView.setVisibility(View.GONE);
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                googleMap.setMyLocationEnabled(true);
                 btnPauseResume.setClickable(true);
-                Toast.makeText(GoogleMapActivity.this, "Unable to get accurate location", Toast.LENGTH_LONG).show();
+                Toast.makeText(GoogleMapActivity.this, "Weak positioning signal!", Toast.LENGTH_LONG).show();
             }
         }
     };
@@ -467,7 +471,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             // Map mode
             if (!isLocationReady) {
                 // If location is not ready, show a toast message
-                Toast.makeText(this, "Getting accurate positioning", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Getting accurate positioning ...", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -561,10 +565,11 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void requestLocationUpdates() {
         LocationRequest locationRequest = new LocationRequest.Builder(5000)
-                .setMinUpdateIntervalMillis(3000)
+                .setMinUpdateIntervalMillis(2000)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .setMinUpdateDistanceMeters(5)
+                .setMinUpdateDistanceMeters(2)
                 .build();
+
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
