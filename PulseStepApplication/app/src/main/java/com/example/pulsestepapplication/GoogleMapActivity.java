@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -178,6 +179,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     // Flags to track permission states
     private boolean hasRequestedBackgroundPermission = false;
     private boolean hasDeniedBackgroundPermission = false;
+    private ImageButton btnGrantPermissions;
 
     @SuppressLint("NewApi")
     @Override
@@ -198,7 +200,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         // 初始化UI组件
         initializeUIComponents();
-
+        
+        // 初始化“授予权限”按钮
+        btnGrantPermissions = findViewById(R.id.btn_grant_permissions);
+        setupGrantPermissionsButton();
         // 检查权限
         checkPermissions();
     }
@@ -247,6 +252,56 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
             btnPauseResume.setClickable(true);
         }
+    }
+    /**
+     * 设置“授予权限”按钮的点击监听器
+     */
+    private void setupGrantPermissionsButton() {
+        btnGrantPermissions.setOnClickListener(v -> {
+            // 打开应用设置页面
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", getPackageName(), null));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        });
+    }
+    /**
+     * 根据权限状态显示或隐藏“授予权限”按钮
+     */
+    private void updateGrantPermissionsButton() {
+        if (isMapMode && hasDeniedBackgroundPermission) {
+            btnGrantPermissions.setVisibility(View.VISIBLE);
+        } else {
+            btnGrantPermissions.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * 在权限状态变化后，更新“授予权限”按钮的可见性
+     */
+    private void handlePermissionChanges() {
+        if (isMapMode) {
+            // 检查定位权限是否被撤销
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // 权限被撤销，切换到无地图模式或其他处理
+                isMapMode = false;
+                if (googleMap != null) {
+                    googleMap.clear();
+                }
+                showDefaultMap();
+            }
+        }
+        // 检查活动识别权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+                // 权限被撤销，导航回MainActivity
+                Toast.makeText(this, "活动识别权限是必需的", Toast.LENGTH_SHORT).show();
+                navigateToWorkoutPage();
+            }
+        }
+
+        // 更新“授予权限”按钮的可见性
+        updateGrantPermissionsButton();
     }
 
     /**
@@ -849,30 +904,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         finish();
     }
 
-    /**
-     * 处理权限变化，当活动重新获得焦点时调用
-     */
-    private void handlePermissionChanges() {
-        if (isMapMode) {
-            // 检查定位权限是否被撤销
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // 权限被撤销，切换到无地图模式或其他处理
-                isMapMode = false;
-                if (googleMap != null) {
-                    googleMap.clear();
-                }
-                showDefaultMap();
-            }
-        }
-        // 检查活动识别权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
-                // 权限被撤销，导航回MainActivity
-                Toast.makeText(this, "活动识别权限是必需的", Toast.LENGTH_SHORT).show();
-                navigateToWorkoutPage();
-            }
-        }
-    }
 
     /**
      * 导航回MainActivity
@@ -904,6 +935,19 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             btnShow.setVisibility(View.GONE);
         } else {
             btnShow.setVisibility(View.VISIBLE);
+        }
+
+        // 检查用户是否已从设置页面授予后台定位权限
+        if (isMapMode && hasDeniedBackgroundPermission) {
+            // 重新检查后台定位权限
+            if (isBackgroundLocationPermissionGranted()) {
+                hasDeniedBackgroundPermission = false;
+                sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, false).apply();
+                // 更新按钮可见性
+                updateGrantPermissionsButton();
+                // 恢复追踪
+                resumeTracking();
+            }
         }
     }
 
@@ -966,6 +1010,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 hasDeniedBackgroundPermission = false;
                 sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, false).apply();
                 //resumeTracking();
+                updateGrantPermissionsButton();
             } else {
                 // 后台定位权限被拒绝
                 hasDeniedBackgroundPermission = true;
@@ -973,6 +1018,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 Toast.makeText(this, "后台定位权限被拒绝，应用将在后台停止跟踪。", Toast.LENGTH_LONG).show();
                 // 显示引导对话框，引导用户前往设置手动授予权限
                 showPermissionDeniedDialog();
+                updateGrantPermissionsButton();
+
             }
         } else if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
