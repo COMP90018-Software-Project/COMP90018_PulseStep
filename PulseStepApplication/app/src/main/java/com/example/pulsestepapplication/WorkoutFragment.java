@@ -144,7 +144,7 @@ public class WorkoutFragment extends Fragment {
             }, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
             // Location permissions granted, check if background location permission is needed
-            checkBackgroundLocationPermission();
+            checkLocationAndStartMapActivity();
         }
     }
 
