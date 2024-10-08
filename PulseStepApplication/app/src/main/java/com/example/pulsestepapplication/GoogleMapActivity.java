@@ -74,6 +74,8 @@ import java.util.Locale;
 public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCallback {
     // Constants
     private static final String TAG = "GoogleMapActivity";
+    private static final int LOCATION_REQUEST_CODE = 1001;
+    private static final int ACTIVITY_RECOGNITION_REQUEST_CODE = 1002;
     private static final int PERMISSION_REQUEST_CODE = 1001;
     private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1002;
     private static final float MOVE_ZOOM_LEVEL = 17f;
@@ -189,28 +191,26 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Checks and requests necessary permissions.
      */
     private void checkPermissions() {
-        List<String> permissionsNeeded = new ArrayList<>();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
-            permissionsNeeded.add(Manifest.permission.ACTIVITY_RECOGNITION);
-        }
-        if (isMapMode && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        }
-        if (isMapMode && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            permissionsNeeded.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
-        }
-        // Add check for FOREGROUND_SERVICE_LOCATION permission
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                permissionsNeeded.add(Manifest.permission.FOREGROUND_SERVICE_LOCATION);
+        // Check for activity recognition permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+                // Request activity recognition permission
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_REQUEST_CODE);
+                return;
             }
         }
-        if (!permissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, permissionsNeeded.toArray(new String[0]), PERMISSION_REQUEST_CODE);
-        } else {
-            // Permissions are granted, proceed with setup
-            setupActivity();
+
+        if (isMapMode) {
+            // Check for location permission
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // Request location permission
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
+                return;
+            }
         }
+
+        // Permissions are granted, proceed with setup
+        setupActivity();
     }
 
     /**
@@ -847,17 +847,22 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 Toast.makeText(this, "Background location permission is required", Toast.LENGTH_SHORT).show();
                 navigateToWorkoutPage();
             }
-        } else if (requestCode == PERMISSION_REQUEST_CODE) {
-            boolean allGranted = true;
-            for (int result : grantResults) {
-                allGranted &= (result == PackageManager.PERMISSION_GRANTED);
-            }
-            if (allGranted) {
-                // Permissions granted
-                setupActivity();
+        } else  if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Activity recognition permission granted
+                checkPermissions(); // Check for other permissions
             } else {
-                // Permissions denied, exit to workout page
-                Toast.makeText(this, "Required permissions are not granted", Toast.LENGTH_SHORT).show();
+                // Permission denied, exit to workout page
+                Toast.makeText(this, "Activity recognition permission is required", Toast.LENGTH_SHORT).show();
+                navigateToWorkoutPage();
+            }
+        } else if (requestCode == LOCATION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Location permission granted
+                checkPermissions(); // Check for other permissions
+            } else {
+                // Permission denied, exit to workout page
+                Toast.makeText(this, "Location permission is required in Map mode", Toast.LENGTH_SHORT).show();
                 navigateToWorkoutPage();
             }
         }

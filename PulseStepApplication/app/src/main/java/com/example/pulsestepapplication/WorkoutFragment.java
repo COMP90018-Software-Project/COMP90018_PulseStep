@@ -144,10 +144,10 @@ public class WorkoutFragment extends Fragment {
             }, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
             // Location permissions granted, check if background location permission is needed
-            checkBackgroundLocationPermission();
+            checkLocationAndStartMapActivity();
         }
     }
-
+/*
     private void checkBackgroundLocationPermission() {
         if (!hasBackgroundLocationPermission()) {
             // Request background location permission
@@ -167,6 +167,8 @@ public class WorkoutFragment extends Fragment {
         // Request background location permission
         ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_PERMISSION_REQUEST_CODE);
     }
+
+ */
 
     /**
      * Initializes the appropriate map based on user's location.
@@ -441,29 +443,6 @@ public class WorkoutFragment extends Fragment {
     }
 
     /**
-     * Checks if necessary permissions are granted and proceeds to location checks.
-     * If permissions are not granted, requests them.
-     */
-    private void checkPermissionsAndProceed() {
-        if (!hasLocationPermissions()) {
-            // Request location permissions if not granted
-            requestPermissions(new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-            }, LOCATION_PERMISSION_REQUEST_CODE);
-        } else {
-            // Location permissions are granted; check activity recognition permissions
-            if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
-                // Request activity recognition permission if required and not granted
-                requestActivityRecognitionPermission();
-            } else {
-                // Permissions are granted; proceed to start map activity
-                checkLocationAndStartMapActivity();
-            }
-        }
-    }
-
-    /**
      * Determines if activity recognition permission is required based on Android version.
      *
      * @return True if permission is required, false otherwise.
@@ -507,6 +486,7 @@ public class WorkoutFragment extends Fragment {
             proceedToNoMapActivity();
             return;
         }
+
         if (fusedLocationClient == null) {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
         }
@@ -666,6 +646,7 @@ public class WorkoutFragment extends Fragment {
                 if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
                     requestActivityRecognitionPermission();
                 } else {
+
                     checkLocationAndStartMapActivity();
                 }
                 // Re-initialize the map now that permissions are granted
