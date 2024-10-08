@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyViewHolder> {
 
@@ -44,6 +45,12 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
     public int getItemCount() {
 //        count num of items
         return rankModels.size();
+    }
+
+    // 更新数据并通知适配器数据变化
+    public void updateData(List<String> newData) {
+        List<String> mData = newData;
+        notifyDataSetChanged();  // 通知适配器数据已更改
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder{
