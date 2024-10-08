@@ -96,6 +96,8 @@
         <!-- Activity Declarations -->
         <activity android:name=".NoMapActivity"
             android:exported="false"/>
+        <activity android:name=".AmapActivity"
+            android:exported="false"/>
         <activity android:name=".AmapRunSummaryActivity"
         <activity android:name=".AmapActivity"
             android:exported="false"/>
