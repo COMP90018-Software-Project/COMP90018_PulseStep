@@ -89,7 +89,7 @@
             android:foregroundServiceType="location"
             tools:ignore="ForegroundServicePermission" />
         <service
-            android:name=".StepService"
+            android:name=".StepTrackingService"
             android:exported="false"
             android:foregroundServiceType="health" />
 
