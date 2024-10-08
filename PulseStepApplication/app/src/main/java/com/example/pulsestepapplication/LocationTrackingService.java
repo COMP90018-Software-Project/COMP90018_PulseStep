@@ -27,6 +27,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
 
 public class LocationTrackingService extends Service {
@@ -34,18 +35,18 @@ public class LocationTrackingService extends Service {
     private static final int NOTIFICATION_ID = 1;
     public static final String CHANNEL_ID = "LocationTrackingChannel";
 
-    // Define broadcast action strings
+    // 定义广播动作字符串
     public static final String ACTION_PAUSE_STEP_COUNTING = "com.example.pulsestepapplication.ACTION_PAUSE_STEP_COUNTING";
     public static final String ACTION_RESUME_STEP_COUNTING = "com.example.pulsestepapplication.ACTION_RESUME_STEP_COUNTING";
 
-    // Location variables
+    // 位置相关变量
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
 
     // StepCounter
     private StepCounter stepCounter;
 
-    // BroadcastReceiver to receive commands to pause and resume step counting
+    // 广播接收器，用于接收暂停和恢复步数计数的命令
     private BroadcastReceiver serviceReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -53,11 +54,11 @@ public class LocationTrackingService extends Service {
             switch (intent.getAction()) {
                 case ACTION_PAUSE_STEP_COUNTING:
                     stepCounter.stopStepTracking();
-                    Log.d(TAG, "Received ACTION_PAUSE_STEP_COUNTING");
+                    Log.d(TAG, "收到ACTION_PAUSE_STEP_COUNTING");
                     break;
                 case ACTION_RESUME_STEP_COUNTING:
                     stepCounter.startStepTracking();
-                    Log.d(TAG, "Received ACTION_RESUME_STEP_COUNTING");
+                    Log.d(TAG, "收到ACTION_RESUME_STEP_COUNTING");
                     break;
             }
         }
@@ -71,7 +72,7 @@ public class LocationTrackingService extends Service {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         setupLocationCallback();
 
-        // Initialize StepCounter
+        // 初始化StepCounter
         stepCounter = new StepCounter(this);
         stepCounter.setStepCounterListener(new StepCounter.StepCounterListener() {
             @Override
@@ -81,29 +82,29 @@ public class LocationTrackingService extends Service {
 
             @Override
             public void onPermissionRequired() {
-                Log.e(TAG, "ACTIVITY_RECOGNITION permission required");
-                // Since the service cannot directly request permissions, ensure permissions are requested and granted in the activity
+                Log.e(TAG, "ACTIVITY_RECOGNITION权限是必需的");
+                // 由于服务无法直接请求权限，确保在活动中请求并授予权限
                 stopSelf();
             }
         });
 
-        // Register BroadcastReceiver
+        // 注册BroadcastReceiver
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_PAUSE_STEP_COUNTING);
         filter.addAction(ACTION_RESUME_STEP_COUNTING);
         LocalBroadcastManager.getInstance(this).registerReceiver(serviceReceiver, filter);
 
-        Log.d(TAG, "Service onCreate");
+        Log.d(TAG, "服务onCreate");
     }
 
     /**
-     * Creates a notification channel for the foreground service.
+     * 创建前台服务的通知渠道
      */
     private void createNotificationChannel() {
-        // Create notification channel
+        // 创建通知渠道
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Location Tracking";
-            String description = "Notifies the user that location tracking service is running";
+            CharSequence name = "位置追踪";
+            String description = "通知用户位置追踪服务正在运行";
             int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
@@ -114,19 +115,19 @@ public class LocationTrackingService extends Service {
     }
 
     /**
-     * Builds the notification for the foreground service.
+     * 构建前台服务的通知
      *
-     * @return NotificationCompat.Builder object.
+     * @return NotificationCompat.Builder对象
      */
     private NotificationCompat.Builder getNotificationBuilder() {
-        // Create notification
+        // 创建通知
         Intent notificationIntent = new Intent(this, GoogleMapActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent,
                 PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("PulseStep Running")
-                .setContentText("Location tracking service is running in the background")
+                .setContentText("位置追踪服务正在后台运行")
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_LOW);
@@ -135,46 +136,56 @@ public class LocationTrackingService extends Service {
     }
 
     /**
-     * Sets up the location callback to receive location updates.
+     * 设置位置回调以接收位置更新
      */
     private void setupLocationCallback() {
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 for (android.location.Location location : locationResult.getLocations()) {
-                    // Handle location updates
+                    // 处理位置更新
                     LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                     sendLocationUpdate(latLng);
-                    Log.d(TAG, "Location updated: " + latLng.toString());
+                    Log.d(TAG, "位置更新: " + latLng.toString());
                 }
             }
         };
     }
 
     /**
-     * Starts requesting location updates.
+     * 开始请求位置更新
      */
     @SuppressLint("MissingPermission")
-    private void startLocationUpdates() {
-        LocationRequest locationRequest = new LocationRequest.Builder(5000)
-                .setMinUpdateIntervalMillis(3000)
-                .setPriority(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY)
-                .build();
+    private void startLocationUpdates(boolean isBackgroundPermissionGranted) {
+        LocationRequest locationRequest;
+        if (isBackgroundPermissionGranted) {
+            // 后台定位权限已授予，使用高精度
+            locationRequest = new LocationRequest.Builder(5000)
+                    .setMinUpdateIntervalMillis(3000)
+                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                    .build();
+        } else {
+            // 后台定位权限未授予，仅前台使用，降低精度以节省电量
+            locationRequest = new LocationRequest.Builder(5000)
+                    .setMinUpdateIntervalMillis(3000)
+                    .setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
+                    .build();
+        }
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
     }
 
     /**
-     * Stops requesting location updates.
+     * 停止请求位置更新
      */
     private void stopLocationUpdates() {
         fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
     /**
-     * Sends a location update to the activity via local broadcast.
+     * 发送位置更新广播到活动
      *
-     * @param latLng The updated location coordinates.
+     * @param latLng 更新的位置坐标
      */
     private void sendLocationUpdate(LatLng latLng) {
         Intent intent = new Intent("com.example.pulsestepapplication.LOCATION_UPDATE");
@@ -184,9 +195,9 @@ public class LocationTrackingService extends Service {
     }
 
     /**
-     * Sends a step count update to the activity via local broadcast.
+     * 发送步数更新广播到活动
      *
-     * @param stepCount The updated step count.
+     * @param stepCount 更新的步数
      */
     private void sendStepUpdate(int stepCount) {
         Intent intent = new Intent("com.example.pulsestepapplication.STEP_UPDATE");
@@ -196,20 +207,28 @@ public class LocationTrackingService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Check permissions
+        // 检查权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                Log.e(TAG, "Missing FOREGROUND_SERVICE_LOCATION permission");
+                Log.e(TAG, "缺少FOREGROUND_SERVICE_LOCATION权限");
                 stopSelf();
                 return START_NOT_STICKY;
             }
         }
-        // Start foreground service
+        // 启动前台服务
         startForeground(NOTIFICATION_ID, getNotificationBuilder().build());
-        startLocationUpdates();
-        // Start step counting
+
+        // 获取后台定位权限状态
+        boolean isBackgroundPermissionGranted = false;
+        if (intent != null) {
+            isBackgroundPermissionGranted = intent.getBooleanExtra("background_permission_granted", false);
+        }
+
+        // 开始位置更新
+        startLocationUpdates(isBackgroundPermissionGranted);
+        // 开始步数计数
         stepCounter.startStepTracking();
-        Log.d(TAG, "Service onStartCommand");
+        Log.d(TAG, "服务onStartCommand");
         return START_STICKY;
     }
 
@@ -219,7 +238,7 @@ public class LocationTrackingService extends Service {
         stopLocationUpdates();
         stepCounter.stopStepTracking();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceReceiver);
-        Log.d(TAG, "Service destroyed");
+        Log.d(TAG, "服务被销毁");
     }
 
     @Nullable
