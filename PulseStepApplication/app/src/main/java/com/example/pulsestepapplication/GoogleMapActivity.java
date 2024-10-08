@@ -76,9 +76,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private static final String TAG = "GoogleMapActivity";
     private static final int LOCATION_REQUEST_CODE = 1001;
     private static final int ACTIVITY_RECOGNITION_REQUEST_CODE = 1002;
-    private static final int PERMISSION_REQUEST_CODE = 1001;
-    private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1002;
-    private static final float MOVE_ZOOM_LEVEL = 17f;
+    private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1003; // Changed to 1003 to avoid conflict
+    private static final float MOVE_ZOOM_LEVEL = 19f;
     private static final float DEFAULT_ZOOM_LEVEL = 15f;
     private static final float MAX_ZOOM_LEVEL = 19f;
     private static final float DISTANCE_THRESHOLD_METERS = 1.0f; // Distance threshold in meters
@@ -167,6 +166,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private double userWeight;
     private Geocoder geocoder;
 
+    // Flag to indicate if background location permission is granted
+    private boolean isBackgroundLocationPermissionGranted = false;
+
     @SuppressLint("NewApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -185,6 +187,62 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
         // Check permissions
         checkPermissions();
+    }
+
+    /**
+     * Initializes the UI components by finding them via their IDs.
+     */
+    private void initializeUIComponents() {
+        btnPauseResume = findViewById(R.id.btn_stop);
+        btnShow = findViewById(R.id.btn_show);
+        timerTextView = findViewById(R.id.timer_text_view);
+        stepTextView = findViewById(R.id.step_text_view);
+        avgPaceTextView = findViewById(R.id.avg_text_view);
+        cTextView = findViewById(R.id.calories_text_view);
+        backButton = findViewById(R.id.back_button_running_page);
+        mapImageView = findViewById(R.id.default_image_view);
+        waitView = findViewById(R.id.wait);
+        waitTextView = findViewById(R.id.waitText);
+        // Hide the map initially
+        View mapFragment = findViewById(R.id.google_map);
+        if (mapFragment != null) {
+            mapFragment.setVisibility(View.GONE);  // Hide the map at first
+        }
+        // Set click listener for the back button
+        backButton.setOnClickListener(v -> navigateToMainActivity());
+
+        if (isMapMode) {
+            // Start rotation animation
+            Animation rotateAnimation = AnimationUtils.loadAnimation(this, R.anim.rotate);
+            waitView.startAnimation(rotateAnimation);
+            waitView.setVisibility(View.VISIBLE);
+            waitTextView.setVisibility(View.VISIBLE);
+            btnPauseResume.setClickable(false);
+        } else {
+            waitView.setVisibility(View.GONE);
+            waitTextView.setVisibility(View.GONE);
+            // Show the map once location is ready
+
+            if (mapFragment != null) {
+                mapFragment.setVisibility(View.VISIBLE);  // Show the map when location is ready
+            }
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            if (googleMap != null) {
+                googleMap.setMyLocationEnabled(true);
+            }
+            btnPauseResume.setClickable(true);
+        }
+    }
+
+    /**
+     * Navigates back to the MainActivity.
+     */
+    private void navigateToMainActivity() {
+        Intent intent = new Intent(GoogleMapActivity.this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     /**
@@ -235,60 +293,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Initializes the UI components by finding them via their IDs.
-     */
-    private void initializeUIComponents() {
-        btnPauseResume = findViewById(R.id.btn_stop);
-        btnShow = findViewById(R.id.btn_show);
-        timerTextView = findViewById(R.id.timer_text_view);
-        stepTextView = findViewById(R.id.step_text_view);
-        avgPaceTextView = findViewById(R.id.avg_text_view);
-        cTextView = findViewById(R.id.calories_text_view);
-        backButton = findViewById(R.id.back_button_running_page);
-        mapImageView = findViewById(R.id.default_image_view);
-        waitView = findViewById(R.id.wait);
-        waitTextView = findViewById(R.id.waitText);
-        // Hide the map initially
-        View mapFragment = findViewById(R.id.google_map);
-        if (mapFragment != null) {
-            mapFragment.setVisibility(View.GONE);  // Hide the map at first
-        }
-        // Set click listener for the back button
-        backButton.setOnClickListener(v -> navigateToMainActivity());
-
-        if (isMapMode) {
-            // Start rotation animation
-            Animation rotateAnimation = AnimationUtils.loadAnimation(this, R.anim.rotate);
-            waitView.startAnimation(rotateAnimation);
-            waitView.setVisibility(View.VISIBLE);
-            waitTextView.setVisibility(View.VISIBLE);
-            btnPauseResume.setClickable(false);
-        } else {
-            waitView.setVisibility(View.GONE);
-            waitTextView.setVisibility(View.GONE);
-            // Show the map once location is ready
-
-            if (mapFragment != null) {
-                mapFragment.setVisibility(View.VISIBLE);  // Show the map when location is ready
-            }
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            googleMap.setMyLocationEnabled(true);
-            btnPauseResume.setClickable(true);
-        }
-    }
-
-    /**
-     * Navigates back to the MainActivity.
-     */
-    private void navigateToMainActivity() {
-        Intent intent = new Intent(GoogleMapActivity.this, MainActivity.class);
-        startActivity(intent);
-        finish();
-    }
-
-    /**
      * Sets up the SupportMapFragment and initializes the map asynchronously.
      */
     private void setupMapFragment() {
@@ -321,6 +325,30 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 Toast.makeText(this, "Obtaining location, please wait...", Toast.LENGTH_SHORT).show();
                 return;
             }
+            if (isMapMode) {
+                checkAndRequestBackgroundLocationPermission();
+            } else {
+                resumeTracking();
+            }
+        }
+    }
+
+    /**
+     * Checks and requests background location permission if needed.
+     */
+    private void checkAndRequestBackgroundLocationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Check if background location permission is already granted
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // Request background location permission
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_REQUEST_CODE);
+            } else {
+                // Permission already granted
+                isBackgroundLocationPermissionGranted = true;
+                resumeTracking();
+            }
+        } else {
+            // Background location permission is not required below Android Q
             resumeTracking();
         }
     }
@@ -381,7 +409,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         Intent pauseIntent = new Intent(LocationTrackingService.ACTION_PAUSE_STEP_COUNTING);
         LocalBroadcastManager.getInstance(this).sendBroadcast(pauseIntent);
     }
-
     /**
      * Starts the tracking service.
      */
@@ -824,6 +851,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (isTracking) {
             timerHandler.removeCallbacks(timerRunnable);
         }
+
+        // Check if the app is going to the background
+        if (isTracking && isMapMode && !isBackgroundLocationPermissionGranted) {
+            pauseTracking();
+            Toast.makeText(this, "Tracking paused because background location permission is not granted.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
@@ -841,13 +874,17 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (requestCode == BACKGROUND_LOCATION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Background location permission granted
-                startTrackingService();
+                isBackgroundLocationPermissionGranted = true;
+                resumeTracking();
             } else {
-                // Permission denied, exit to workout page
-                Toast.makeText(this, "Background location permission is required", Toast.LENGTH_SHORT).show();
-                navigateToWorkoutPage();
+                // Permission denied, inform the user and handle accordingly
+                isBackgroundLocationPermissionGranted = false;
+                Toast.makeText(this, "Background location permission denied. Tracking will pause when app is not in use.", Toast.LENGTH_LONG).show();
+
+                //startTrackingService();
+                // Optionally, provide a way for the user to grant permission from settings
             }
-        } else  if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
+        } else if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Activity recognition permission granted
                 checkPermissions(); // Check for other permissions
