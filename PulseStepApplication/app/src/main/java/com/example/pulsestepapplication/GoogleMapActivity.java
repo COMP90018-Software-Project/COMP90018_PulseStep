@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Address;
@@ -75,17 +76,17 @@ import java.util.List;
 import java.util.Locale;
 
 public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCallback {
-    // Constants
+    // 常量
     private static final String TAG = "GoogleMapActivity";
     private static final int LOCATION_REQUEST_CODE = 1001;
     private static final int ACTIVITY_RECOGNITION_REQUEST_CODE = 1002;
-    private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1003; // Unique Request Code
+    private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1003; // 唯一请求码
     private static final float MOVE_ZOOM_LEVEL = 17f;
     private static final float DEFAULT_ZOOM_LEVEL = 15f;
     private static final float MAX_ZOOM_LEVEL = 19f;
-    private static final float DISTANCE_THRESHOLD_METERS = 1.0f; // Distance threshold in meters
+    private static final float DISTANCE_THRESHOLD_METERS = 1.0f; // 距离阈值，单位米
 
-    // UI Components
+    // UI组件
     private ImageButton btnPauseResume;
     private TextView timerTextView, stepTextView, avgPaceTextView;
     private ImageButton btnShow;
@@ -95,14 +96,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private ImageView waitView;
     private TextView waitTextView;
 
-    // Map and Location
+    // 地图和位置
     private GoogleMap googleMap;
     private double initialLatitude;
     private double initialLongitude;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
 
-    // Tracking Variables
+    // 追踪变量
     private final List<Polyline> polyLines = new ArrayList<>();
     private final List<LatLng> pathPoints = new ArrayList<>();
     private final List<LatLng> trajectory = new ArrayList<>();
@@ -114,9 +115,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private int currentStepCount = 0;
     private static final Double realDistance = 0.05;
     private static final double metValue = 8.0;
-    private static final int LOCATION_TIMEOUT = 10000; // Location timeout in milliseconds
+    private static final int LOCATION_TIMEOUT = 10000; // 定位超时时间，毫秒
 
-    // Timer Variables
+    // 定时器变量
     private long startTime = 0L;
     private long pauseTime = 0L;
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
@@ -132,7 +133,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             timerTextView.setText(String.format("%02d:%02d", minutes, seconds));
             elapsedTime = millis;
 
-            // Update average pace in No-map mode
+            // 在无地图模式下更新平均配速
             if (!isMapMode) {
                 updateAvgPaceNoMapMode();
             }
@@ -140,7 +141,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
     };
 
-    // Location Timeout Handler
+    // 定位超时处理
     private final Handler locationTimeoutHandler = new Handler(Looper.getMainLooper());
     private final Runnable locationTimeoutRunnable = new Runnable() {
         @Override
@@ -155,12 +156,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                     return;
                 }
                 googleMap.setMyLocationEnabled(true);
-                Toast.makeText(GoogleMapActivity.this, "Location timeout, signal is weak!", Toast.LENGTH_LONG).show();
+                Toast.makeText(GoogleMapActivity.this, "定位超时，信号较弱！", Toast.LENGTH_LONG).show();
             }
         }
     };
 
-    // Mode flag: true for Map mode, false for No-map mode
+    // 模式标志：地图模式为true，无地图模式为false
     private boolean isMapMode;
     private boolean isServiceRunning = false;
 
@@ -168,6 +169,11 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private int userAge;
     private double userWeight;
     private Geocoder geocoder;
+
+    // SharedPreferences相关
+    private static final String PREFS_NAME = "LocationPrefs";
+    private static final String KEY_HAS_DENIED_BACKGROUND_PERMISSION = "hasDeniedBackgroundPermission";
+    private SharedPreferences sharedPreferences;
 
     // Flags to track permission states
     private boolean hasRequestedBackgroundPermission = false;
@@ -179,22 +185,26 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_google_map);
 
-        // Get the mode from the intent
+        // 获取模式
         Intent intent = getIntent();
-        isMapMode = intent.getBooleanExtra("MAP_MODE", true); // default to Map mode
+        isMapMode = intent.getBooleanExtra("MAP_MODE", true); // 默认地图模式
         userName = intent.getStringExtra("name");
         userAge = intent.getIntExtra("age", 25);
         userWeight = intent.getDoubleExtra("weight", 70.0);
 
-        // Initialize UI components
+        // 初始化SharedPreferences
+        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        hasDeniedBackgroundPermission = sharedPreferences.getBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, false);
+
+        // 初始化UI组件
         initializeUIComponents();
 
-        // Check permissions
+        // 检查权限
         checkPermissions();
     }
 
     /**
-     * Initializes the UI components by finding them via their IDs.
+     * 初始化UI组件，通过ID查找
      */
     private void initializeUIComponents() {
         btnPauseResume = findViewById(R.id.btn_stop);
@@ -207,16 +217,16 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         mapImageView = findViewById(R.id.default_image_view);
         waitView = findViewById(R.id.wait);
         waitTextView = findViewById(R.id.waitText);
-        // Hide the map initially
+        // 初始时隐藏地图
         View mapFragment = findViewById(R.id.google_map);
         if (mapFragment != null) {
-            mapFragment.setVisibility(View.GONE);  // Hide the map at first
+            mapFragment.setVisibility(View.GONE);  // 初始隐藏地图
         }
-        // Set click listener for the back button
+        // 设置返回按钮点击监听
         backButton.setOnClickListener(v -> navigateToMainActivity());
 
         if (isMapMode) {
-            // Start rotation animation
+            // 开始旋转动画
             Animation rotateAnimation = AnimationUtils.loadAnimation(this, R.anim.rotate);
             waitView.startAnimation(rotateAnimation);
             waitView.setVisibility(View.VISIBLE);
@@ -225,10 +235,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         } else {
             waitView.setVisibility(View.GONE);
             waitTextView.setVisibility(View.GONE);
-            // Show the map once location is ready
-
+            // 显示默认地图
             if (mapFragment != null) {
-                mapFragment.setVisibility(View.VISIBLE);  // Show the map when location is ready
+                mapFragment.setVisibility(View.VISIBLE);  // 当位置准备好时显示地图
             }
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
@@ -241,7 +250,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Navigates back to the MainActivity.
+     * 导航回MainActivity
      */
     private void navigateToMainActivity() {
         Intent intent = new Intent(GoogleMapActivity.this, MainActivity.class);
@@ -250,38 +259,37 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Checks and requests necessary permissions.
+     * 检查并请求必要的权限
      */
     private void checkPermissions() {
-        // Check for activity recognition permission
+        // 检查活动识别权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
-                // Request activity recognition permission
+                // 请求活动识别权限
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_REQUEST_CODE);
                 return;
             }
         }
 
         if (isMapMode) {
-            // Check for location permission
+            // 检查定位权限
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // Request location permission
+                // 请求定位权限
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
                 return;
             }
         }
 
-        // Permissions are granted, proceed with setup
+        // 权限已授予，继续设置
         setupActivity();
     }
 
     /**
-     * Sets up the activity based on the selected mode.
+     * 设置活动，根据选择的模式
      */
     private void setupActivity() {
-        // Initialize location services if in Map mode
+        // 如果是地图模式，初始化地图
         if (isMapMode) {
-            // Set up map fragment
             setupMapFragment();
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
             setupLocationCallback();
@@ -289,15 +297,15 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             showDefaultMap();
         }
 
-        // Set up button listeners
+        // 设置按钮监听
         setupButtonListeners();
 
-        // Start the tracking service
+        // 启动追踪服务
         startTrackingService();
     }
 
     /**
-     * Sets up the SupportMapFragment and initializes the map asynchronously.
+     * 设置SupportMapFragment并异步初始化地图
      */
     private void setupMapFragment() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -306,12 +314,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         } else {
-            Log.e(TAG, "Map fragment is null");
+            Log.e(TAG, "地图片段为空");
         }
     }
 
     /**
-     * Sets up the button listeners for pause/resume and show actions.
+     * 设置按钮的点击监听
      */
     private void setupButtonListeners() {
         btnPauseResume.setOnClickListener(v -> handleStartStopButtonClick());
@@ -319,105 +327,111 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Handles the start/stop button click event.
+     * 处理开始/暂停按钮的点击事件
      */
     private void handleStartStopButtonClick() {
         if (isTracking) {
             pauseTracking();
         } else {
             if (isMapMode && !isLocationReady) {
-                Toast.makeText(this, "Obtaining location, please wait...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "正在获取位置，请稍候...", Toast.LENGTH_SHORT).show();
                 return;
             }
             if (isMapMode) {
-                checkAndRequestBackgroundLocationPermission();
+                if (isBackgroundLocationPermissionGranted()) {
+                    // 已授予后台定位权限，恢复追踪
+                    resumeTracking();
+                } else {
+                    if (!hasRequestedBackgroundPermission && !hasDeniedBackgroundPermission) {
+                        // 尚未请求过后台定位权限，进行请求
+                        checkAndRequestBackgroundLocationPermission();
+                    } else if (hasDeniedBackgroundPermission) {
+                        // 用户已拒绝后台定位权限，显示引导对话框
+                       // showPermissionDeniedDialog();
+                    }
+                    // 即使未授予后台定位权限，仍允许前台追踪
+                    resumeTracking();
+                }
             } else {
+                // 无地图模式，正常恢复追踪
                 resumeTracking();
             }
         }
     }
 
     /**
-     * Checks and requests background location permission if needed.
+     * 检查并请求后台定位权限
      */
     private void checkAndRequestBackgroundLocationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Check if background location permission is already granted
+            // 检查后台定位权限是否已授予
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // Check if we've already requested this permission
-                if (!hasRequestedBackgroundPermission) {
-                    hasRequestedBackgroundPermission = true;
-                    // Show rationale if needed
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
-                        showBackgroundPermissionRationale();
-                    } else {
-                        // Directly request the permission
-                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_REQUEST_CODE);
-                    }
+                // 检查是否应展示权限请求说明
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                    // 显示权限请求说明
+                    showBackgroundPermissionRationale();
                 } else {
-                    // Permission has been denied previously
-                    if (hasDeniedBackgroundPermission) {
-                        // Inform the user and guide them to settings
-                        showPermissionDeniedDialog();
-                    }
+                    // 直接请求权限
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_REQUEST_CODE);
                 }
-            } else {
-                // Permission already granted
-                resumeTracking();
             }
-        } else {
-            // Background location permission is not required below Android Q
-            resumeTracking();
         }
     }
 
     /**
-     * Shows a rationale dialog for background location permission.
+     * 显示后台定位权限的解释对话框
      */
     private void showBackgroundPermissionRationale() {
         new AlertDialog.Builder(this)
-                .setTitle("Background Location Permission")
-                .setMessage("This app requires background location access to track your activities even when the app is not in use.")
-                .setPositiveButton("Allow", (dialog, which) -> {
-                    // Request the permission
+                .setTitle("后台定位权限")
+                .setMessage("为了在应用程序后台运行时继续跟踪您的位置，需要授予后台定位权限。")
+                .setPositiveButton("允许", (dialog, which) -> {
+                    // 请求后台定位权限
                     ActivityCompat.requestPermissions(GoogleMapActivity.this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_REQUEST_CODE);
                 })
-                .setNegativeButton("Deny", (dialog, which) -> {
-                    // User declined, set flag
+                .setNegativeButton("拒绝", (dialog, which) -> {
+                    // 用户拒绝权限请求，设置标志位
                     hasDeniedBackgroundPermission = true;
-                    Toast.makeText(GoogleMapActivity.this, "Background location permission denied. Tracking will pause when the app is not in use.", Toast.LENGTH_LONG).show();
+                    sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, true).apply();
+                    Toast.makeText(GoogleMapActivity.this, "后台定位权限被拒绝，应用将在后台停止跟踪。", Toast.LENGTH_LONG).show();
                 })
                 .create()
                 .show();
     }
 
     /**
-     * Shows a dialog directing the user to app settings to enable background location.
+     * 显示权限被拒绝后的对话框，引导用户前往设置手动授予权限
      */
     private void showPermissionDeniedDialog() {
         new AlertDialog.Builder(this)
-                .setTitle("Background Location Permission Denied")
-                .setMessage("To enable background tracking, please allow background location access in the app settings.")
-                .setPositiveButton("Open Settings", (dialog, which) -> {
-                    // Open app settings
+                .setTitle("后台定位权限被拒绝")
+                .setMessage("若要启用后台跟踪，请在应用设置中允许后台定位权限。")
+                .setPositiveButton("打开设置", (dialog, which) -> {
+                    // 打开应用设置页面
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", getPackageName(), null));
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> {
-                    Toast.makeText(GoogleMapActivity.this, "Background location permission denied. Tracking will pause when the app is not in use.", Toast.LENGTH_LONG).show();
+                .setNegativeButton("取消", (dialog, which) -> {
+                    Toast.makeText(this, "后台定位权限被拒绝，应用将在后台停止跟踪。", Toast.LENGTH_LONG).show();
                 })
                 .create()
                 .show();
     }
-
     /**
      * Starts the tracking process.
      */
     @SuppressLint({"MissingPermission", "UseCompatLoadingForDrawables"})
     private void resumeTracking() {
+        // 如果已经在追踪且未暂停，则不执行任何操作
+        if (isTracking && !isPaused) {
+            Log.d(TAG, "resumeTracking() 已经在追踪且未暂停，跳过执行。");
+            return;
+        }
+
         isTracking = true;
         isPaused = false;
+
         if (isFirstStart) {
             pathPoints.clear();
             totalDistance = 0.0f;
@@ -426,7 +440,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             isFirstStart = false;
 
             if (isMapMode) {
-                // Get the last known location and move the camera
+                // 获取最后已知位置并移动相机
                 fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
                     if (location != null) {
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -435,41 +449,44 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 });
             }
         } else {
-            // Adjust startTime to account for pause duration
+            // 仅在从暂停状态恢复时调整 startTime
             long pauseDuration = SystemClock.elapsedRealtime() - pauseTime;
             startTime += pauseDuration;
             timerHandler.postDelayed(timerRunnable, 0);
         }
-        btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.pause));
+
+        btnPauseResume.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pause));
         btnShow.setVisibility(View.GONE);
 
-        // Send broadcast to service to resume step counting
+        // 发送广播给服务，恢复步数计数
         Intent resumeIntent = new Intent(LocationTrackingService.ACTION_RESUME_STEP_COUNTING);
+        // 传递是否授予后台定位权限
+        resumeIntent.putExtra("background_permission_granted", isBackgroundLocationPermissionGranted());
         LocalBroadcastManager.getInstance(this).sendBroadcast(resumeIntent);
     }
 
     /**
-     * Pauses the tracking process.
+     * 暂停追踪
      */
     private void pauseTracking() {
         isTracking = false;
         isPaused = true;
         pauseTime = SystemClock.elapsedRealtime();
         timerHandler.removeCallbacks(timerRunnable);
-        btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.start));
+        btnPauseResume.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.start));
         btnShow.setVisibility(View.VISIBLE);
         if (isMapMode) {
             drawCurrentPolyline();
         }
         trajectory.add(null);
 
-        // Send broadcast to service to pause step counting
+        // 发送广播给服务，暂停步数计数
         Intent pauseIntent = new Intent(LocationTrackingService.ACTION_PAUSE_STEP_COUNTING);
         LocalBroadcastManager.getInstance(this).sendBroadcast(pauseIntent);
     }
 
     /**
-     * Starts the tracking service.
+     * 启动追踪服务
      */
     private void startTrackingService() {
         Intent serviceIntent = new Intent(this, LocationTrackingService.class);
@@ -478,7 +495,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Stops the tracking service.
+     * 停止追踪服务
      */
     private void stopTrackingService() {
         Intent serviceIntent = new Intent(this, LocationTrackingService.class);
@@ -487,13 +504,13 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Displays a default map image when location permission is not granted or in No-map mode.
+     * 显示默认地图（无地图模式）
      */
     private void showDefaultMap() {
-        // Display default image
+        // 显示默认图片
         mapImageView.setImageResource(R.drawable.bg_workout);
         mapImageView.setVisibility(View.VISIBLE);
-        // Hide map fragment
+        // 隐藏地图片段
         View mapFragment = findViewById(R.id.google_map);
         if (mapFragment != null) {
             mapFragment.setVisibility(View.GONE);
@@ -501,25 +518,25 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Called when the Google Map is ready. Configures map settings.
+     * 当地图准备好时调用，配置地图设置
      *
-     * @param map The GoogleMap object that is ready to be used.
+     * @param map 准备好的GoogleMap对象
      */
     @Override
     public void onMapReady(GoogleMap map) {
         googleMap = map;
         applyCustomMapStyle();
         googleMap.setMaxZoomPreference(MAX_ZOOM_LEVEL);
-        // Set the initial camera position to the user's last known location
+        // 设置初始相机位置为用户的最后已知位置
         Intent intent = getIntent();
         initialLatitude = intent.getDoubleExtra("LATITUDE", 0.0);
         initialLongitude = intent.getDoubleExtra("LONGITUDE", 0.0);
         if (initialLatitude != 0.0 && initialLongitude != 0.0) {
             LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
             CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(initialLatLng)   // Set the center of the map
-                    .zoom(DEFAULT_ZOOM_LEVEL) // Set the zoom level
-                    .tilt(0)                // Set tilt to 0 to ensure a 2D view
+                    .target(initialLatLng)   // 设置地图中心
+                    .zoom(DEFAULT_ZOOM_LEVEL) // 设置缩放级别
+                    .tilt(0)                // 设置倾斜角度为0，确保二维视图
                     .build();
 
             googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
@@ -530,45 +547,45 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         googleMap.setMyLocationEnabled(false);
         googleMap.setBuildingsEnabled(false);
 
-        // Start requesting location updates
+        // 开始请求位置更新
         onLocationPermissionGranted();
     }
 
     /**
-     * Applies a custom style to the Google Map from a raw resource file.
+     * 应用自定义地图样式
      */
     private void applyCustomMapStyle() {
         try {
             boolean success = googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
             if (!success) {
-                Log.e(TAG, "Map style parsing failed.");
+                Log.e(TAG, "地图样式解析失败。");
             } else {
-                Log.d(TAG, "Map style applied successfully.");
+                Log.d(TAG, "地图样式应用成功。");
             }
         } catch (Resources.NotFoundException e) {
-            Log.e(TAG, "Map style resource not found", e);
+            Log.e(TAG, "地图样式资源未找到", e);
         }
     }
 
     /**
-     * Sets up the location callback.
+     * 设置位置回调
      */
     private void setupLocationCallback() {
         locationCallback = new LocationCallback() {
             @SuppressLint("MissingPermission")
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                // Update location regardless of tracking state
+                // 无论是否在追踪状态，都更新位置
                 for (Location location : locationResult.getLocations()) {
                     if (location.hasAccuracy() && location.getAccuracy() < 50.0) {
                         isLocationReady = true;
                         waitView.clearAnimation();
                         waitView.setVisibility(View.GONE);
                         waitTextView.setVisibility(View.GONE);
-                        // Show the map once location is ready
+                        // 一旦位置准备好，显示地图
                         View mapFragment = findViewById(R.id.google_map);
                         if (mapFragment != null) {
-                            mapFragment.setVisibility(View.VISIBLE);  // Show the map when location is ready
+                            mapFragment.setVisibility(View.VISIBLE);  // 位置准备好后显示地图
                         }
                         btnPauseResume.setClickable(true);
                         if (ActivityCompat.checkSelfPermission(GoogleMapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(GoogleMapActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -578,12 +595,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                         locationTimeoutHandler.removeCallbacks(locationTimeoutRunnable);
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                         if (isFirstStart) {
-                            // Initially move the camera to the current location
+                            // 初始时将相机移动到当前位置
                             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM_LEVEL));
                         }
                     } else {
                         if (!isLocationReady) {
-                            Log.d(TAG, "Location accuracy insufficient, continuing attempts...");
+                            Log.d(TAG, "位置精度不足，继续尝试...");
                         }
                     }
 
@@ -604,7 +621,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Starts requesting location updates.
+     * 开始请求位置更新
      */
     @SuppressLint("MissingPermission")
     private void onLocationPermissionGranted() {
@@ -612,15 +629,15 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             googleMap.setMyLocationEnabled(false);
             googleMap.setBuildingsEnabled(false);
 
-            // Start requesting location updates
+            // 开始请求位置更新
             requestLocationUpdates();
-            // Start location timeout handling
+            // 开始定位超时处理
             locationTimeoutHandler.postDelayed(locationTimeoutRunnable, LOCATION_TIMEOUT);
         }
     }
 
     /**
-     * Requests location updates.
+     * 请求位置更新
      */
     @SuppressLint("MissingPermission")
     private void requestLocationUpdates() {
@@ -634,9 +651,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Updates the path with the new location and calculates the total distance.
+     * 根据新位置更新路径并计算总距离
      *
-     * @param latLng The new location coordinates.
+     * @param latLng 新的位置坐标
      */
     @SuppressLint("DefaultLocale")
     private void updatePath(LatLng latLng) {
@@ -644,32 +661,32 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             return;
         }
 
-        // If pathPoints is empty, we are processing the first location point
+        // 如果pathPoints为空，表示处理第一个位置点
         if (pathPoints.isEmpty()) {
-            pathPoints.add(latLng); // Add the first point directly but don't draw yet
+            pathPoints.add(latLng); // 直接添加第一个点，但暂不绘制
             trajectory.add(latLng);
-            return; // Skip drawing to wait for the next point
+            return; // 跳过绘制，等待下一个点
         }
 
-        // Calculate the distance between the current point and the last added point
+        // 计算当前点与最后一个添加点之间的距离
         LatLng lastLatLng = pathPoints.get(pathPoints.size() - 1);
         float[] results = new float[1];
         Location.distanceBetween(lastLatLng.latitude, lastLatLng.longitude, latLng.latitude, latLng.longitude, results);
 
-        // Check if the distance between locations is significant (> 1 meter)
+        // 检查两点之间的距离是否显著（> 1米）
         if (results[0] > DISTANCE_THRESHOLD_METERS) {
-            // Update total distance only if the user has moved more than the threshold
+            // 仅当用户移动超过阈值时更新总距离
             totalDistance += results[0];
             double totalDistanceKm = totalDistance / 1000.0;
             double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
 
-            // Ensure that distance and time are both valid before calculating pace
+            // 确保距离和时间都有效后计算配速
             if (totalDistanceKm > realDistance && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
                 double elapsedTimeInMinutes = elapsedTime / 60000.0;
                 double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
                 runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
-                // Check if the calculated pace is within a reasonable range
+                // 检查配速是否在合理范围内
                 if (avgPace >= 1.0 && avgPace <= 30.0) {
                     runOnUiThread(() -> avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60))));
                 } else {
@@ -679,7 +696,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 runOnUiThread(() -> avgPaceTextView.setText("--'--\""));
             }
 
-            // Only add the current point to pathPoints and draw the line if it meets criteria
+            // 仅在满足条件时添加当前点到pathPoints并绘制线条
             pathPoints.add(latLng);
             trajectory.add(latLng);
             drawCurrentPolyline();
@@ -687,7 +704,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Draws the current polyline on the map.
+     * 绘制当前的折线
      */
     private void drawCurrentPolyline() {
         if (!pathPoints.isEmpty() && googleMap != null) {
@@ -704,13 +721,13 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Updates the average pace in No-map mode based on steps and time.
+     * 在无地图模式下，根据步数和时间更新平均配速
      */
     @SuppressLint("DefaultLocale")
     private void updateAvgPaceNoMapMode() {
-        // Assume average step length in meters
+        // 假设平均步长为0.75米
         float averageStepLength = 0.75f;
-        float distance = currentStepCount * averageStepLength; // in meters
+        float distance = currentStepCount * averageStepLength; // 单位米
         double distanceKm = distance / 1000.0;
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
         if (distanceKm > realDistance && totalTimeMinutes > 0) {
@@ -718,7 +735,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             double elapsedTimeInMinutes = elapsedTime / 60000.0;
             double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
             runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
-            // Update avgPaceTextView
+            // 更新avgPaceTextView
             runOnUiThread(() -> avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60))));
         } else {
             runOnUiThread(() -> avgPaceTextView.setText("--'--\""));
@@ -726,12 +743,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Calculates calories burned based on weight, duration, and MET value.
+     * 根据体重、持续时间和MET值计算燃烧的卡路里
      *
-     * @param weight            User's weight in kilograms.
-     * @param durationInMinutes Duration of activity in minutes.
-     * @param metValue          MET value of the activity.
-     * @return Calories burned.
+     * @param weight            用户体重，单位千克
+     * @param durationInMinutes 活动持续时间，单位分钟
+     * @param metValue          活动的MET值
+     * @return 燃烧的卡路里
      */
     private double calculateCalories(double weight, double durationInMinutes, double metValue) {
         double durationInHours = durationInMinutes / 60.0;
@@ -739,32 +756,32 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Converts a LatLng point to a human-readable address string.
+     * 将LatLng点转换为可读的地址字符串
      *
-     * @param latLng The LatLng object representing the location.
-     * @return A string containing the country and city, or "Unknown Location" if not available.
+     * @param latLng 位置坐标
+     * @return 国家和城市的字符串，或“未知位置”
      */
     private String getAddressFromLatLng(LatLng latLng) {
-        String address = "Unknown Location";
+        String address = "未知位置";
 
-        // Ensure Geocoder is initialized
+        // 确保Geocoder已初始化
         if (geocoder == null) {
             if (Geocoder.isPresent()) {
                 geocoder = new Geocoder(this, Locale.getDefault());
             } else {
-                Log.e(TAG, "Geocoder not available.");
+                Log.e(TAG, "Geocoder不可用。");
                 return address;
             }
         }
 
         try {
-            // Get address from latitude and longitude
+            // 从纬度和经度获取地址
             List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
 
             if (addresses != null && !addresses.isEmpty()) {
                 Address addr = addresses.get(0);
-                String country = addr.getCountryName(); // Country
-                String city = addr.getLocality();       // City
+                String country = addr.getCountryName(); // 国家
+                String city = addr.getLocality();       // 城市
 
                 if (country != null && city != null) {
                     address = country + ", " + city;
@@ -774,13 +791,13 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                     address = city;
                 }
             } else {
-                Log.e(TAG, "No address found for the location.");
+                Log.e(TAG, "未找到位置的地址。");
             }
         } catch (IOException e) {
             Log.e(TAG, "Geocoder IOException: " + e.getMessage());
             e.printStackTrace();
         } catch (IllegalArgumentException e) {
-            Log.e(TAG, "Invalid latitude or longitude values.");
+            Log.e(TAG, "无效的纬度或经度值。");
             e.printStackTrace();
         }
 
@@ -788,17 +805,17 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Shows the last tracked path on the map with start and end markers.
+     * 显示最后的追踪路径，包括起点和终点标记
      */
     private void showLastTrack() {
-        // Calculate distance
+        // 计算距离
         float distanceInKm;
         if (isMapMode) {
             distanceInKm = totalDistance / 1000.0f;
         } else {
-            // In No-map mode, calculate distance based on steps
+            // 无地图模式，根据步数计算距离
             float averageStepLength = 0.75f;
-            float distance = currentStepCount * averageStepLength; // in meters
+            float distance = currentStepCount * averageStepLength; // 单位米
             distanceInKm = distance / 1000.0f;
         }
 
@@ -806,13 +823,13 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         int stepCount = currentStepCount;
 
         String avg = avgPaceTextView.getText().toString();
-        // Get the last location's address
-        String address = "Unknown Location";
+        // 获取最后位置的地址
+        String address = "未知位置";
         if (isMapMode && initialLatitude != 0.0 && initialLongitude != 0.0) {
             LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
             address = getAddressFromLatLng(initialLatLng);
         }
-        // Create Intent to RunSummaryActivity
+        // 创建跳转到RunSummaryActivity的Intent
         Intent intent = new Intent(GoogleMapActivity.this, RunSummaryActivity.class);
         intent.putExtra("distance", distanceInKm);
         intent.putExtra("avgPace", avg);
@@ -823,7 +840,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         intent.putExtra("MODE", isMapMode ? "MAP" : "NO_MAP");
 
         if (isMapMode) {
-            // Collect trajectory points
+            // 收集轨迹点
             ArrayList<LatLng> trajectoryList = new ArrayList<>(trajectory);
             intent.putParcelableArrayListExtra("trajectory", trajectoryList);
         }
@@ -833,13 +850,13 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Handles permission changes when the activity resumes.
+     * 处理权限变化，当活动重新获得焦点时调用
      */
     private void handlePermissionChanges() {
         if (isMapMode) {
-            // Check if location permission has been revoked
+            // 检查定位权限是否被撤销
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // Permission revoked, switch to No-map mode or handle accordingly
+                // 权限被撤销，切换到无地图模式或其他处理
                 isMapMode = false;
                 if (googleMap != null) {
                     googleMap.clear();
@@ -847,18 +864,18 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 showDefaultMap();
             }
         }
-        // Check for activity recognition permission
+        // 检查活动识别权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
-                // Permission revoked, navigate back to MainActivity
-                Toast.makeText(this, "Activity recognition permission is required", Toast.LENGTH_SHORT).show();
+                // 权限被撤销，导航回MainActivity
+                Toast.makeText(this, "活动识别权限是必需的", Toast.LENGTH_SHORT).show();
                 navigateToWorkoutPage();
             }
         }
     }
 
     /**
-     * Navigates back to the MainActivity.
+     * 导航回MainActivity
      */
     private void navigateToWorkoutPage() {
         Intent intent = new Intent(GoogleMapActivity.this, MainActivity.class);
@@ -867,16 +884,16 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Handles tracking state and permission changes when the activity resumes.
+     * 在活动恢复时调用
      */
     @Override
     protected void onResume() {
         super.onResume();
 
-        // Handle permission changes
+        // 处理权限变化
         handlePermissionChanges();
 
-        // Register BroadcastReceiver
+        // 注册BroadcastReceiver
         IntentFilter filter = new IntentFilter();
         filter.addAction("com.example.pulsestepapplication.LOCATION_UPDATE");
         filter.addAction("com.example.pulsestepapplication.STEP_UPDATE");
@@ -891,52 +908,52 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Unregisters the BroadcastReceiver when the activity is paused.
+     * 在活动暂停时调用
      */
     @Override
     protected void onPause() {
         super.onPause();
-        // Unregister BroadcastReceiver
+        // 取消注册BroadcastReceiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(trackingReceiver);
     }
 
     /**
-     * Removes timer callbacks when the activity is stopped.
+     * 在活动停止时调用
      */
     @Override
     protected void onStop() {
         super.onStop();
-        // Pause the timer if tracking
+        // 移除定时器回调
         if (isTracking) {
             timerHandler.removeCallbacks(timerRunnable);
         }
 
-        // Check if the app is going to the background
+        // 检查应用是否进入后台
         if (isTracking && isMapMode && !isBackgroundLocationPermissionGranted()) {
             pauseTracking();
-            Toast.makeText(this, "Tracking paused because background location permission is not granted.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "由于缺少后台定位权限，跟踪已暂停。", Toast.LENGTH_SHORT).show();
         }
     }
 
     /**
-     * Checks if background location permission is granted.
+     * 检查是否授予了后台定位权限
      *
-     * @return true if granted, false otherwise
+     * @return 如果授予，返回true；否则返回false
      */
     private boolean isBackgroundLocationPermissionGranted() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED;
         }
-        // Below Android Q, background location permission is not required
+        // Android Q以下不需要后台定位权限
         return true;
     }
 
     /**
-     * Handles the result of permission requests.
+     * 处理权限请求结果
      *
-     * @param requestCode  The request code passed in requestPermissions().
-     * @param permissions  The requested permissions.
-     * @param grantResults The grant results for the corresponding permissions.
+     * @param requestCode  请求码
+     * @param permissions  请求的权限
+     * @param grantResults 权限结果
      */
     @SuppressLint("NewApi")
     @Override
@@ -945,39 +962,41 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == BACKGROUND_LOCATION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Background location permission granted
+                // 后台定位权限被授予
                 hasDeniedBackgroundPermission = false;
-                resumeTracking();
+                sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, false).apply();
+                //resumeTracking();
             } else {
-                // Permission denied
+                // 后台定位权限被拒绝
                 hasDeniedBackgroundPermission = true;
-                Toast.makeText(this, "Background location permission denied. Tracking will pause when the app is not in use.", Toast.LENGTH_LONG).show();
-                // Optionally, you can show a dialog guiding the user to settings
+                sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, true).apply();
+                Toast.makeText(this, "后台定位权限被拒绝，应用将在后台停止跟踪。", Toast.LENGTH_LONG).show();
+                // 显示引导对话框，引导用户前往设置手动授予权限
                 showPermissionDeniedDialog();
             }
         } else if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Activity recognition permission granted
-                checkPermissions(); // Check for other permissions
+                // 活动识别权限被授予
+                checkPermissions(); // 检查其他权限
             } else {
-                // Permission denied, exit to workout page
-                Toast.makeText(this, "Activity recognition permission is required", Toast.LENGTH_SHORT).show();
+                // 权限被拒绝，导航回Workout页面
+                Toast.makeText(this, "活动识别权限是必需的", Toast.LENGTH_SHORT).show();
                 navigateToWorkoutPage();
             }
         } else if (requestCode == LOCATION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Location permission granted
-                checkPermissions(); // Check for other permissions
+                // 定位权限被授予
+                checkPermissions(); // 检查其他权限
             } else {
-                // Permission denied, exit to workout page
-                Toast.makeText(this, "Location permission is required in Map mode", Toast.LENGTH_SHORT).show();
+                // 权限被拒绝，导航回Workout页面
+                Toast.makeText(this, "地图模式需要定位权限", Toast.LENGTH_SHORT).show();
                 navigateToWorkoutPage();
             }
         }
     }
 
     /**
-     * BroadcastReceiver to receive location and step updates from the service.
+     * BroadcastReceiver，用于接收来自服务的位置信息和步数更新
      */
     private BroadcastReceiver trackingReceiver = new BroadcastReceiver() {
         @Override
@@ -985,21 +1004,21 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             if ("com.example.pulsestepapplication.LOCATION_UPDATE".equals(intent.getAction())) {
                 double lat = intent.getDoubleExtra("lat", 0.0);
                 double lng = intent.getDoubleExtra("lng", 0.0);
-                // Update the path on the map
+                // 在地图上更新路径
                 updatePath(new LatLng(lat, lng));
             } else if ("com.example.pulsestepapplication.STEP_UPDATE".equals(intent.getAction())) {
                 int stepCount = intent.getIntExtra("stepCount", 0);
-                Log.d(TAG, "Received step count update: " + stepCount);
-                // Update step count display
+                Log.d(TAG, "收到步数更新: " + stepCount);
+                // 更新步数显示
                 updateStepCount(stepCount);
             }
         }
     };
 
     /**
-     * Updates the step count on the UI.
+     * 更新UI上的步数
      *
-     * @param stepCount The current step count.
+     * @param stepCount 当前步数
      */
     private void updateStepCount(int stepCount) {
         runOnUiThread(() -> {
@@ -1012,6 +1031,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         });
     }
 
+    /**
+     * 按下返回键时调用
+     */
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -1019,7 +1041,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Stops the service when the activity is destroyed.
+     * 当活动销毁时调用，停止服务和移除位置更新
      */
     @Override
     protected void onDestroy() {

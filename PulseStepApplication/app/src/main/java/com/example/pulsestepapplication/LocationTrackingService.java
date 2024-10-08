@@ -59,6 +59,10 @@ public class LocationTrackingService extends Service {
                 case ACTION_RESUME_STEP_COUNTING:
                     stepCounter.startStepTracking();
                     Log.d(TAG, "收到ACTION_RESUME_STEP_COUNTING");
+                    // 获取后台定位权限状态
+                    boolean isBackgroundPermissionGranted = intent.getBooleanExtra("background_permission_granted", false);
+                    // 根据权限状态调整位置更新
+                    startLocationUpdates(isBackgroundPermissionGranted);
                     break;
             }
         }
@@ -154,6 +158,8 @@ public class LocationTrackingService extends Service {
 
     /**
      * 开始请求位置更新
+     *
+     * @param isBackgroundPermissionGranted 是否已授予后台定位权限
      */
     @SuppressLint("MissingPermission")
     private void startLocationUpdates(boolean isBackgroundPermissionGranted) {
