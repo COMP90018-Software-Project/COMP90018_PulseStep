@@ -24,22 +24,16 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.amap.api.maps.AMap;
-import com.amap.api.maps.AMapOptions;
-import com.amap.api.maps.MapView;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
-
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+
 
 public class WorkoutFragment extends Fragment {
 
@@ -55,8 +49,6 @@ public class WorkoutFragment extends Fragment {
 
     private FusedLocationProviderClient fusedLocationClient;
     private GoogleMap mMap;
-    private MapView amapView;
-    private AMap aMap;
     private boolean isUsingAmap = false;
     private ProgressBar mapProgressBar;
 
@@ -147,28 +139,6 @@ public class WorkoutFragment extends Fragment {
             checkLocationAndStartMapActivity();
         }
     }
-/*
-    private void checkBackgroundLocationPermission() {
-        if (!hasBackgroundLocationPermission()) {
-            // Request background location permission
-            requestBackgroundPermission();
-        } else {
-            // No need for background permission or already granted, enter map mode
-            checkLocationAndStartMapActivity();
-        }
-    }
-
-    private boolean hasBackgroundLocationPermission() {
-        // Check if background permission is granted
-        return ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestBackgroundPermission() {
-        // Request background location permission
-        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_PERMISSION_REQUEST_CODE);
-    }
-
- */
 
     /**
      * Initializes the appropriate map based on user's location.
@@ -182,15 +152,8 @@ public class WorkoutFragment extends Fragment {
                         lastLatitude = location.getLatitude();
                         lastLongitude = location.getLongitude();
 
-                        if (isInChina(lastLatitude, lastLongitude)) {
-                            // Initialize AMap with user's location
-                            isUsingAmap = true;
-                            initializeAMapWithLocation(view, savedInstanceState, lastLatitude, lastLongitude);
-                        } else {
-                            // Initialize Google Map with user's location
-                            isUsingAmap = false;
                             initializeGoogleMapWithLocation(lastLatitude, lastLongitude);
-                        }
+
                     } else {
                         // Request new location if last known location is null
                         requestNewLocationForMapInitialization(view, savedInstanceState);
@@ -213,15 +176,10 @@ public class WorkoutFragment extends Fragment {
                         lastLatitude = location.getLatitude();
                         lastLongitude = location.getLongitude();
 
-                        if (isInChina(lastLatitude, lastLongitude)) {
-                            // Initialize AMap with user's location
-                            isUsingAmap = true;
-                            initializeAMapWithLocation(view, savedInstanceState, lastLatitude, lastLongitude);
-                        } else {
                             // Initialize Google Map with user's location
                             isUsingAmap = false;
                             initializeGoogleMapWithLocation(lastLatitude, lastLongitude);
-                        }
+
                     } else {
                         // Keep the placeholder image visible
                         showToast("Unable to retrieve current location");
@@ -233,23 +191,6 @@ public class WorkoutFragment extends Fragment {
                 });
     }
 
-    private void initializeAMapWithLocation(View view, Bundle savedInstanceState, Double latitude, Double longitude) {
-        AMapOptions aOptions = new AMapOptions();
-        if (latitude != null && longitude != null) {
-            com.amap.api.maps.model.CameraPosition cp = new com.amap.api.maps.model.CameraPosition(
-                    new com.amap.api.maps.model.LatLng(latitude, longitude), 18f, 0, 0);
-            aOptions.camera(cp);
-        }
-        amapView = new MapView(requireContext(), aOptions);
-        ViewGroup mapContainer = view.findViewById(R.id.map_container);
-        // Add the map view to the container
-        mapContainer.addView(amapView);
-        amapView.onCreate(savedInstanceState);
-        aMap = amapView.getMap();
-
-        configureMap();
-        onMapReady();
-    }
 
     private void initializeGoogleMapWithLocation(Double latitude, Double longitude) {
         GoogleMapOptions options = new GoogleMapOptions();
@@ -276,44 +217,17 @@ public class WorkoutFragment extends Fragment {
     private void configureMap() {
         // Apply custom map style
         applyCustomMapStyle();
-        if (isUsingAmap) {
-            aMap.showBuildings(false);
-            aMap.showMapText(false);
-        } else {
-            // Configure Google Map settings
             if (hasLocationPermissions()) {
                 mMap.setMyLocationEnabled(false);
             }
-        }
+
     }
 
     /**
      * Applies custom style to the map, depending on which map is in use.
      */
     private void applyCustomMapStyle() {
-        if (isUsingAmap) {
-            // Apply custom style to AMap
-            try {
-                com.amap.api.maps.model.CustomMapStyleOptions customMapStyleOptions =
-                        new com.amap.api.maps.model.CustomMapStyleOptions();
 
-                // Set style data path (located in assets directory)
-                customMapStyleOptions.setStyleDataPath(getAssetsPath("style/style.data"));
-
-                // If there are extra texture files, set the texture file path
-                customMapStyleOptions.setStyleExtraPath(getAssetsPath("style/style_extra.data"));
-
-                // Apply custom style options to the map
-                aMap.setCustomMapStyle(customMapStyleOptions);
-
-                // Enable custom map style
-                aMap.setMapCustomEnable(true);
-
-                Log.d(TAG, "Custom map style applied successfully to AMap.");
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to apply custom map style to AMap", e);
-            }
-        } else {
             // Apply custom style to Google Map
             try {
                 boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.workout));
@@ -325,15 +239,9 @@ public class WorkoutFragment extends Fragment {
             } catch (Resources.NotFoundException e) {
                 Log.e(TAG, "Map style resource not found", e);
             }
-        }
+
     }
 
-    /**
-     * Gets the full path of a file in the assets directory.
-     */
-    private String getAssetsPath(String fileName) {
-        return "file:///android_asset/" + fileName;
-    }
 
     /**
      * Called when the map is ready (either AMap or Google Map).
@@ -357,14 +265,9 @@ public class WorkoutFragment extends Fragment {
                         if (location != null && shouldUpdateMap(location)) {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
-                            if (isUsingAmap) {
-                                com.amap.api.maps.model.LatLng currentLatLng =
-                                        new com.amap.api.maps.model.LatLng(latitude, longitude);
-                                aMap.moveCamera(com.amap.api.maps.CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
-                            } else {
-                                LatLng currentLatLng = new LatLng(latitude, longitude);
+                            LatLng currentLatLng = new LatLng(latitude, longitude);
                                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
-                            }
+
                             // Store the new location
                             lastLatitude = latitude;
                             lastLongitude = longitude;
@@ -393,14 +296,9 @@ public class WorkoutFragment extends Fragment {
                         if (location != null) {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
-                            if (isUsingAmap) {
-                                com.amap.api.maps.model.LatLng currentLatLng =
-                                        new com.amap.api.maps.model.LatLng(latitude, longitude);
-                                aMap.moveCamera(com.amap.api.maps.CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
-                            } else {
-                                LatLng currentLatLng = new LatLng(latitude, longitude);
+                             LatLng currentLatLng = new LatLng(latitude, longitude);
                                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
-                            }
+
                             // Store the new location
                             lastLatitude = latitude;
                             lastLongitude = longitude;
@@ -551,10 +449,7 @@ public class WorkoutFragment extends Fragment {
      * @param longitude The longitude to check.
      * @return True if within China, false otherwise.
      */
-    private boolean isInChina(double latitude, double longitude) {
-        // China's approximate geographical boundaries
-        return latitude >= 18.0 && latitude <= 54.0 && longitude >= 73.0 && longitude <= 135.0;
-    }
+
 
     /**
      * Starts the appropriate map activity based on the user's location and permissions.
@@ -567,13 +462,8 @@ public class WorkoutFragment extends Fragment {
         boolean activityRecognitionGranted = hasActivityRecognitionPermission();
 
         Intent intent;
-        if (latitude != null && longitude != null && isInChina(latitude, longitude)) {
-            intent = new Intent(getActivity(), GoogleMapActivity.class);
-            Log.d(TAG, "Launching AmapActivity");
-        } else {
             intent = new Intent(getActivity(), GoogleMapActivity.class);
             Log.d(TAG, "Launching GoogleMapActivity");
-        }
 
         intent.putExtra("LOCATION_GRANTED", locationGranted);
         intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
@@ -671,38 +561,4 @@ public class WorkoutFragment extends Fragment {
         }
     }
 
-    /**
-     * Lifecycle methods to manage MapView's state.
-     */
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (isUsingAmap && amapView != null) {
-            amapView.onResume();
-        }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (isUsingAmap && amapView != null) {
-            amapView.onPause();
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (isUsingAmap && amapView != null) {
-            amapView.onDestroy();
-        }
-    }
-
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (isUsingAmap && amapView != null) {
-            amapView.onSaveInstanceState(outState);
-        }
-    }
 }
