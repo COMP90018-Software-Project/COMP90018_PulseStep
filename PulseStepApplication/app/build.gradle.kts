@@ -15,9 +15,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        ndk {
-            abiFilters.addAll(listOf("x86_64", "x86"))//,"armeabi-v7a", "arm64-v8a"
-        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,18 +37,13 @@ android {
     buildFeatures {
         viewBinding = true
     }
-    sourceSets {
-        getByName("main") {
-            jniLibs.srcDirs("libs")
-        }
-    }
+
 }
 
 dependencies {
     implementation ("androidx.fragment:fragment:1.5.5")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.android.gms:play-services-maps:18.0.0")
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation("com.github.dhaval2404:imagepicker:2.1")
     implementation("com.google.android.material:material:1.5.0")
     implementation("de.hdodenhof:circleimageview:3.0.0")
