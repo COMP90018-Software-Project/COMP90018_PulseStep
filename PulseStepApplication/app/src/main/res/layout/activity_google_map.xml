@@ -2,7 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/white">
 
     <!-- Toolbar at the top -->
     <FrameLayout
@@ -10,23 +11,28 @@
         android:layout_height="match_parent">
 
         <!-- Google Map Fragment -->
+
+        <!-- Centered Rotating ImageView on Top of the Map -->
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/google_map"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="65dp" />
+            android:layout_marginTop="60dp"
+            android:background="@android:color/white" />
 
-        <!-- Centered Rotating ImageView on Top of the Map -->
+
+
         <ImageView
             android:id="@+id/wait"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginTop="30dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:tint="@color/like_orange"
+            android:layout_marginTop="30dp"
             android:background="@android:color/transparent"
-            app:srcCompat="@android:drawable/stat_notify_sync_noanim" />
+            android:visibility="gone"
+            app:srcCompat="@android:drawable/stat_notify_sync_noanim"
+            app:tint="@color/like_orange" />
 
         <TextView
             android:id="@+id/waitText"
@@ -71,6 +77,16 @@
             android:textSize="20sp"
             android:layout_gravity="center"
             android:paddingTop="8dp" />
+        <ImageButton
+            android:id="@+id/btn_grant_permissions"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="20dp"
+            android:layout_gravity="top|end"
+            android:backgroundTint="@color/like_orange"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_setting" />
 
     </androidx.appcompat.widget.Toolbar>
     <ImageView
@@ -171,8 +187,8 @@
                     android:layout_height="wrap_content"
                     android:text="--'--''"
                     android:textSize="20sp"
-                android:textColor="@android:color/black"
-                android:textStyle="bold" />
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -189,8 +205,8 @@
                     android:layout_height="wrap_content"
                     android:text="Calories"
                     android:textSize="12sp"
-                android:textColor="#808080"
-                android:textStyle="bold" />
+                    android:textColor="#808080"
+                    android:textStyle="bold" />
 
                 <!-- Calories Value -->
                 <TextView
@@ -199,8 +215,8 @@
                     android:layout_height="wrap_content"
                     android:text="0"
                     android:textSize="20sp"
-                android:textColor="@android:color/black"
-                android:textStyle="bold" />
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
