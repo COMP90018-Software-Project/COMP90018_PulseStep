@@ -1,5 +1,7 @@
 package com.example.pulsestepapplication;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -27,10 +30,18 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * RunSummaryActivity displays the summary of a run, including distance, time, address, step count,
@@ -59,11 +70,17 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private TextView avgPaceTextView;
     private Button finishButton;
     private String calories;
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_run_summary);
+
+        // Initialize Firebase Auth and Firestore
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // Initialize UI components
         initializeUIComponents();
@@ -77,9 +94,48 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         // Initialize and set up the map
         setupMap(savedInstanceState);
 
+        // Get user UID
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String userUID = currentUser.getUid();
+
+        // Get passed startDateTime and finishDateTime
+        String startDateTime = getIntent().getStringExtra("startDateTime");
+        String finishDateTime = getIntent().getStringExtra("finishDateTime");
+        Log.d("RunSummary", "startDateTime: " + startDateTime);
+        Log.d("RunSummary", "finishDateTime: " + finishDateTime);
+
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Map<String, Object> userRunningDetails = new HashMap<>();
+
+                userRunningDetails.put("userId", userUID);
+                userRunningDetails.put("startDateTime", startDateTime);
+                userRunningDetails.put("finishDateTime", finishDateTime);
+                userRunningDetails.put("activeTime", time);
+                userRunningDetails.put("avgPace", avgPace);
+                userRunningDetails.put("distance", distance);
+                userRunningDetails.put("calories", calories);
+                userRunningDetails.put("stepCount", stepCount);
+                userRunningDetails.put("location", address);
+
+
+                // Save data to Firestore
+                db.collection("run").add(userRunningDetails)
+                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w(TAG, "Error adding document", e);
+                            }
+                        });
+
+
                 Intent intent = new Intent(RunSummaryActivity.this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 intent.putExtra("fragment", "WorkoutFragment"); // 可选：传递参数以指示返回到WorkoutFragment
