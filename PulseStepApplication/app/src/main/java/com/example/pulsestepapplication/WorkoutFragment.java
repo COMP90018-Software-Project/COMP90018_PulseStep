@@ -116,6 +116,9 @@ public class WorkoutFragment extends Fragment {
         TextView greetingText = view.findViewById(R.id.greeting_text);
         greetingText.setText("Hi, " + userName);
 
+
+
+
         // Set up Run button to initiate permission and network checks
         Button runButton = view.findViewById(R.id.run_button);
         runButton.setOnClickListener(v -> {
@@ -123,11 +126,13 @@ public class WorkoutFragment extends Fragment {
             checkActivityRecognitionPermissionAndProceed();
         });
 
-        // Set up Jump button to navigate to JumpActivity
+
+
+        //Set up Jump button to navigate to JumpActivity
         Button jumpButton = view.findViewById(R.id.jump_button);
         jumpButton.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), JumpActivity.class);
-            startActivity(intent);
+            // When the user clicks the Jump button, pass user info into intent, then start the jump activity
+            proceedToJumpActivity();
         });
 
         return view;
@@ -464,6 +469,8 @@ public class WorkoutFragment extends Fragment {
         return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
     }
 
+
+
     /**
      * Requests activity recognition permission.
      */
@@ -575,6 +582,23 @@ public class WorkoutFragment extends Fragment {
         }
         intent.putExtra("LATITUDE", latitude);
         intent.putExtra("LONGITUDE", longitude);
+
+        intent.putExtra("name", userName);
+        intent.putExtra("age", userAge);
+        intent.putExtra("weight", userWeight);
+        startActivity(intent);
+    }
+
+    /**
+     * Starts the appropriate jump activity based on the user's info.
+     */
+    private void proceedToJumpActivity() {
+        boolean locationGranted = hasLocationPermissions();
+        boolean activityRecognitionGranted = hasActivityRecognitionPermission();
+
+        Intent intent = new Intent(getActivity(), JumpActivity.class);
+        intent.putExtra("LOCATION_GRANTED", locationGranted);
+        intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
 
         intent.putExtra("name", userName);
         intent.putExtra("age", userAge);

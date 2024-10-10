@@ -30,6 +30,13 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" /> <!-- Allows access to body sensors (required for step counting) -->
     <uses-permission android:name="android.permission.BODY_SENSORS" />
 
+    <!--
+    Although the gyroscope and accelerometer do not need to be declared directly,
+    it is necessary to declare power management and background operation.
+    -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
