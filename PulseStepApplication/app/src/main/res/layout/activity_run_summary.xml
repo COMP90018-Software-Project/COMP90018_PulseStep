@@ -137,6 +137,8 @@
         app:layout_constraintBottom_toTopOf="@+id/bt_finish_run"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:backgroundTint="#FFFFFF"
+        android:background="@drawable/rounded_background"
         android:layout_width="0dp">
 
         <LinearLayout
