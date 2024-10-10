@@ -224,8 +224,6 @@
         </LinearLayout>
 
     </LinearLayout>
-
-    <!-- Buttons placed above the card layout -->
     <RelativeLayout
         android:id="@+id/button_layout"
         android:layout_width="match_parent"
@@ -237,20 +235,7 @@
         android:layout_marginLeft="50dp"
         android:layout_marginRight="50dp">
 
-        <!-- Show Button -->
-        <ImageButton
-            android:id="@+id/btn_show"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@drawable/circular_button"
-            android:src="@drawable/ic_finish"
-            android:layout_centerVertical="true"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="20dp"
-            android:contentDescription="Finish"
-            android:visibility="gone" />
-
-        <!-- Progress Bar around Stop Button -->
+        <!-- Progress Bar around Show Button -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="80dp"
@@ -258,14 +243,25 @@
             android:indeterminate="false"
             android:max="100"
             android:progress="0"
-            android:layout_marginStart="8dp"
-            android:layout_centerVertical="true"
             android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
             android:visibility="gone"
             style="?android:attr/progressBarStyleHorizontal"
             android:progressDrawable="@drawable/circular_progress_drawable" />
 
-        <!-- Stop Button -->
+        <!-- Show Button (centered inside the ProgressBar) -->
+        <ImageButton
+            android:id="@+id/btn_show"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/circular_button"
+            android:src="@drawable/ic_finish"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="15dp"
+            android:contentDescription="Finish"
+            android:visibility="gone" />
+
         <ImageButton
             android:id="@+id/btn_stop"
             android:layout_width="70dp"
@@ -275,6 +271,7 @@
             android:layout_centerInParent="true"
             android:scaleType="centerInside" />
     </RelativeLayout>
+
 
 
 
