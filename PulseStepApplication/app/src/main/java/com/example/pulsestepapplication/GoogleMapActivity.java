@@ -1,6 +1,8 @@
 package com.example.pulsestepapplication;
 
 import android.Manifest;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -25,16 +27,18 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -81,6 +85,7 @@ import java.util.ArrayList;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCallback {
     // Constants
@@ -123,6 +128,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private static final Double realDistance = 0.05;
     private static final double metValue = 8.0;
     private static final int LOCATION_TIMEOUT = 10000; // Location timeout in milliseconds
+
+    //Button
+    private boolean isLongPress = false;
+    private Handler handler = new Handler();
+    private ProgressBar progressBar;
+    private int progressStatus = 0;
+    private boolean isRunning = false;
+    private boolean hasTriggeredSuccess = false;
 
     // Timer Variables
     private long startTime = 0L;
@@ -384,11 +397,85 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     /**
      * Setup button click listeners
      */
+    @SuppressLint("ClickableViewAccessibility")
     private void setupButtonListeners() {
+        progressBar = findViewById(R.id.progressBar);
         btnPauseResume.setOnClickListener(v -> handleStartStopButtonClick());
-        btnShow.setOnClickListener(v -> showLastTrack());
-    }
+        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
+        circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
+        progressBar.setProgressDrawable(circularProgressDrawable);
+        btnShow.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (isRunning || hasTriggeredSuccess) {
+                        return true;
+                    }
+                    isRunning = true;
 
+
+                    progressBar.setVisibility(View.VISIBLE);
+                    progressStatus = 0;
+                    circularProgressDrawable.setProgress(progressStatus);
+
+                    if (!hasTriggeredSuccess) {
+                        ObjectAnimator scaleXDown = ObjectAnimator.ofFloat(btnShow, "scaleX", 1f, 1.3f);
+                        ObjectAnimator scaleYDown = ObjectAnimator.ofFloat(btnShow, "scaleY", 1f, 1.3f);
+                        AnimatorSet animatorSetDown = new AnimatorSet();
+                        animatorSetDown.playTogether(scaleXDown, scaleYDown);
+                        animatorSetDown.setDuration(2000);
+                        animatorSetDown.start();
+                    }
+
+                    new Thread(new Runnable() {
+                        public void run() {
+                            while (progressStatus < 100 && isRunning) {
+                                progressStatus += 1;
+                                handler.post(new Runnable() {
+                                    public void run() {
+                                        circularProgressDrawable.setProgress(progressStatus);
+                                    }
+                                });
+                                try {
+                                    Thread.sleep(20);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            if (progressStatus >= 100 && isRunning) {
+                                isLongPress = true;
+                                handler.post(() -> {
+                                    showLastTrack();
+                                    isRunning = false;
+                                    hasTriggeredSuccess = true;
+                                });
+                            }
+                        }
+                    }).start();
+                    break;
+
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (!hasTriggeredSuccess) {
+                        ObjectAnimator scaleXUp = ObjectAnimator.ofFloat(btnShow, "scaleX", 1.3f, 1f);
+                        ObjectAnimator scaleYUp = ObjectAnimator.ofFloat(btnShow, "scaleY", 1.3f, 1f);
+                        AnimatorSet animatorSetUp = new AnimatorSet();
+                        animatorSetUp.playTogether(scaleXUp, scaleYUp);
+                        animatorSetUp.setDuration(300);
+                        animatorSetUp.start();
+                    }
+                    isRunning = false;
+                    if (progressStatus < 100) {
+                        progressBar.setVisibility(View.GONE);
+                        handler.removeCallbacksAndMessages(null);
+                        progressStatus = 0;
+                    }
+                    break;
+            }
+            return true;
+        });
+
+    }
     /**
      * Handle the start/pause button click event
      */
