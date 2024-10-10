@@ -3,12 +3,10 @@ package com.example.pulsestepapplication;
 import android.app.Dialog;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,23 +15,15 @@ import android.widget.ImageView;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreSettings;
-import com.google.firebase.firestore.MemoryCacheSettings;
-import com.google.firebase.firestore.PersistentCacheSettings;
-import com.google.firebase.firestore.Source;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+
 
 public class RankingFragment extends Fragment {
 
@@ -53,6 +43,7 @@ public class RankingFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseUser currentUser;
     private String userId;
+    private TargetViewModel targetViewModel;
 
 
     public RankingFragment() {
@@ -64,11 +55,14 @@ public class RankingFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setUpRankModels();
 
-        db = FirebaseFirestore.getInstance();
-
         // 获取当前用户的 UID
-        currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        userId = currentUser.getUid();
+//        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+//        userId = currentUser.getUid();
+
+        // 使用 ViewModelProvider 来获取 ViewModel 实例
+        targetViewModel= new ViewModelProvider(this).get(TargetViewModel.class);
+
+
     }
 
     @Override
@@ -90,7 +84,24 @@ public class RankingFragment extends Fragment {
 //        updateTargetDisplay();
         // 初始化显示目标时长的 TextView
         dailyTargetTextView = view.findViewById(R.id.daily_target_hours);
-        getCurrentTargetFromFirestore();
+//        getCurrentTargetFromFirestore();
+
+        // Observe the target hours LiveData from ViewModel
+        targetViewModel.getTargetHours().observe(getViewLifecycleOwner(), new Observer<String>() {
+            @Override
+            public void onChanged(String targetHours) {
+                // 如果 targetHours 是 "--"，则不更新 selectedTargetHours
+                if (!targetHours.equals("--")) {
+                    selectedTargetHours = Integer.parseInt(targetHours);
+                }
+
+                updateTargetDisplay(targetHours);  // 更新目标时长的显示
+            }
+        });
+
+
+        // Fetch the target hours when the fragment is created
+        targetViewModel.fetchTargetHours();
 
         ImageView editTarget = view.findViewById(R.id.bt_set_target);
         // 给 dailyTargetTextView 设置点击事件，触发 Dialog
@@ -159,19 +170,21 @@ public class RankingFragment extends Fragment {
             public void onClick(View v) {
                 // 获取选择的目标时间并更新
                 selectedTargetHours = targetPicker.getValue();
-                updateTargetDisplay();
+                updateTargetDisplay(String.valueOf(selectedTargetHours));
 
-                // Add a new document with a generated ID
-                db.collection("users").document(userId)
-                        .update("target", selectedTargetHours)
-                        .addOnSuccessListener(aVoid -> {
-                            // Success update
-                            Toast.makeText(getContext(), "Target updated successfully!", Toast.LENGTH_SHORT).show();
-
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(getContext(), "Failed to update target!", Toast.LENGTH_SHORT).show();
-                        });
+//                // Add a new document with a generated ID
+//                db.collection("users").document(userId)
+//                        .update("target", selectedTargetHours)
+//                        .addOnSuccessListener(aVoid -> {
+//                            // Success update
+//                            Toast.makeText(getContext(), "Target updated successfully!", Toast.LENGTH_SHORT).show();
+//
+//                        })
+//                        .addOnFailureListener(e -> {
+//                            Toast.makeText(getContext(), "Failed to update target!", Toast.LENGTH_SHORT).show();
+//                        });
+                // Update the target hours in Firestore using ViewModel
+                targetViewModel.updateTargetHours(String.valueOf(selectedTargetHours));
 
                 dialog.dismiss();
             }
@@ -188,11 +201,14 @@ public class RankingFragment extends Fragment {
     }
 
     // 更新目标时长显示
-    private void updateTargetDisplay() {
-
-        String targetText = selectedTargetHours + " "+ (selectedTargetHours == 1 ? "hour" : "hours");
-        dailyTargetTextView.setText(targetText);
+    private void updateTargetDisplay(String targetHours) {
+        if (targetHours.equals("--")) {
+            dailyTargetTextView.setText("-- hours");  // 如果没有目标，显示 "-- hours"
+        } else {
+            dailyTargetTextView.setText(targetHours + " " + (selectedTargetHours == 1 ? "hour" : "hours"));
+        }
     }
+
 
     // 从 Firestore 获取当前用户的目标值
     private void getCurrentTargetFromFirestore() {
@@ -204,11 +220,11 @@ public class RankingFragment extends Fragment {
                         Long target = documentSnapshot.getLong("target");
                         if (target != null) {
                             selectedTargetHours = target.intValue();  // 将 Firebase 获取到的目标时间设置为当前值
-                            updateTargetDisplay();  // 更新目标显示
+                            updateTargetDisplay(String.valueOf(selectedTargetHours));  // 更新目标显示
                         } else {
                             // 如果 target 不存在，设置默认值为 1
                             selectedTargetHours = 1;
-                            updateTargetDisplay();  // 设置默认值
+                            updateTargetDisplay(String.valueOf(selectedTargetHours));  // 设置默认值
                         }
                     }
                 })

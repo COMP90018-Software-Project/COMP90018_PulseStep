@@ -1,6 +1,7 @@
 package com.example.pulsestepapplication;
 
-public class RankModel {
+public class
+RankModel {
     String rankNo;
     String rankUserName;
     String rankWorkoutTime;

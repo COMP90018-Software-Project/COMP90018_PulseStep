@@ -4,30 +4,27 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import com.example.pulsestepapplication.databinding.ActivityMainBinding;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
+
     // Cache the WorkoutFragment instance
     private Fragment workoutFragment;
+    private Fragment rankingFragment;
+    private Fragment profileFragment;
     private Fragment activeFragment; // The currently displayed Fragment
 
     @Override
@@ -46,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
             initWorkoutFragment(true);
         }
 
+        // Initialize RankingFragment and ProfileFragment
+        initRankingFragment();
+        initProfileFragment();
+
         // Initialize bottom navigation view
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             switch (item.getItemId()) {
@@ -54,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("DEBUG", "change to workout");
                     break;
                 case R.id.ranking:
-                    showFragment(new RankingFragment());
+                    showFragment(rankingFragment);
                     Log.d("DEBUG", "change to ranking");
                     break;
                 case R.id.profile:
@@ -87,29 +88,80 @@ public class MainActivity extends AppCompatActivity {
         Log.d("DEBUG", "home page: workout fragment");
     }
 
+    private void initProfileFragment() {
+        // Create a new RankingFragment instance
+        profileFragment = new ProfileFragment();
+
+//        // Optionally, you can pass arguments to the RankingFragment
+//        // If you don't need to pass any data, you can skip this part
+//        Bundle args = new Bundle();
+//        args.putString("category", "sports");  // Example of passing arguments
+//        profileFragment.setArguments(args);
+
+        // Add the RankingFragment to the fragment container
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.frameLayout, profileFragment, "profile")
+                .hide(profileFragment)  // Initially hide it, since workoutFragment is shown first
+                .commit();
+
+        Log.d("DEBUG", "ProfileFragment initialized and cached");
+    }
+
+    private void initRankingFragment() {
+        // Create a new RankingFragment instance
+        rankingFragment = new RankingFragment();
+
+//        // Optionally, you can pass arguments to the RankingFragment
+//        // If you don't need to pass any data, you can skip this part
+//        Bundle args = new Bundle();
+//        args.putString("category", "sports");  // Example of passing arguments
+//        rankingFragment.setArguments(args);
+
+        // Add the RankingFragment to the fragment container
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.frameLayout, rankingFragment, "ranking")
+                .hide(rankingFragment)  // Initially hide it, since workoutFragment is shown first
+                .commit();
+
+        Log.d("DEBUG", "RankingFragment initialized and cached");
+    }
+
     /**
      * Displays the specified Fragment using show() and hide() to avoid refreshing.
      */
     private void showFragment(Fragment fragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
-        // If the fragment to show is the cached workoutFragment
-        if (fragment == workoutFragment) {
-            // Only show and hide the other Fragment
-            transaction.hide(activeFragment).show(workoutFragment);
+//        // If the fragment to show is the cached workoutFragment
+//        if (fragment == workoutFragment) {
+//            // Only show and hide the other Fragment
+//            transaction.hide(activeFragment).show(workoutFragment);
+//        } else {
+//            // If it is not the workoutFragment
+//            if (!fragment.isAdded()) {
+//                // If the fragment is not added, add it and hide the current Fragment
+//                transaction.hide(activeFragment).add(R.id.frameLayout, fragment);
+//            } else {
+//                // If the fragment is already added, directly show it and hide the current Fragment
+//                transaction.hide(activeFragment).show(fragment);
+//            }
+//        }
+//
+//        transaction.commit();
+//        activeFragment = fragment; // Update the currently displayed Fragment
+
+        // Check if the fragment is already added
+        if (!fragment.isAdded()) {
+            // If the fragment is not added, add it and hide the current fragment
+            transaction.hide(activeFragment).add(R.id.frameLayout, fragment);
         } else {
-            // If it is not the workoutFragment
-            if (!fragment.isAdded()) {
-                // If the fragment is not added, add it and hide the current Fragment
-                transaction.hide(activeFragment).add(R.id.frameLayout, fragment);
-            } else {
-                // If the fragment is already added, directly show it and hide the current Fragment
-                transaction.hide(activeFragment).show(fragment);
-            }
+            // If the fragment is already added, directly show it and hide the current fragment
+            transaction.hide(activeFragment).show(fragment);
         }
 
+        // Commit the transaction and update the currently active fragment
         transaction.commit();
-        activeFragment = fragment; // Update the currently displayed Fragment
+        activeFragment = fragment;
     }
 
     /**
