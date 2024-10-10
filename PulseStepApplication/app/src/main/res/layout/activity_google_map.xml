@@ -229,7 +229,7 @@
     <RelativeLayout
         android:id="@+id/button_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="85dp"
         android:layout_centerHorizontal="true"
         android:layout_above="@id/card_layout"
         android:layout_marginBottom="-35dp"
@@ -248,17 +248,32 @@
             android:layout_alignParentStart="true"
             android:layout_marginStart="20dp"
             android:contentDescription="Finish"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
+        <!-- Progress Bar around Stop Button -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:indeterminate="false"
+            android:max="100"
+            android:progress="0"
+            android:layout_marginStart="8dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true"
+            android:visibility="gone"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:progressDrawable="@drawable/circular_progress_drawable" />
 
         <!-- Stop Button -->
         <ImageButton
             android:id="@+id/btn_stop"
             android:layout_width="70dp"
             android:layout_height="70dp"
-            android:background="@drawable/circular_button"
+            android:background="@drawable/circular_button_ripple"
             android:src="@drawable/start"
-            android:layout_centerInParent="true" />
+            android:layout_centerInParent="true"
+            android:scaleType="centerInside" />
     </RelativeLayout>
 
 
