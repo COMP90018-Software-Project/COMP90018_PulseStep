@@ -16,6 +16,7 @@ circleimageview = "3.1.0"
 materialVersion = "3"
 firebaseAuth = "23.0.0"
 firebaseFirestore = "25.1.0"
+googleGmsGoogleServices = "4.4.2"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -43,4 +44,5 @@ x-3-10 = { module = "com.google.gms.google-services:4.3.10" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
 

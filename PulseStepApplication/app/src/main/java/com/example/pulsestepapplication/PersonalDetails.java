@@ -16,8 +16,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PersonalDetails extends AppCompatActivity {
@@ -191,6 +193,16 @@ public class PersonalDetails extends AppCompatActivity {
             userDetails.put("gender", gender);
             userDetails.put("appleHealthEnabled", appleHealthEnabled);
             userDetails.put("avatarUrl", avatarUrl);
+            // Default daily target for user
+            userDetails.put("target", 1);
+
+//            userDetails.put("dailyActiveTime",0);
+//            userDetails.put("monthlyActiveTime",0);
+//
+//            List<String> dailyLikeList = new ArrayList<>();
+//            userDetails.put("dailyLike",dailyLikeList);
+//            List<String> monthlyLikeList = new ArrayList<>();
+//            userDetails.put("monthlyLike",monthlyLikeList);
 
             // Save data to Firestore
             db.collection("users").document(userUID)
