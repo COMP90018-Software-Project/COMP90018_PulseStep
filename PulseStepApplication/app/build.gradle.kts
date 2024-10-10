@@ -16,9 +16,9 @@ android {
         versionCode = 1
         versionName = "1.0"
         ndk {
-            abiFilters.addAll(listOf("x86_64", "x86"))//,"armeabi-v7a", "arm64-v8a"
+            abiFilters.addAll(listOf("x86_64", "x86","armeabi-v7a", "arm64-v8a"))//
         }
-
+//
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
