@@ -18,12 +18,11 @@ import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
-
 
 public class RankingFragment extends Fragment {
 
@@ -40,38 +39,27 @@ public class RankingFragment extends Fragment {
             R.drawable.sample_profile_img};
 
     private TextView dailyTargetTextView;
-    private int selectedTargetHours;
+    private String targetHours;
     private FirebaseFirestore db;
     private FirebaseUser currentUser;
     private String userId;
-    private TargetViewModel targetViewModel;
 
 
     public RankingFragment() {
         // Required empty public constructor
     }
 
-//    @Override
-//    public void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setUpRankModels();
-//
-//        // 获取当前用户的 UID
-////        currentUser = FirebaseAuth.getInstance().getCurrentUser();
-////        userId = currentUser.getUid();
-//
-//        // 使用 ViewModelProvider 来获取 ViewModel 实例
-//        targetViewModel= new ViewModelProvider(this).get(TargetViewModel.class);
-//
-//
-//    }
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setUpRankModels();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         setUpRankModels();
-        targetViewModel= new ViewModelProvider(this).get(TargetViewModel.class);
 
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_ranking, container, false);
@@ -83,30 +71,19 @@ public class RankingFragment extends Fragment {
         RankListAdapter rankListAdapter = new RankListAdapter(requireContext(), rankModels);
         rankRecyclerView.setAdapter(rankListAdapter);
 
-        // Set Target Dialog
-        // 从 Firebase 获取当前用户的 target 并更新 UI
-//        getCurrentTargetFromFirestore();
-//        updateTargetDisplay();
         // 初始化显示目标时长的 TextView
         dailyTargetTextView = view.findViewById(R.id.daily_target_hours);
-//        getCurrentTargetFromFirestore();
 
-        // Observe the target hours LiveData from ViewModel
-        targetViewModel.getTargetHours().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(String targetHours) {
-                // 如果 targetHours 是 "--"，则不更新 selectedTargetHours
-                if (!targetHours.equals("--")) {
-                    selectedTargetHours = Integer.parseInt(targetHours);
-                }
+        // Initialize FirebaseFirestore
+        db = FirebaseFirestore.getInstance();
 
-                updateTargetDisplay(targetHours);  // 更新目标时长的显示
-            }
-        });
+        // 获取当前用户的 UID
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        userId = currentUser.getUid();
 
+        // 从 Firebase 获取当前用户的 target 并更新 UI
+        fetchTargetHours();
 
-        // Fetch the target hours when the fragment is created
-        targetViewModel.fetchTargetHours();
 
         ImageView editTarget = view.findViewById(R.id.bt_set_target);
         // 给 dailyTargetTextView 设置点击事件，触发 Dialog
@@ -167,30 +144,37 @@ public class RankingFragment extends Fragment {
         // 设置 NumberPicker 的当前值
         targetPicker.setMinValue(1);
         targetPicker.setMaxValue(12); // 设置 1 到 12 小时
-        targetPicker.setValue(selectedTargetHours);
+
+        // Handle possible null or invalid targetHours
+        int targetValue = 1;  // Default value
+        if (targetHours != null) {
+            try {
+                targetValue = Integer.parseInt(targetHours);
+            } catch (NumberFormatException e) {
+                targetValue = 1;  // Default value if parsing fails
+            }
+        }
+        targetPicker.setValue(targetValue);
 
         // Set new target
         btnSet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // 获取选择的目标时间并更新
-                selectedTargetHours = targetPicker.getValue();
-                updateTargetDisplay(String.valueOf(selectedTargetHours));
+                targetHours = String.valueOf(targetPicker.getValue());
+                updateTargetHours(targetHours);
 
-//                // Add a new document with a generated ID
-//                db.collection("users").document(userId)
-//                        .update("target", selectedTargetHours)
-//                        .addOnSuccessListener(aVoid -> {
-//                            // Success update
-//                            Toast.makeText(getContext(), "Target updated successfully!", Toast.LENGTH_SHORT).show();
-//
-//                        })
-//                        .addOnFailureListener(e -> {
-//                            Toast.makeText(getContext(), "Failed to update target!", Toast.LENGTH_SHORT).show();
-//                        });
-                // Update the target hours in Firestore using ViewModel
-                targetViewModel.updateTargetHours(String.valueOf(selectedTargetHours));
+                // Add a new document with a generated ID
+                db.collection("users").document(userId)
+                        .update("target", targetHours)
+                        .addOnSuccessListener(aVoid -> {
+                            // Success update
+                            Toast.makeText(getContext(), "Target updated successfully!", Toast.LENGTH_SHORT).show();
 
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(getContext(), "Failed to update target!", Toast.LENGTH_SHORT).show();
+                        });
                 dialog.dismiss();
             }
         });
@@ -210,32 +194,39 @@ public class RankingFragment extends Fragment {
         if (targetHours.equals("--")) {
             dailyTargetTextView.setText("-- hours");  // 如果没有目标，显示 "-- hours"
         } else {
-            dailyTargetTextView.setText(targetHours + " " + (selectedTargetHours == 1 ? "hour" : "hours"));
+            dailyTargetTextView.setText(targetHours + " " + (targetHours.equals("1") ? "hour" : "hours"));
         }
     }
 
-
-    // 从 Firestore 获取当前用户的目标值
-    private void getCurrentTargetFromFirestore() {
-        db.collection("users").document(userId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        // 获取 target 字段的值
-                        Long target = documentSnapshot.getLong("target");
-                        if (target != null) {
-                            selectedTargetHours = target.intValue();  // 将 Firebase 获取到的目标时间设置为当前值
-                            updateTargetDisplay(String.valueOf(selectedTargetHours));  // 更新目标显示
-                        } else {
-                            // 如果 target 不存在，设置默认值为 1
-                            selectedTargetHours = 1;
-                            updateTargetDisplay(String.valueOf(selectedTargetHours));  // 设置默认值
-                        }
+    public void fetchTargetHours() {
+        if (userId != null) {
+            DocumentReference userRef = db.collection("users").document(userId);
+            userRef.get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    Object target = documentSnapshot.get("target");
+                    if (target != null) {
+                        targetHours = target.toString();
+                    } else {
+                        targetHours = "--";  // Default value
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Failed to load target!", Toast.LENGTH_SHORT).show();
-                });
+                    updateTargetDisplay(targetHours);
+                }
+            }).addOnFailureListener(e -> {
+                targetHours = "--";  // Set default value in case of failure
+                updateTargetDisplay(targetHours);
+            });
+        }
+    }
+
+    public void updateTargetHours(String newTarget) {
+        if (userId != null) {
+            db.collection("users").document(userId)
+                    .update("target", newTarget)
+                    .addOnSuccessListener(aVoid -> targetHours = newTarget)
+                    .addOnFailureListener(e -> {
+                        // Handle the error if needed
+                    });
+        }
     }
 
 }
