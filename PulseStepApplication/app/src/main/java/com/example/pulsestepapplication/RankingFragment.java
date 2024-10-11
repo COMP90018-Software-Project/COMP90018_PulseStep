@@ -36,6 +36,7 @@ public class RankingFragment extends Fragment {
             R.drawable.sample_profile_img,
             R.drawable.sample_profile_img,
             R.drawable.sample_profile_img,
+            R.drawable.sample_profile_img,
             R.drawable.sample_profile_img};
 
     private TextView dailyTargetTextView;

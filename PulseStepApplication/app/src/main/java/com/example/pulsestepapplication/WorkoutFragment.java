@@ -503,7 +503,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("LATITUDE", latitude);
         intent.putExtra("LONGITUDE", longitude);
 
-        intent.putExtra("name", userName);
+        intent.putExtra("name",  userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
         startActivity(intent);
