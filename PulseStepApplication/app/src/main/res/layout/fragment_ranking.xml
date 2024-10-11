@@ -158,7 +158,7 @@
                 android:layout_marginTop="20dp"
                 android:progressDrawable="@drawable/progress_bar"
                 android:max="100"
-                android:progress="71"
+                android:progress="0"
                 app:layout_constraintTop_toBottomOf="@id/target_title"
                 app:layout_constraintStart_toStartOf="parent"/>  <!-- 当前进度设为 71% -->
 

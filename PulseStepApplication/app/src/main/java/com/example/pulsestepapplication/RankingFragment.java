@@ -7,12 +7,14 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.NumberPicker;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +25,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Calendar;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 
 public class RankingFragment extends Fragment {
 
@@ -39,11 +47,13 @@ public class RankingFragment extends Fragment {
             R.drawable.sample_profile_img};
 
     private TextView dailyTargetTextView;
+    private TextView dailyActiveTimeTextView;
     private String targetHours;
+    private String dailyActiveTime;
     private FirebaseFirestore db;
     private FirebaseUser currentUser;
     private String userId;
-
+    private ProgressBar progressBar;
 
     public RankingFragment() {
         // Required empty public constructor
@@ -70,8 +80,12 @@ public class RankingFragment extends Fragment {
         RankListAdapter rankListAdapter = new RankListAdapter(requireContext(), rankModels);
         rankRecyclerView.setAdapter(rankListAdapter);
 
-        // 初始化显示目标时长的 TextView
+        // View of daily target and active time TextView
         dailyTargetTextView = view.findViewById(R.id.daily_target_hours);
+        dailyActiveTimeTextView = view.findViewById(R.id.progress_detail);
+
+        // View of progress bar
+        progressBar = view.findViewById(R.id.progressBar);
 
         // Initialize FirebaseFirestore
         db = FirebaseFirestore.getInstance();
@@ -81,7 +95,7 @@ public class RankingFragment extends Fragment {
         userId = currentUser.getUid();
 
         // 从 Firebase 获取当前用户的 target 并更新 UI
-        fetchTargetHours();
+        fetchTargetData();
 //        fetchDailyActiveHours();
 
         ImageView editTarget = view.findViewById(R.id.bt_set_target);
@@ -192,13 +206,53 @@ public class RankingFragment extends Fragment {
     }
 
     /**
+     * Displays the updated daily active time.
+     */
+    private void updateDailyActiveDisplay(String dailyActiveTime) {
+        if (dailyActiveTime != null) {
+            dailyActiveTimeTextView.setText(dailyActiveTime + "/");
+        } else {
+            dailyActiveTimeTextView.setText("0/");
+        }
+    }
+
+    /**
      * Fetch the target from firestore.
      */
-    private void fetchTargetHours() {
+    private void fetchTargetData() {
         if (userId != null) {
             DocumentReference userRef = db.collection("users").document(userId);
-            userRef.get().addOnSuccessListener(documentSnapshot -> {
+//            userRef.get().addOnSuccessListener(documentSnapshot -> {
+            // 使用 addSnapshotListener 来监听数据库的变动
+            userRef.addSnapshotListener((documentSnapshot, error) -> {
+                if (error != null) {
+                    Log.w("RankingFragment", "Listen failed.", error);
+                    return;
+                }
                 if (documentSnapshot.exists()) {
+                    // Update daily active time UI
+                    Map<String, Long> dailyActiveMap = (Map<String, Long>) documentSnapshot.get("dailyActive");
+                    // Get current date
+                    String today = getCurrentDate();
+                    // init dailyActiveTime to 0
+                    double dailyActiveInHours = 0;
+                    // get today active time and convert to hours
+                    if (dailyActiveMap != null && dailyActiveMap.containsKey(today)) {
+                        long dailyActiveInSeconds = dailyActiveMap.get(today);
+                        dailyActiveInHours = convertSecondsToHours(dailyActiveInSeconds);
+                    }
+//                    dailyActiveTime = Double.toString(dailyActiveInHours);
+                    // convert to specific format
+                    if (dailyActiveInHours == Math.floor(dailyActiveInHours)) {
+                        // if int
+                        dailyActiveTime = String.format(Locale.getDefault(), "%.0f", dailyActiveInHours);
+                    } else {
+                        // if decimal
+                        dailyActiveTime = String.format(Locale.getDefault(), "%.1f", dailyActiveInHours);
+                    }
+                    updateDailyActiveDisplay(dailyActiveTime);
+
+                    // Update target hours UI
                     Object target = documentSnapshot.get("target");
                     if (target != null) {
                         targetHours = target.toString();
@@ -206,11 +260,21 @@ public class RankingFragment extends Fragment {
                         targetHours = "--";  // Default value
                     }
                     updateTargetDisplay(targetHours);
+
+                    // update daily progress - ProgressBar
+                    if (!targetHours.equals("--")) {
+                        double targetInHours = Double.parseDouble(targetHours);  // Convert target hours to double
+                        int progress = (int) ((dailyActiveInHours / targetInHours) * 100);  // Calculate progress percentage
+                        progressBar.setProgress(progress);  // Update progress bar
+                    }
                 }
-            }).addOnFailureListener(e -> {
-                targetHours = "--";  // Set default value in case of failure
-                updateTargetDisplay(targetHours);
             });
+//                    .addOnFailureListener(e -> {
+//                targetHours = "--";  // Set default value in case of failure
+//                dailyActiveTime = "0";
+//                updateTargetDisplay(targetHours);
+//                updateDailyActiveDisplay(dailyActiveTime);
+//            });
         }
     }
 
@@ -233,4 +297,37 @@ public class RankingFragment extends Fragment {
         }
     }
 
+//    /**
+//     * Fetch the target from firestore.
+//     */
+//    private void fetchDailyActiveHours() {
+//        if (userId != null) {
+//            DocumentReference userRef = db.collection("users").document(userId);
+//            userRef.get().addOnSuccessListener(documentSnapshot -> {
+//                if (documentSnapshot.exists()) {
+//                    Object target = documentSnapshot.get("target");
+//                    if (target != null) {
+//                        targetHours = target.toString();
+//                    } else {
+//                        targetHours = "--";  // Default value
+//                    }
+//                    updateTargetDisplay(targetHours);
+//                }
+//            }).addOnFailureListener(e -> {
+//                targetHours = "--";  // Set default value in case of failure
+//                updateTargetDisplay(targetHours);
+//            });
+//        }
+//    }
+    // 将秒转换为小时，并保留小数点后一位
+    private double convertSecondsToHours(long seconds) {
+        return seconds / 3600.0; // 将秒转换为小时
+    }
+
+    // 获取当前日期的函数，返回格式 "yyyy-MM-dd"
+    private String getCurrentDate() {
+        Date date = Calendar.getInstance().getTime();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        return dateFormat.format(date); // YYYY-MM-DD 格式
+    }
 }

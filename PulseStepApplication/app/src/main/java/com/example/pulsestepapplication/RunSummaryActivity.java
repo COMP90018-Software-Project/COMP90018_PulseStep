@@ -423,10 +423,14 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
      * Convert active time from string MM:SS to seconds.
      */
     private int convertTimeToSeconds(String time) {
-        String[] parts = time.split(":");
-        int minutes = Integer.parseInt(parts[0]);
-        int seconds = Integer.parseInt(parts[1]);
-        return minutes * 60 + seconds;
+        if (time != null && !time.isEmpty()) {
+            String[] parts = time.split(":");
+            int minutes = Integer.parseInt(parts[0]);
+            int seconds = Integer.parseInt(parts[1]);
+            return minutes * 60 + seconds;
+        } else {
+            return 0;
+        }
     }
 
     /**

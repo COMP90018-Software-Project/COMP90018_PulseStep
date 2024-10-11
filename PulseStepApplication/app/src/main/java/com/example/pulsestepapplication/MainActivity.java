@@ -137,6 +137,10 @@ public class MainActivity extends AppCompatActivity {
             // If the fragment is not added, add it and hide the current fragment
             transaction.hide(activeFragment).add(R.id.frameLayout, fragment);
         } else {
+//            // 强制重新加载数据
+//            if (fragment instanceof RankingFragment) {
+//                ((RankingFragment) fragment).fetchTargetData();
+//            }
             // If the fragment is already added, directly show it and hide the current fragment
             transaction.hide(activeFragment).show(fragment);
         }
