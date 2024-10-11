@@ -30,6 +30,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 android:paddingTop="30dp"
                 app:singleSelection="true"
+                app:selectionRequired="true"
                 app:checkedButton="@id/bt_daily"
                 >
                 <Button
