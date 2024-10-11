@@ -50,24 +50,28 @@ public class RankingFragment extends Fragment {
         // Required empty public constructor
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setUpRankModels();
-
-        // 获取当前用户的 UID
-//        currentUser = FirebaseAuth.getInstance().getCurrentUser();
-//        userId = currentUser.getUid();
-
-        // 使用 ViewModelProvider 来获取 ViewModel 实例
-        targetViewModel= new ViewModelProvider(this).get(TargetViewModel.class);
-
-
-    }
+//    @Override
+//    public void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        setUpRankModels();
+//
+//        // 获取当前用户的 UID
+////        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+////        userId = currentUser.getUid();
+//
+//        // 使用 ViewModelProvider 来获取 ViewModel 实例
+//        targetViewModel= new ViewModelProvider(this).get(TargetViewModel.class);
+//
+//
+//    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        setUpRankModels();
+        targetViewModel= new ViewModelProvider(this).get(TargetViewModel.class);
+
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_ranking, container, false);
 

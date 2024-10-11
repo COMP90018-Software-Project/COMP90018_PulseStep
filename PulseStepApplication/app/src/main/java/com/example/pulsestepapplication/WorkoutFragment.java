@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.icu.text.SimpleDateFormat;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +24,8 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -33,6 +36,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+
+import java.util.Calendar;
+import java.util.Locale;
 
 
 public class WorkoutFragment extends Fragment {
@@ -55,6 +61,9 @@ public class WorkoutFragment extends Fragment {
     private String userName;
     private int userAge;
     private double userWeight;
+    private WorkoutViewModel workoutViewModel;
+    private TextView greetingTextView;
+
     public WorkoutFragment() {
         // Required empty public constructor
     }
@@ -67,15 +76,27 @@ public class WorkoutFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
+        workoutViewModel= new ViewModelProvider(this).get(WorkoutViewModel.class);
+        // Observe the target hours LiveData from ViewModel
+        workoutViewModel.getUserName().observe(getViewLifecycleOwner(), new Observer<String>() {
+            @Override
+            public void onChanged(String userName) {
+                 greetingMessageDisplay(userName);
+            }
+        });
+
+        workoutViewModel.fetchUserName();
+
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
         mapProgressBar = view.findViewById(R.id.map_progress_bar);
         // Get the arguments passed from MainActivity
         Bundle args = getArguments();
         if (args != null) {
-            userName = args.getString("name");
-            userAge = args.getInt("age");
-            userWeight = args.getDouble("weight");
+//            userName = args.getString("name");
+//            userAge = args.getInt("age");
+//            userWeight = args.getDouble("weight");
             // Get location permission status
             boolean locationGranted = args.getBoolean("locationGranted", false);
             // Initialize map based on location permission status
@@ -97,12 +118,12 @@ public class WorkoutFragment extends Fragment {
             }
         }
 
-        //greeting_text
-        TextView greetingText = view.findViewById(R.id.greeting_text);
-        greetingText.setText("Hi, " + userName);
+        // greeting text rendered on workout page
+        greetingTextView = view.findViewById(R.id.greeting_text);
 
-
-
+        // date text rendered on workout page
+        TextView dateTextView = view.findViewById((R.id.date_text));
+        dateTextView.setText(getFormattedDate());
 
         // Set up Run button to initiate permission and network checks
         Button runButton = view.findViewById(R.id.run_button);
@@ -585,4 +606,13 @@ public class WorkoutFragment extends Fragment {
         }
     }
 
+    private void greetingMessageDisplay(String userName) {
+        greetingTextView.setText("Hi, " + userName);
+    }
+
+    public String getFormattedDate() {
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE - MMM d", Locale.getDefault());
+        return dateFormat.format(calendar.getTime());
+    }
 }
