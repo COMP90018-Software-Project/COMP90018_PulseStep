@@ -1,5 +1,7 @@
 package com.example.pulsestepapplication;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -8,14 +10,23 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JumpSummaryActivity extends AppCompatActivity {
 
@@ -39,14 +50,17 @@ public class JumpSummaryActivity extends AppCompatActivity {
     private String avgPace;
     private Button finishButton;
     private String calories;
-
-
-
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_jump_summary);
+
+        // Initialize Firebase Auth and Firestore
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // Initialize UI components
         initializeUIComponents();
@@ -57,13 +71,49 @@ public class JumpSummaryActivity extends AppCompatActivity {
         // Display data
         displayData();
 
-//        // Initialize and set up the jump speed gif
+        // Initialize and set up the jump speed gif
 //        setUpGif(savedInstanceState);
+
+        // Get user UID
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String userUID = currentUser.getUid();
+
+        // Get passed startDateTime and finishDateTime
+        String startDateTime = getIntent().getStringExtra("startDateTime");
+        String finishDateTime = getIntent().getStringExtra("finishDateTime");
+        Log.d("RunSummary", "startDateTime: " + startDateTime);
+        Log.d("RunSummary", "finishDateTime: " + finishDateTime);
 
         // Handle Finish button click
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Map<String, Object> userJumpRopeDetails = new HashMap<>();
+
+                userJumpRopeDetails.put("userId", userUID);
+                userJumpRopeDetails.put("startDateTime", startDateTime);
+                userJumpRopeDetails.put("finishDateTime", finishDateTime);
+                userJumpRopeDetails.put("activeTime", time);
+                userJumpRopeDetails.put("avgJumpCount", avgPace);
+                userJumpRopeDetails.put("calories", calories);
+                userJumpRopeDetails.put("jumpCount ", jumpCount);
+                userJumpRopeDetails.put("location", address);
+
+                // Save data to Firestore
+                db.collection("jump").add(userJumpRopeDetails)
+                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w(TAG, "Error adding document", e);
+                            }
+                        });
+
                 // Finish the activity and return to the previous screen
                 Intent intent = new Intent(JumpSummaryActivity.this, MainActivity.class);
                 startActivity(intent);

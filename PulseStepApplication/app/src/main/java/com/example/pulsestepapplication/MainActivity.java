@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("DEBUG", "change to ranking");
                     break;
                 case R.id.profile:
-                    showFragment(new ProfileFragment());
+                    showFragment(profileFragment);
                     Log.d("DEBUG", "change to profile");
                     break;
             }
@@ -92,11 +92,9 @@ public class MainActivity extends AppCompatActivity {
         // Create a new RankingFragment instance
         profileFragment = new ProfileFragment();
 
-//        // Optionally, you can pass arguments to the RankingFragment
-//        // If you don't need to pass any data, you can skip this part
-//        Bundle args = new Bundle();
-//        args.putString("category", "sports");  // Example of passing arguments
-//        profileFragment.setArguments(args);
+        Bundle args = new Bundle();
+        args.putString("Name", "exampleUserName");  // 传递 Name 值
+        profileFragment.setArguments(args);
 
         // Add the RankingFragment to the fragment container
         getSupportFragmentManager().beginTransaction()
@@ -131,24 +129,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private void showFragment(Fragment fragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-
-//        // If the fragment to show is the cached workoutFragment
-//        if (fragment == workoutFragment) {
-//            // Only show and hide the other Fragment
-//            transaction.hide(activeFragment).show(workoutFragment);
-//        } else {
-//            // If it is not the workoutFragment
-//            if (!fragment.isAdded()) {
-//                // If the fragment is not added, add it and hide the current Fragment
-//                transaction.hide(activeFragment).add(R.id.frameLayout, fragment);
-//            } else {
-//                // If the fragment is already added, directly show it and hide the current Fragment
-//                transaction.hide(activeFragment).show(fragment);
-//            }
-//        }
-//
-//        transaction.commit();
-//        activeFragment = fragment; // Update the currently displayed Fragment
 
         // Check if the fragment is already added
         if (!fragment.isAdded()) {
