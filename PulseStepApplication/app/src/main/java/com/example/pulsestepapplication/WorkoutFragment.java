@@ -478,8 +478,8 @@ public class WorkoutFragment extends Fragment {
         boolean activityRecognitionGranted = hasActivityRecognitionPermission();
 
         Intent intent;
-            intent = new Intent(getActivity(), GoogleMapActivity.class);
-            Log.d(TAG, "Launching GoogleMapActivity");
+        intent = new Intent(getActivity(), GoogleMapActivity.class);
+        Log.d(TAG, "Launching GoogleMapActivity");
 
         intent.putExtra("LOCATION_GRANTED", locationGranted);
         intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
