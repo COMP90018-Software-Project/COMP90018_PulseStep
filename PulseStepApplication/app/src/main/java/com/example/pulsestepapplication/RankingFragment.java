@@ -163,18 +163,7 @@ public class RankingFragment extends Fragment {
                 // 获取选择的目标时间并更新
                 targetHours = String.valueOf(targetPicker.getValue());
                 updateTargetHours(targetHours);
-
-                // Add a new document with a generated ID
-                db.collection("users").document(userId)
-                        .update("target", targetHours)
-                        .addOnSuccessListener(aVoid -> {
-                            // Success update
-                            Toast.makeText(getContext(), "Target updated successfully!", Toast.LENGTH_SHORT).show();
-
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(getContext(), "Failed to update target!", Toast.LENGTH_SHORT).show();
-                        });
+                updateTargetDisplay(targetHours);
                 dialog.dismiss();
             }
         });
@@ -220,11 +209,16 @@ public class RankingFragment extends Fragment {
 
     public void updateTargetHours(String newTarget) {
         if (userId != null) {
+            // Add a new document with a generated ID
             db.collection("users").document(userId)
-                    .update("target", newTarget)
-                    .addOnSuccessListener(aVoid -> targetHours = newTarget)
+                    .update("target", targetHours)
+                    .addOnSuccessListener(aVoid -> {
+                        // Success update
+                        Toast.makeText(getContext(), "New Target Has Been Set!", Toast.LENGTH_SHORT).show();
+
+                    })
                     .addOnFailureListener(e -> {
-                        // Handle the error if needed
+                        Toast.makeText(getContext(), "Failed to update target!", Toast.LENGTH_SHORT).show();
                     });
         }
     }
