@@ -1,20 +1,16 @@
 package com.example.pulsestepapplication;
 
-import static android.app.Activity.RESULT_OK;
-
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,31 +22,30 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.pulsestepapplication.calendar.DateItemClickListener;
 import com.example.pulsestepapplication.calendar.HorizontalCalendar;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.github.dhaval2404.imagepicker.ImagePicker;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
-import java.io.IOException;
-import java.util.Calendar;
+
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 public class ProfileFragment extends Fragment implements DateItemClickListener {
     private HorizontalCalendar horizontalCalendar;
     private TextView monthTextView;
-    private Uri filePath;
     ImageView profileImage;
     StorageReference storageReference;
-    ActivityResultLauncher<Intent> imagePickerLauncher;
 
-    private final int PICK_IMAGE_REQUEST = 71;
+    ActivityResultLauncher<Intent> imagePickLauncher;
+    Uri selectedImageUri;
 
+    private String userId;
     private String userName;
 
-    public ProfileFragment(){
+    public ProfileFragment() {
 
     }
 
@@ -58,22 +53,14 @@ public class ProfileFragment extends Fragment implements DateItemClickListener {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize the ActivityResultLauncher for image picking
-        imagePickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
+        imagePickLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                        // Handle the image picking result
+                    if(result.getResultCode() == Activity.RESULT_OK){
                         Intent data = result.getData();
-                        filePath = data.getData();
-                        if (filePath != null) {
-                            try {
-                                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), filePath);
-                                profileImage.setImageBitmap(bitmap);
-                                uploadImage();  // Upload the selected image
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                        if(data!=null && data.getData()!=null){
+                            selectedImageUri = data.getData();
+                            setProfilePic(getContext(),selectedImageUri,profileImage);
+                            uploadImage();
                         }
                     }
                 }
@@ -90,9 +77,23 @@ public class ProfileFragment extends Fragment implements DateItemClickListener {
         // Get the arguments passed from MainActivity
         Bundle args = getArguments();
         if (args != null) {
+            userId = args.getString("userId");
             userName = args.getString("fullName");
-            Log.e("ProfileFragment", "userName = "+ userName);
+            Log.e("ProfileFragment", "userId: " + userId + "Full Name: " + userName);
         }
+
+        profileImage = view.findViewById(R.id.profile_image);
+        FirebaseStorage.getInstance().getReference()
+                .child("users")
+                .child(userId)
+                .child("images/profile_image")
+                .getDownloadUrl()
+                .addOnCompleteListener(task -> {
+                    if(task.isSuccessful()){
+                        Uri uri  = task.getResult();
+                        setProfilePic(getContext(),uri,profileImage);
+                    }
+                });
 
         // Set username in profile page
         TextView nameTextView = view.findViewById(R.id.name);
@@ -126,14 +127,21 @@ public class ProfileFragment extends Fragment implements DateItemClickListener {
         }
 
 
+
         // Image picker button
         ImageView imagePicker = view.findViewById(R.id.btn_image_picker);
-        profileImage = view.findViewById(R.id.profile_image);
 
-        loadImage(); // Load the existing image from storage
+        imagePicker.setOnClickListener((v)->{
+            ImagePicker.with(this).cropSquare().compress(512).maxResultSize(512,512)
+                    .createIntent(new Function1<Intent, Unit>() {
+                        @Override
+                        public Unit invoke(Intent intent) {
+                            imagePickLauncher.launch(intent);
+                            return null;
+                        }
+                    });
+        });
 
-        // Set OnClickListener for the image picker button
-        imagePicker.setOnClickListener(v -> chooseImage());
 
         return view;
     }
@@ -144,76 +152,35 @@ public class ProfileFragment extends Fragment implements DateItemClickListener {
         horizontalCalendar.highlightSelectedDate(position);
     }
 
-    private void loadImage() {
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            final String retrievedName = bundle.getString("Name");
-
-            if (retrievedName != null) {
-                // Reference to an image file in Cloud Storage
-                StorageReference storageReference = FirebaseStorage.getInstance().getReference()
-                        .child(retrievedName).child("images/profile_image");
-
-                // Load the image using Glide
-                Glide.with(this)
-                        .load(storageReference)
-                        .into(profileImage);
-            } else {
-                Log.e("ProfileFragment", "No name found in bundle");
-            }
-        } else {
-            Log.e("ProfileFragment", "Arguments bundle is null");
-        }
-    }
-
 
     // Upload the selected image to Firebase Storage
     private void uploadImage() {
-        if (filePath != null) {
-            // 从 arguments 中获取名字
-            Bundle bundle = getArguments();
-            if (bundle != null) {
-                final String retrievedName = bundle.getString("Name");
+        if (selectedImageUri != null) {
+            if (userId != null && !userId.isEmpty()) {
+                // 初始化 Firebase Storage 的引用
+                storageReference = FirebaseStorage.getInstance().getReference()
+                        .child("users").child(userId).child("images/profile_image");
 
-                if (retrievedName != null) {
-                    // 初始化 Firebase Storage 的引用
-                    storageReference = FirebaseStorage.getInstance().getReference()
-                            .child(retrievedName).child("images/profile_image");
-
-                    storageReference.putFile(filePath)
-                            .addOnSuccessListener(taskSnapshot -> {
-                                // 上传成功的处理逻辑
-                                Toast.makeText(getContext(), "Image Uploaded", Toast.LENGTH_SHORT).show();
-                                // 重新加载图片
-                                loadImage();
-                            })
-                            .addOnFailureListener(e -> {
-                                // 上传失败的处理逻辑
-                                Toast.makeText(getContext(), "Upload Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            });
-                } else {
-                    Log.e("ProfileFragment", "Name not found in arguments");
-                    Toast.makeText(getContext(), "Failed to upload: Name is null", Toast.LENGTH_SHORT).show();
-                }
+                storageReference.putFile(selectedImageUri)
+                        .addOnSuccessListener(taskSnapshot -> {
+                            // 上传成功的处理逻辑
+//                            Toast.makeText(getContext(), "Image Uploaded", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            // 上传失败的处理逻辑
+                            Toast.makeText(getContext(), "Upload Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
             } else {
-                Log.e("ProfileFragment", "Arguments bundle is null");
-                Toast.makeText(getContext(), "Failed to upload: Arguments are null", Toast.LENGTH_SHORT).show();
+                Log.e("ProfileFragment", "Name not found in arguments");
+                Toast.makeText(getContext(), "Failed to upload: Name is null or empty", Toast.LENGTH_SHORT).show();
             }
         } else {
-            Log.e("ProfileFragment", "File path is null");
-            Toast.makeText(getContext(), "Failed to upload: File path is null", Toast.LENGTH_SHORT).show();
+            Log.e("ProfileFragment", "filePath is null");
         }
     }
 
-
-
-    // Method to trigger the image picker
-    private void chooseImage() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        imagePickerLauncher.launch(Intent.createChooser(intent, "Select Picture"));
+    public static void setProfilePic(Context context, Uri imageUri, ImageView imageView){
+        Glide.with(context).load(imageUri).apply(RequestOptions.circleCropTransform()).into(imageView);
     }
-
 
 }

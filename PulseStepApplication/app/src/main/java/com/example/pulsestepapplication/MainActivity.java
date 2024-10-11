@@ -78,54 +78,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-//    private void initWorkoutFragment(boolean locationGranted) {
-//        // Create WorkoutFragment instance
-//        workoutFragment = new WorkoutFragment();
-//        activeFragment = workoutFragment; // Set the initial fragment to workoutFragment
-//
-//        // Pass arguments, including location permission status
-//        Bundle args = new Bundle();
-//        args.putString("name", name);
-//        Log.e("WorkoutFragment", "userName = "+ name);
-////        args.putInt("age", 66);
-////        args.putDouble("weight", 66.6);
-//        args.putBoolean("locationGranted", locationGranted); // Pass location permission status
-//        workoutFragment.setArguments(args);
-//
-//        // Add the WorkoutFragment to the container
-//        getSupportFragmentManager().beginTransaction()
-//                .add(R.id.frameLayout, workoutFragment, "workout")
-//                .commit();
-//
-//        Log.d("DEBUG", "home page: workout fragment");
-//    }
-//
-//    private void initProfileFragment() {
-//        // Create a new RankingFragment instance
-//        profileFragment = new ProfileFragment();
-//
-//        // Add the RankingFragment to the fragment container
-//        getSupportFragmentManager().beginTransaction()
-//                .add(R.id.frameLayout, profileFragment, "profile")
-//                .hide(profileFragment)  // Initially hide it, since workoutFragment is shown first
-//                .commit();
-//
-//        Log.d("DEBUG", "ProfileFragment initialized and cached");
-//    }
-//
-//    private void initRankingFragment() {
-//        // Create a new RankingFragment instance
-//        rankingFragment = new RankingFragment();
-//
-//        // Add the RankingFragment to the fragment container
-//        getSupportFragmentManager().beginTransaction()
-//                .add(R.id.frameLayout, rankingFragment, "ranking")
-//                .hide(rankingFragment)  // Initially hide it, since workoutFragment is shown first
-//                .commit();
-//
-//        Log.d("DEBUG", "RankingFragment initialized and cached");
-//    }
-
     /**
      * Displays the specified Fragment using show() and hide() to avoid refreshing.
      */
@@ -160,27 +112,6 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-//                                           @NonNull int[] grantResults) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//
-//        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-//            boolean locationGranted = false;
-//            if (grantResults.length > 0) {
-//                for (int result : grantResults) {
-//                    if (result == PackageManager.PERMISSION_GRANTED) {
-//                        locationGranted = true;
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            // Initialize WorkoutFragment based on permission result
-//            initWorkoutFragment(locationGranted);
-//        }
-//    }
-
 
     private void fetchUserData() {
         if (userId != null) {
@@ -197,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.e("UserInfo", "Full Name: " + fullName + ", Weight: " + weight);
 
                         // 把数据传递给 Fragment
-                        passDataToFragments(fullName, Double.parseDouble(weight));
+                        passDataToFragments(userId, fullName, Double.parseDouble(weight));
                     } else {
                         Log.e("UserInfo", "Some fields are missing.");
                     }
@@ -213,12 +144,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void passDataToFragments(String fullName, Double weight) {
+    private void passDataToFragments(String userId, String fullName, Double weight) {
         // 创建 Bundle 存储数据
         Bundle args = new Bundle();
+        args.putString("userId", userId);
         args.putString("fullName", fullName);
         args.putDouble("weight", weight);
-        Log.e("PassedData", "Full Name: " + fullName + ", Weight: " + weight);
+        Log.e("PassedData", "userId: " + userId + ", Full Name: " + fullName + ", Weight: " + weight);
 
         // 初始化各个 Fragment 并传递数据
         initWorkoutFragment(true, args);
