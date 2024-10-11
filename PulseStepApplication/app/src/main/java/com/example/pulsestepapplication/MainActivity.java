@@ -74,9 +74,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Pass arguments, including location permission status
         Bundle args = new Bundle();
-        args.putString("name", "Jackie");
-        args.putInt("age", 66);
-        args.putDouble("weight", 66.6);
+//        args.putString("name", "Jackie");
+//        args.putInt("age", 66);
+//        args.putDouble("weight", 66.6);
         args.putBoolean("locationGranted", locationGranted); // Pass location permission status
         workoutFragment.setArguments(args);
 
