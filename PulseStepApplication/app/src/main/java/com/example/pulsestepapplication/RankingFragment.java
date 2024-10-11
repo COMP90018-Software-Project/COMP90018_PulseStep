@@ -161,7 +161,7 @@ public class RankingFragment extends Fragment {
             public void onClick(View v) {
                 // 获取选择的目标时间并更新
                 targetHours = String.valueOf(targetPicker.getValue());
-                updateTargetDisplay(targetHours);
+                updateTargetHours(targetHours);
 
                 // Add a new document with a generated ID
                 db.collection("users").document(userId)
@@ -208,11 +208,11 @@ public class RankingFragment extends Fragment {
                     } else {
                         targetHours = "--";  // Default value
                     }
-                    updateTargetHours(targetHours);
+                    updateTargetDisplay(targetHours);
                 }
             }).addOnFailureListener(e -> {
                 targetHours = "--";  // Set default value in case of failure
-                updateTargetHours(targetHours);
+                updateTargetDisplay(targetHours);
             });
         }
     }
