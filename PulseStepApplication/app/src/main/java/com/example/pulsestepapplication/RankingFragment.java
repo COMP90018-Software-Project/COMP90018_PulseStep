@@ -67,7 +67,6 @@ public class RankingFragment extends Fragment {
         RecyclerView rankRecyclerView = view.findViewById(R.id.ranking_List);
         rankRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-
         RankListAdapter rankListAdapter = new RankListAdapter(requireContext(), rankModels);
         rankRecyclerView.setAdapter(rankListAdapter);
 
@@ -83,7 +82,7 @@ public class RankingFragment extends Fragment {
 
         // 从 Firebase 获取当前用户的 target 并更新 UI
         fetchTargetHours();
-
+//        fetchDailyActiveHours();
 
         ImageView editTarget = view.findViewById(R.id.bt_set_target);
         // 给 dailyTargetTextView 设置点击事件，触发 Dialog
@@ -132,6 +131,9 @@ public class RankingFragment extends Fragment {
 
     }
 
+    /**
+     * Set up the target picker dialog
+     */
     private void setUpTargetPickerDialog(){
         final Dialog dialog = new Dialog(requireContext());
         dialog.setContentView(R.layout.dialog_set_target); // 使用自定义布局 dialog_time_picker.xml
@@ -178,7 +180,9 @@ public class RankingFragment extends Fragment {
         dialog.show();  // 显示对话框
     }
 
-    // 更新目标时长显示
+    /**
+     * Displays the updated target.
+     */
     private void updateTargetDisplay(String targetHours) {
         if (targetHours.equals("--")) {
             dailyTargetTextView.setText("-- hours");  // 如果没有目标，显示 "-- hours"
@@ -187,7 +191,10 @@ public class RankingFragment extends Fragment {
         }
     }
 
-    public void fetchTargetHours() {
+    /**
+     * Fetch the target from firestore.
+     */
+    private void fetchTargetHours() {
         if (userId != null) {
             DocumentReference userRef = db.collection("users").document(userId);
             userRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -207,7 +214,10 @@ public class RankingFragment extends Fragment {
         }
     }
 
-    public void updateTargetHours(String newTarget) {
+    /**
+     * Update the new target to firestore.
+     */
+    private void updateTargetHours(String newTarget) {
         if (userId != null) {
             // Add a new document with a generated ID
             db.collection("users").document(userId)

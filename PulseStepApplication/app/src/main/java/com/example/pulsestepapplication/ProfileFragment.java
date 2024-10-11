@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.pulsestepapplication.calendar.DateItemClickListener;
 import com.example.pulsestepapplication.calendar.HorizontalCalendar;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
@@ -35,6 +36,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.IOException;
+import java.util.Calendar;
 
 public class ProfileFragment extends Fragment implements DateItemClickListener {
     private HorizontalCalendar horizontalCalendar;
@@ -45,6 +47,8 @@ public class ProfileFragment extends Fragment implements DateItemClickListener {
     ActivityResultLauncher<Intent> imagePickerLauncher;
 
     private final int PICK_IMAGE_REQUEST = 71;
+
+    private String userName;
 
     public ProfileFragment(){
 
@@ -83,6 +87,17 @@ public class ProfileFragment extends Fragment implements DateItemClickListener {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        // Get the arguments passed from MainActivity
+        Bundle args = getArguments();
+        if (args != null) {
+            userName = args.getString("fullName");
+            Log.e("ProfileFragment", "userName = "+ userName);
+        }
+
+        // Set username in profile page
+        TextView nameTextView = view.findViewById(R.id.name);
+        nameTextView.setText(userName);
+
         // Find the setting button by its ID
         ImageView settingButton = view.findViewById(R.id.setting_button_profile_page);
 
@@ -103,6 +118,7 @@ public class ProfileFragment extends Fragment implements DateItemClickListener {
             RecyclerView datesRv = view.findViewById(R.id.dates_rv);
             TextView monthTextView = view.findViewById(R.id.month);
             horizontalCalendar = new HorizontalCalendar(this, datesRv, monthTextView, requireActivity());
+
         } else {
             // Handle the case where the fragment is not attached to an activity
             Toast.makeText(getContext(), "Calendar is not available yet. Please try again later.", Toast.LENGTH_SHORT).show();

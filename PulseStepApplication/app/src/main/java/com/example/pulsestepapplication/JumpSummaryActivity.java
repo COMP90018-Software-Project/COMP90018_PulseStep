@@ -3,6 +3,7 @@ package com.example.pulsestepapplication;
 import static android.content.ContentValues.TAG;
 
 import android.content.Intent;
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -25,7 +26,10 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class JumpSummaryActivity extends AppCompatActivity {
@@ -105,6 +109,7 @@ public class JumpSummaryActivity extends AppCompatActivity {
                             @Override
                             public void onSuccess(DocumentReference documentReference) {
                                 Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                                updateUserActiveTime(userUID, time);
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {
@@ -167,6 +172,83 @@ public class JumpSummaryActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Update the user daily and monthly active time in users database.
+     */
+    private void updateUserActiveTime(String userId, String activeTime) {
+        // Convert active time from string MM:SS to seconds.
+        int timeInSeconds = convertTimeToSeconds(activeTime);
+
+        // Retrieve current date and month
+        String today = getCurrentDate();
+        String currentMonth = getCurrentMonth();
+
+        //  Update dailyActive and monthlyActive in users
+        DocumentReference userRef = db.collection("users").document(userId);
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                // Get current dailyActive and monthlyActive data
+                Map<String, Long> dailyActive = (Map<String, Long>) documentSnapshot.get("dailyActive");
+                Map<String, Long> monthlyActive = (Map<String, Long>) documentSnapshot.get("monthlyActive");
+
+                // Initialize it if dailyActive or monthlyActive not exist
+                if (dailyActive == null) {
+                    dailyActive = new HashMap<>();
+                }
+                if (monthlyActive == null) {
+                    monthlyActive = new HashMap<>();
+                }
+
+                // Calculate new active time
+                long updatedDailyActive = dailyActive.containsKey(today) ? dailyActive.get(today) + timeInSeconds : timeInSeconds;
+                long updatedMonthlyActive = monthlyActive.containsKey(currentMonth) ? monthlyActive.get(currentMonth) + timeInSeconds : timeInSeconds;
+
+                // Update Firestore data
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("dailyActive." + today, updatedDailyActive);
+                updates.put("monthlyActive." + currentMonth, updatedMonthlyActive);
+
+                userRef.update(updates).addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "User active time updated successfully.");
+                }).addOnFailureListener(e -> {
+                    Log.w(TAG, "Error updating user active time", e);
+                });
+            } else {
+                // If user not exist
+                Log.w(TAG, "User document does not exist.");
+            }
+        }).addOnFailureListener(e -> {
+            Log.w(TAG, "Error fetching user document", e);
+        });
+    }
+
+    /**
+     * Convert active time from string MM:SS to seconds.
+     */
+    private int convertTimeToSeconds(String time) {
+        String[] parts = time.split(":");
+        int minutes = Integer.parseInt(parts[0]);
+        int seconds = Integer.parseInt(parts[1]);
+        return minutes * 60 + seconds;
+    }
+
+    /**
+     * Method used to get current date in the format: YYYY-MM-DD
+     */
+    private String getCurrentDate() {
+        Date date = Calendar.getInstance().getTime();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        return dateFormat.format(date);
+    }
+
+    /**
+     * Method used to get current month in the format: YYYY-MM
+     */
+    private String getCurrentMonth() {
+        Date date = Calendar.getInstance().getTime();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
+        return dateFormat.format(date);
+    }
 
 
 
