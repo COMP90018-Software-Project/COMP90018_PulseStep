@@ -14,7 +14,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -252,20 +256,42 @@ public class JumpActivity extends AppCompatActivity {
     }
 
 
-    private void popUpConfirmDialog(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(JumpActivity.this);
-        builder.setTitle("Confirm Exit");
-        builder.setMessage("Are you sure you want to exit the jump activity?");
+    private void popUpConfirmDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_custom, null);
+        builder.setView(dialogView);
         builder.setCancelable(false);
-        builder.setPositiveButton("Yes", (dialog, which) -> {
-            // Finish the current activity and return to the RunSummaryActivity page
-            Intent intent = new Intent(JumpActivity.this, JumpSummaryActivity.class);
+        AlertDialog dialog = builder.create();
+
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = window.getAttributes();
+            layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.8);
+
+            int offsetInDp = 100;
+            float scale = getResources().getDisplayMetrics().density;
+            layoutParams.y = (int) (offsetInDp * scale + 0.5f);
+            layoutParams.dimAmount = 0.9f;
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
+            window.setAttributes(layoutParams);
+        }
+
+        Button positiveButton = dialogView.findViewById(R.id.positive_button);
+        Button negativeButton = dialogView.findViewById(R.id.negative_button);
+
+        positiveButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.putExtra("fragment", "WorkoutFragment");
             startActivity(intent);
             finish();
         });
-        builder.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
-        builder.create().show();
 
+        negativeButton.setOnClickListener(v -> dialog.dismiss());
     }
 
 
@@ -361,6 +387,14 @@ public class JumpActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && jumpCounter != null) {
             jumpCounter.unregisterListener();
         }
+    }
+    /**
+     * Called when the back button is pressed
+     */
+    @SuppressLint("MissingSuperCall")
+    @Override
+    public void onBackPressed() {
+        popUpConfirmDialog();
     }
 
     /**
