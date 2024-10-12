@@ -1206,8 +1206,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        finish();
+        popUpConfirmDialog();
     }
+
 
     /**
      * Called when the activity is destroyed, stopping the service and removing location updates
