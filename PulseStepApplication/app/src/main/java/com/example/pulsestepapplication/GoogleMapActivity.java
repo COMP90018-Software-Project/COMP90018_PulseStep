@@ -198,7 +198,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     // Flags to track permission states
     private boolean hasRequestedBackgroundPermission = false;
     private boolean hasDeniedBackgroundPermission = false;
-    private ImageButton btnGrantPermissions;
 
     @SuppressLint("NewApi")
     @Override
@@ -220,9 +219,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         // Initialize UI Components
         initializeUIComponents();
 
-        // Initialize "Grant Permissions" button
-        btnGrantPermissions = findViewById(R.id.btn_grant_permissions);
-        setupGrantPermissionsButton();
         // Check permissions
         checkPermissions();
     }
@@ -247,7 +243,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             mapFragment.setVisibility(View.GONE);  // Initially hide the map
         }
         // Set up back button click listener
-        backButton.setOnClickListener(v -> navigateToMainActivity());
+        backButton.setOnClickListener(v -> popUpConfirmDialog());
 
         if (isMapMode) {
             // Start rotation animation
@@ -272,30 +268,26 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             btnPauseResume.setClickable(true);
         }
     }
-
     /**
-     * Set up the click listener for the "Grant Permissions" button
+     * Shows a confirmation dialog to exit the current running activity.
+     * - "Yes" will finish the activity and navigate to the WorkoutFragment.
+     * - "No" will close the dialog without exiting.
      */
-    private void setupGrantPermissionsButton() {
-        btnGrantPermissions.setOnClickListener(v -> {
-            // Open application settings page
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts("package", getPackageName(), null));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    private void popUpConfirmDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Confirm Exit");
+        builder.setMessage("Are you sure you want to exit the running activity?");
+        builder.setCancelable(false);
+        builder.setPositiveButton("Yes", (dialog, which) -> {
+            // Finish the current activity and return to the RunSummaryActivity page
+            Intent intent = new Intent(this, WorkoutFragment.class);
             startActivity(intent);
+            finish();
         });
+        builder.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
+        builder.create().show();
     }
 
-    /**
-     * Show or hide the "Grant Permissions" button based on permission status
-     */
-    private void updateGrantPermissionsButton() {
-        if (isMapMode && hasDeniedBackgroundPermission) {
-            btnGrantPermissions.setVisibility(View.VISIBLE);
-        } else {
-            btnGrantPermissions.setVisibility(View.GONE);
-        }
-    }
 
     /**
      * Update the visibility of the "Grant Permissions" button after permission state changes
@@ -321,8 +313,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         }
 
-        // Update the visibility of the "Grant Permissions" button
-        updateGrantPermissionsButton();
     }
 
     /**
@@ -1078,8 +1068,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             if (isBackgroundLocationPermissionGranted()) {
                 hasDeniedBackgroundPermission = false;
                 sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, false).apply();
-                // Update button visibility
-                updateGrantPermissionsButton();
+
                 // Resume tracking
                 resumeTracking();
             }
@@ -1145,7 +1134,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 hasDeniedBackgroundPermission = false;
                 sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, false).apply();
                 //resumeTracking();
-                updateGrantPermissionsButton();
             } else {
                 // Background location permission denied
                 hasDeniedBackgroundPermission = true;
@@ -1153,7 +1141,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 //Toast.makeText(this, "Background location permission denied, the app will stop tracking in the background.", Toast.LENGTH_LONG).show();
                 // Show guidance dialog, guiding the user to manually grant permission in settings
                 //showPermissionDeniedDialog();
-                updateGrantPermissionsButton();
 
             }
         } else if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
