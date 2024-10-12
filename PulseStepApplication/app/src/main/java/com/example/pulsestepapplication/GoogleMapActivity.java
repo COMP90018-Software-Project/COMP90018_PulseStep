@@ -27,8 +27,10 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -38,6 +40,7 @@ import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -275,19 +278,41 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void popUpConfirmDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Confirm Exit");
-        builder.setMessage("Are you sure you want to exit the running activity?");
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_custom, null);
+        builder.setView(dialogView);
         builder.setCancelable(false);
-        builder.setPositiveButton("Yes", (dialog, which) -> {
-            // Finish the current activity and return to the RunSummaryActivity page
-            Intent intent = new Intent(this, WorkoutFragment.class);
+        AlertDialog dialog = builder.create();
+
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = window.getAttributes();
+            layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.8);
+
+            int offsetInDp = 100;
+            float scale = getResources().getDisplayMetrics().density;
+            layoutParams.y = (int) (offsetInDp * scale + 0.5f);
+            layoutParams.dimAmount = 0.9f;
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
+            window.setAttributes(layoutParams);
+        }
+
+        Button positiveButton = dialogView.findViewById(R.id.positive_button);
+        Button negativeButton = dialogView.findViewById(R.id.negative_button);
+
+        positiveButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.putExtra("fragment", "WorkoutFragment");
             startActivity(intent);
             finish();
         });
-        builder.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
-        builder.create().show();
-    }
 
+        negativeButton.setOnClickListener(v -> dialog.dismiss());
+    }
 
     /**
      * Update the visibility of the "Grant Permissions" button after permission state changes
@@ -1203,9 +1228,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     /**
      * Called when the back button is pressed
      */
+    @SuppressLint("MissingSuperCall")
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         popUpConfirmDialog();
     }
 
