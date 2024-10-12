@@ -119,8 +119,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private LocationCallback locationCallback;
 
     // Tracking Variables
+    private final List<List<LatLng>> allPathPoints = new ArrayList<>(); // Modified to hold segments
+    private List<LatLng> pathPoints; // Modified to be a segment
     private final List<Polyline> polyLines = new ArrayList<>();
-    private final List<LatLng> pathPoints = new ArrayList<>();
     private final List<LatLng> trajectory = new ArrayList<>();
     private boolean isTracking = false;
     private boolean isPaused = false;
@@ -271,6 +272,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             btnPauseResume.setClickable(true);
         }
     }
+
     /**
      * Shows a confirmation dialog to exit the current running activity.
      * - "Yes" will finish the activity and navigate to the WorkoutFragment.
@@ -491,6 +493,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         });
 
     }
+
     /**
      * Handle the start/pause button click event
      */
@@ -638,7 +641,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         isPaused = false;
 
         if (isFirstStart) {
-            pathPoints.clear();
+            // Start a new pathPoints list for the new segment
+            pathPoints = new ArrayList<>();
+            allPathPoints.add(pathPoints);
+
             totalDistance = 0.0f;
             startTime = SystemClock.elapsedRealtime();
             timerHandler.postDelayed(timerRunnable, 0);
@@ -658,6 +664,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             long pauseDuration = SystemClock.elapsedRealtime() - pauseTime;
             startTime += pauseDuration;
             timerHandler.postDelayed(timerRunnable, 0);
+
+            // Start a new pathPoints list for the new segment
+            pathPoints = new ArrayList<>();
+            allPathPoints.add(pathPoints);
         }
 
         btnPauseResume.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pause));
@@ -680,10 +690,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         timerHandler.removeCallbacks(timerRunnable);
         btnPauseResume.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.start));
         btnShow.setVisibility(View.VISIBLE);
-        if (isMapMode) {
-            drawCurrentPolyline();
-        }
         trajectory.add(null);
+        // Draw the current polyline and clear the current pathPoints
+        drawCurrentPolyline();
+        pathPoints = null;
 
         // Send broadcast to the service to pause step counting
         Intent pauseIntent = new Intent(LocationTrackingService.ACTION_PAUSE_STEP_COUNTING);
@@ -862,7 +872,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     @SuppressLint("DefaultLocale")
     private void updatePath(LatLng latLng) {
-        if (!isTracking || isPaused) {
+        if (!isTracking || isPaused || pathPoints == null) {
             return;
         }
 
@@ -901,26 +911,36 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 runOnUiThread(() -> avgPaceTextView.setText("--'--\""));
             }
 
-            // Only add the current point to pathPoints and draw the lines if conditions are met
+            // Add the new point to the current pathPoints
             pathPoints.add(latLng);
             trajectory.add(latLng);
+
+            // Draw the polyline
             drawCurrentPolyline();
         }
     }
 
     /**
-     * Draw the current polyline
+     * Draw the current polylines for all segments
      */
     private void drawCurrentPolyline() {
-        if (!pathPoints.isEmpty() && googleMap != null) {
-            PolylineOptions polylineOptions = new PolylineOptions().addAll(pathPoints).color(getResources().getColor(R.color.like_orange)).width(10);
-            if (polyLines.isEmpty() || isPaused) {
+        if (googleMap == null) return;
+
+        // Remove existing polylines from the map
+        for (Polyline polyline : polyLines) {
+            polyline.remove();
+        }
+        polyLines.clear();
+
+        // Draw each segment separately
+        for (List<LatLng> segment : allPathPoints) {
+            if (!segment.isEmpty()) {
+                PolylineOptions polylineOptions = new PolylineOptions()
+                        .addAll(segment)
+                        .color(getResources().getColor(R.color.like_orange))
+                        .width(10);
                 Polyline polyline = googleMap.addPolyline(polylineOptions);
                 polyLines.add(polyline);
-            } else {
-                polyLines.get(polyLines.size() - 1).remove();
-                Polyline polyline = googleMap.addPolyline(polylineOptions);
-                polyLines.set(polyLines.size() - 1, polyline);
             }
         }
     }
@@ -1053,7 +1073,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         startActivity(intent);
         finish();
     }
-
 
     /**
      * Navigate back to MainActivity
@@ -1233,7 +1252,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     public void onBackPressed() {
         popUpConfirmDialog();
     }
-
 
     /**
      * Called when the activity is destroyed, stopping the service and removing location updates
