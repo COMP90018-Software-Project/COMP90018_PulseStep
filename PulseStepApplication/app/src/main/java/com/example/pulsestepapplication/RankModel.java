@@ -6,12 +6,14 @@ RankModel {
     String rankUserName;
     String rankWorkoutTime;
     int rankUserImage;
+    String rankLikeNum;
 
-    public RankModel(String rankNo, String rankUserName, String rankWorkoutTime, int rankUserImage) {
+    public RankModel(String rankNo, String rankUserName, String rankWorkoutTime, int rankUserImage, String rankLikeNum) {
         this.rankNo = rankNo;
         this.rankUserName = rankUserName;
         this.rankWorkoutTime = rankWorkoutTime;
         this.rankUserImage = rankUserImage;
+        this.rankLikeNum = rankLikeNum;
     }
 
     public String getRankNo() {
@@ -29,4 +31,6 @@ RankModel {
     public int getRankUserImage() {
         return rankUserImage;
     }
+
+    public String getRankLikeNum() {return rankLikeNum; }
 }
