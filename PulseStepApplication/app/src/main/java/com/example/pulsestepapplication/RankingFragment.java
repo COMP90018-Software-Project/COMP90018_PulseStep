@@ -1,8 +1,10 @@
 package com.example.pulsestepapplication;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -55,6 +57,7 @@ public class RankingFragment extends Fragment {
     private TextView topNameTextView;
     private TextView topActiveTimeTextView;
     private RecyclerView rankRecyclerView;
+    private CardView rankRowView;
     private ImageView editTarget;
     private ProgressBar progressBar;
 
@@ -178,6 +181,7 @@ public class RankingFragment extends Fragment {
         // View of rank list
         rankRecyclerView = view.findViewById(R.id.ranking_List);
         rankRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        rankRowView = view.findViewById(R.id.rank_row);
     }
 
 

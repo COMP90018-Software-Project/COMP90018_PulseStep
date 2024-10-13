@@ -1,6 +1,7 @@
 package com.example.pulsestepapplication;
 
 import android.content.Context;
+import android.content.Intent;
 import android.icu.text.SimpleDateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -87,6 +88,17 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
             Log.d("rank row", "this is current user");
             // Set the tint color to red for the current user
             holder.rankRowView.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.user_rank_row_orange));
+        }
+
+
+        if(!isMonthlyRank) {
+            // Set the click listener for the CardView
+            holder.rankRowView.setOnClickListener(v -> {
+                // Navigate to RankRowDetail activity when the row is clicked
+                Intent intent = new Intent(context, RankRowDetail.class);
+                intent.putExtra("userId", updateUserId);  // Pass the selected user's ID to the new activity
+                context.startActivity(intent);
+            });
         }
     }
 

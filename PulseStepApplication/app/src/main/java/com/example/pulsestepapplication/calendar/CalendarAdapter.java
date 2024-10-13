@@ -20,92 +20,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-//public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.CalendarViewHolder> {
-//
-//    private List<String> dates;
-//    private int selectedPosition;
-//    private RecyclerView recyclerView;
-//    private LinearLayoutManager layoutManager;
-//    private OnDateClickListener onDateClickListener;
-//
-//    // 接口用于回调点击的日期
-//    public interface OnDateClickListener {
-//        void onDateClick(String date);
-//    }
-//
-//    public CalendarAdapter(List<String> dates, int selectedPosition, RecyclerView recyclerView, LinearLayoutManager layoutManager, OnDateClickListener listener) {
-//        this.dates = dates;
-//        this.selectedPosition = selectedPosition;
-//        this.recyclerView = recyclerView;
-//        this.layoutManager = layoutManager;
-//        this.onDateClickListener = listener;
-//
-//        // 滚动到选择的日期
-//        if (selectedPosition != -1) {
-//            recyclerView.post(() -> {
-//                View itemView = layoutManager.findViewByPosition(selectedPosition);
-//                if (itemView != null) {
-//                    int offset = recyclerView.getWidth() - itemView.getWidth();
-//                    layoutManager.scrollToPositionWithOffset(selectedPosition, offset);
-//                }
-//            });
-//        }
-//    }
-//
-//    @NonNull
-//    @Override
-//    public CalendarViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-//        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.calendar_item, parent, false);
-//        return new CalendarViewHolder(view);
-//    }
-//
-//    @Override
-//    public void onBindViewHolder(@NonNull CalendarViewHolder holder, int position) {
-//        String date = dates.get(position);
-//        holder.tvDate.setText(date);
-//
-//        // 处理选择状态的背景和颜色
-//        if (position == selectedPosition) {
-//            holder.tvDate.setBackgroundResource(R.drawable.calendar_item_background);
-//            holder.tvDate.setPadding(0, 14, 0, 14);  // Ensure consistent padding
-//            holder.tvDate.setTextColor(Color.WHITE);
-//        } else {
-//            holder.tvDate.setBackgroundResource(0);
-//            holder.tvDate.setPadding(0, 14, 0, 14);  // Ensure consistent padding
-//            holder.tvDate.setTextColor(Color.BLACK);
-//        }
-//
-//        // 点击事件：通知 ProfileFragment 选中的日期
-//        holder.itemView.setOnClickListener(v -> {
-//            selectedPosition = position;
-//            notifyDataSetChanged();
-//
-//            // 使用 SimpleDateFormat 格式化为 yyyy-MM-dd
-//            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-//            Calendar cal = Calendar.getInstance();
-//            cal.add(Calendar.DAY_OF_MONTH, position - 15); // 日期相对偏移量
-//
-//            String formattedDate = sdf.format(cal.getTime());
-//            onDateClickListener.onDateClick(formattedDate);  // 回调，传递正确格式的日期
-//        });
-//    }
-//
-//
-//    @Override
-//    public int getItemCount() {
-//        return dates.size();
-//    }
-//
-//    static class CalendarViewHolder extends RecyclerView.ViewHolder {
-//        TextView tvDate;
-//
-//        public CalendarViewHolder(@NonNull View itemView) {
-//            super(itemView);
-//            tvDate = itemView.findViewById(R.id.tv_date);
-//        }
-//    }
-//}
-
 public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.CalendarViewHolder> {
 
     private List<String> dates;
@@ -201,7 +115,7 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
         if (position == selectedPosition) {
             holder.tvDate.setBackgroundResource(R.drawable.calendar_item_background);
             holder.tvDate.setPadding(0, 14, 0, 14);  // Ensure consistent padding
-            holder.tvDate.setTextColor(Color.WHITE);
+            holder.tvDate.setTextColor(Color.BLACK);
         } else {
             holder.tvDate.setBackgroundResource(0);
             holder.tvDate.setPadding(0, 14, 0, 14);  // Ensure consistent padding
