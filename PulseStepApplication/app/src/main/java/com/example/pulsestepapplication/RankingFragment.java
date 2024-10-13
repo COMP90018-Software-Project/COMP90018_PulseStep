@@ -23,6 +23,10 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -48,45 +52,38 @@ public class RankingFragment extends Fragment {
 
     private TextView dailyTargetTextView;
     private TextView dailyActiveTimeTextView;
+    private TextView topNameTextView;
+    private TextView topActiveTimeTextView;
+    private RecyclerView rankRecyclerView;
+    private ImageView editTarget;
+    private ProgressBar progressBar;
+
     private String targetHours;
-    private String dailyActiveTime;
+    private String userDailyActiveTime;
+    private String userMonthlyActiveTime;
+    private String userTotalActiveTime;
+    private String currentDate;
+    private String currentMonth;
+    private String userId;
+    private String userName;
+    private boolean isMonthlyRank;
+
     private FirebaseFirestore db;
     private FirebaseUser currentUser;
-    private String userId;
-    private ProgressBar progressBar;
 
     public RankingFragment() {
         // Required empty public constructor
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setUpRankModels();
-    }
+//    @Override
+//    public void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        setUpRankModels();
+//    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        setUpRankModels();
-
-        // Inflate the layout for this fragment
-        View view =  inflater.inflate(R.layout.fragment_ranking, container, false);
-
-        RecyclerView rankRecyclerView = view.findViewById(R.id.ranking_List);
-        rankRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        RankListAdapter rankListAdapter = new RankListAdapter(requireContext(), rankModels);
-        rankRecyclerView.setAdapter(rankListAdapter);
-
-        // View of daily target and active time TextView
-        dailyTargetTextView = view.findViewById(R.id.daily_target_hours);
-        dailyActiveTimeTextView = view.findViewById(R.id.progress_detail);
-
-        // View of progress bar
-        progressBar = view.findViewById(R.id.progressBar);
-
         // Initialize FirebaseFirestore
         db = FirebaseFirestore.getInstance();
 
@@ -94,12 +91,29 @@ public class RankingFragment extends Fragment {
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
         userId = currentUser.getUid();
 
-        // 从 Firebase 获取当前用户的 target 并更新 UI
-        fetchTargetData();
-//        fetchDailyActiveHours();
+        // Get current date
+        currentDate = getCurrentDate();
+        currentMonth = getCurrentMonth();
 
-        ImageView editTarget = view.findViewById(R.id.bt_set_target);
-        // 给 dailyTargetTextView 设置点击事件，触发 Dialog
+        // Inflate the layout for this fragment
+        View view =  inflater.inflate(R.layout.fragment_ranking, container, false);
+        initView(view);
+//        // View of daily target and active time TextView
+//        dailyTargetTextView = view.findViewById(R.id.daily_target_hours);
+//        dailyActiveTimeTextView = view.findViewById(R.id.progress_detail);
+//        // View of progress bar
+//        progressBar = view.findViewById(R.id.progressBar);
+//        ImageView editTarget = view.findViewById(R.id.bt_set_target);
+//
+//        // View of the row above rank list (you daily or monthly active time)
+//        topNameTextView = view.findViewById(R.id.you_name);
+//        topActiveTimeTextView = view.findViewById(R.id.you_time);
+//
+//        // View of rank list
+//        rankRecyclerView = view.findViewById(R.id.ranking_List);
+//        rankRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // setTarget Dialog
         editTarget.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -107,8 +121,14 @@ public class RankingFragment extends Fragment {
             }
         });
 
+        // Fetch target and progress data from firestore
+        fetchTargetData();
+        // Set up init rank list (daily)
+        setUpRankModels();
+
         // switch ranking list (monthly/daily)
         MaterialButtonToggleGroup toggleButton = view.findViewById(R.id.bt_switch_rank);
+        toggleButton.check(R.id.bt_daily);
         TextView titleTextView = view.findViewById(R.id.rank_title);
         toggleButton.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
             @Override
@@ -118,32 +138,48 @@ public class RankingFragment extends Fragment {
                     switch (checkedId) {
                         case R.id.bt_daily:
                             titleTextView.setText("Daily Sports Rankings");
-//                            updateRecyclerViewData("daily");
+                            isMonthlyRank = false;
+                            // Fetch target and progress data from firestore
+                            fetchTargetData();
+                            // Set up daily rank list
+                            setUpRankModels();
                             break;
                         case R.id.bt_monthly:
                             titleTextView.setText("Monthly Sports Rankings");
-//                            updateRecyclerViewData("monthly");
+                            isMonthlyRank = true;
+                            // Fetch target and progress data from firestore
+                            fetchTargetData();
+                            // Set up monthly rank list
+                            setUpRankModels();
                             break;
                     }
                 }
             }
         });
+
         return view;
     }
 
-    private void setUpRankModels(){
-        String[] rankNo = getResources().getStringArray(R.array.sample_ranking_no);
-        String[] rankUserNames = getResources().getStringArray(R.array.sample_ranking_user_names);
-        String[] rankWorkoutTimes = getResources().getStringArray(R.array.sample_ranking_times);
+    /**
+     * Init view of ranking page
+     */
+    private void  initView(View view) {
+        // View of daily target and active time TextView
+        dailyTargetTextView = view.findViewById(R.id.daily_target_hours);
+        dailyActiveTimeTextView = view.findViewById(R.id.progress_detail);
+        // View of progress bar
+        progressBar = view.findViewById(R.id.progressBar);
+        editTarget = view.findViewById(R.id.bt_set_target);
 
-        for (int i = 0; i<rankNo.length; i++){
-            rankModels.add(new RankModel(rankNo[i],
-                    rankUserNames[i],
-                    rankWorkoutTimes[i],
-                    rankUserImages[i]));
-        }
+        // View of the row above rank list (you daily or monthly active time)
+        topNameTextView = view.findViewById(R.id.you_name);
+        topActiveTimeTextView = view.findViewById(R.id.you_time);
 
+        // View of rank list
+        rankRecyclerView = view.findViewById(R.id.ranking_List);
+        rankRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
     }
+
 
     /**
      * Set up the target picker dialog
@@ -152,14 +188,14 @@ public class RankingFragment extends Fragment {
         final Dialog dialog = new Dialog(requireContext());
         dialog.setContentView(R.layout.dialog_set_target); // 使用自定义布局 dialog_time_picker.xml
 
-        // 获取 NumberPicker 和按钮
+        // Get NumberPicker and button
         final NumberPicker targetPicker = dialog.findViewById(R.id.targetPicker);
         Button btnSet = dialog.findViewById(R.id.btn_set);
         Button btnCancel = dialog.findViewById(R.id.btn_cancel);
 
-        // 设置 NumberPicker 的当前值
+        // Set picked num in NumberPicker
         targetPicker.setMinValue(1);
-        targetPicker.setMaxValue(12); // 设置 1 到 12 小时
+        targetPicker.setMaxValue(12);
 
         // Handle possible null or invalid targetHours
         int targetValue = 1;  // Default value
@@ -176,7 +212,7 @@ public class RankingFragment extends Fragment {
         btnSet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // 获取选择的目标时间并更新
+                // Get the new target and update
                 targetHours = String.valueOf(targetPicker.getValue());
                 updateTargetHours(targetHours);
                 updateTargetDisplay(targetHours);
@@ -184,14 +220,15 @@ public class RankingFragment extends Fragment {
             }
         });
 
+        // close dialog when click cancel
         btnCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dialog.dismiss();  // 取消，关闭对话框
+                dialog.dismiss();
             }
         });
 
-        dialog.show();  // 显示对话框
+        dialog.show();
     }
 
     /**
@@ -199,7 +236,7 @@ public class RankingFragment extends Fragment {
      */
     private void updateTargetDisplay(String targetHours) {
         if (targetHours.equals("--")) {
-            dailyTargetTextView.setText("-- hours");  // 如果没有目标，显示 "-- hours"
+            dailyTargetTextView.setText("-- hours");
         } else {
             dailyTargetTextView.setText(targetHours + " " + (targetHours.equals("1") ? "hour" : "hours"));
         }
@@ -217,43 +254,58 @@ public class RankingFragment extends Fragment {
     }
 
     /**
+     * Displays the updated the username and active time on the row above rank list.
+     */
+    private void updateTopRowDisplayDisplay(String userName, String totalActiveTime) {
+        if (totalActiveTime != null) {
+            topActiveTimeTextView.setText(totalActiveTime + " " + (totalActiveTime.equals("1") ? "hour" : "hours"));
+        } else {
+            topActiveTimeTextView.setText("0 hours");
+        }
+        topNameTextView.setText(userName);
+    }
+
+
+    /**
      * Fetch the target from firestore.
      */
     private void fetchTargetData() {
         if (userId != null) {
             DocumentReference userRef = db.collection("users").document(userId);
-//            userRef.get().addOnSuccessListener(documentSnapshot -> {
-            // 使用 addSnapshotListener 来监听数据库的变动
+            // using addSnapshotListener to listen the data change in database
             userRef.addSnapshotListener((documentSnapshot, error) -> {
                 if (error != null) {
                     Log.w("RankingFragment", "Listen failed.", error);
                     return;
                 }
                 if (documentSnapshot.exists()) {
-                    // Update daily active time UI
-                    Map<String, Long> dailyActiveMap = (Map<String, Long>) documentSnapshot.get("dailyActive");
-                    // Get current date
-                    String today = getCurrentDate();
-                    // init dailyActiveTime to 0
-                    double dailyActiveInHours = 0;
+                    Object target = documentSnapshot.get("target");
+                    Object fullName = documentSnapshot.get("fullName");
+
+                    Map<String, Long> userDailyActiveMap = (Map<String, Long>) documentSnapshot.get("dailyActive");
+                    Map<String, Long> userMonthlyActiveMap = (Map<String, Long>) documentSnapshot.get("monthlyActive");
+
+                    // init active time in hours to 0
+                    double userDailyActiveInHours = 0;
+                    double userMonthlyActiveInHours = 0;
+
                     // get today active time and convert to hours
-                    if (dailyActiveMap != null && dailyActiveMap.containsKey(today)) {
-                        long dailyActiveInSeconds = dailyActiveMap.get(today);
-                        dailyActiveInHours = convertSecondsToHours(dailyActiveInSeconds);
+                    if (userDailyActiveMap != null && userDailyActiveMap.containsKey(currentDate)
+                            && userMonthlyActiveMap != null && userMonthlyActiveMap.containsKey(currentMonth)) {
+                        long userDailyActiveInSeconds = userDailyActiveMap.get(currentDate);
+                        userDailyActiveInHours = convertSecondsToHours(userDailyActiveInSeconds);
+                        long useMonthlyActiveInSeconds = userMonthlyActiveMap.get(currentMonth);
+                        userMonthlyActiveInHours = convertSecondsToHours(useMonthlyActiveInSeconds);
+
                     }
-//                    dailyActiveTime = Double.toString(dailyActiveInHours);
+
                     // convert to specific format
-                    if (dailyActiveInHours == Math.floor(dailyActiveInHours)) {
-                        // if int
-                        dailyActiveTime = String.format(Locale.getDefault(), "%.0f", dailyActiveInHours);
-                    } else {
-                        // if decimal
-                        dailyActiveTime = String.format(Locale.getDefault(), "%.1f", dailyActiveInHours);
-                    }
-                    updateDailyActiveDisplay(dailyActiveTime);
+                    userDailyActiveTime = convertTimeFormat(userDailyActiveInHours);
+
+                    // Update daily active time UI
+                    updateDailyActiveDisplay(userDailyActiveTime);
 
                     // Update target hours UI
-                    Object target = documentSnapshot.get("target");
                     if (target != null) {
                         targetHours = target.toString();
                     } else {
@@ -264,17 +316,27 @@ public class RankingFragment extends Fragment {
                     // update daily progress - ProgressBar
                     if (!targetHours.equals("--")) {
                         double targetInHours = Double.parseDouble(targetHours);  // Convert target hours to double
-                        int progress = (int) ((dailyActiveInHours / targetInHours) * 100);  // Calculate progress percentage
+                        int progress = (int) ((userDailyActiveInHours / targetInHours) * 100);  // Calculate progress percentage
                         progressBar.setProgress(progress);  // Update progress bar
                     }
+
+                    // convert to specific format
+                    userMonthlyActiveTime = convertTimeFormat(userMonthlyActiveInHours);
+
+                    if (fullName != null) {
+                        userName = fullName.toString();
+                    } else {
+                        userName = "--";  // Default value
+                    }
+
+                    if (isMonthlyRank){
+                        userTotalActiveTime = userMonthlyActiveTime;
+                    } else {
+                        userTotalActiveTime = userDailyActiveTime;
+                    }
+                    updateTopRowDisplayDisplay(userName, userTotalActiveTime);
                 }
             });
-//                    .addOnFailureListener(e -> {
-//                targetHours = "--";  // Set default value in case of failure
-//                dailyActiveTime = "0";
-//                updateTargetDisplay(targetHours);
-//                updateDailyActiveDisplay(dailyActiveTime);
-//            });
         }
     }
 
@@ -297,15 +359,101 @@ public class RankingFragment extends Fragment {
         }
     }
 
-    // 将秒转换为小时，并保留小数点后一位
+
+    /**
+     * Convert seconds to hours
+     */
     private double convertSecondsToHours(long seconds) {
-        return seconds / 3600.0; // 将秒转换为小时
+        return seconds / 3600.0;
     }
 
-    // 获取当前日期的函数，返回格式 "yyyy-MM-dd"
+    private String convertTimeFormat(double time){
+        String convertedTime;
+        if (time == Math.floor(time)) {
+            // if int
+            convertedTime = String.format(Locale.getDefault(), "%.0f", time);
+        } else {
+            // if decimal
+            convertedTime = String.format(Locale.getDefault(), "%.1f", time);
+        }
+        return convertedTime;
+    }
+    /**
+     * Method used to get current date in the format: YYYY-MM-DD
+     */
     private String getCurrentDate() {
         Date date = Calendar.getInstance().getTime();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        return dateFormat.format(date); // YYYY-MM-DD 格式
+        return dateFormat.format(date);
+    }
+
+    /**
+     * Method used to get current month in the format: YYYY-MM
+     */
+    private String getCurrentMonth() {
+        Date date = Calendar.getInstance().getTime();
+        SimpleDateFormat monthFormat = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
+        return monthFormat.format(date);
+    }
+
+    /**
+     * Set up rank list model for daily or monthly
+     */
+    private void setUpRankModels() {
+        Log.d("CurrentDate", "Current Date: " + currentDate);
+        rankModels.clear();
+
+        String rankTypeField = isMonthlyRank ? "monthlyActive." + currentMonth : "dailyActive." + currentDate;
+
+        db.collection("users")
+                .whereGreaterThan(rankTypeField, 299)  // active time greater than 5min can join the rank competition
+                .orderBy(rankTypeField, Query.Direction.DESCENDING)
+                .addSnapshotListener((queryDocumentSnapshots, error) -> {
+                    if (error != null) {
+                        Log.e("FetchTopUsers", "Error fetching users", error);
+                        return;
+                    }
+
+                    if (queryDocumentSnapshots != null) {
+                        rankModels.clear();  // reset the rank list data when retrieving new data
+                        int rankNo = 1;
+
+                        for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                            // Get row user name
+                            String rowUserId = document.getId();
+                            String userName = document.getString("fullName");
+
+                            // Get row user active time (daily or monthly)
+                            Map<String, Long> activeMap = (Map<String, Long>) document.get(isMonthlyRank ? "monthlyActive" : "dailyActive");
+                            if (activeMap != null && activeMap.containsKey(isMonthlyRank ? currentMonth : currentDate)) {
+                                long activeInSeconds = activeMap.get(isMonthlyRank ? currentMonth : currentDate);
+                                double activeInHours = convertSecondsToHours(activeInSeconds);
+                                String activeTime = convertTimeFormat(activeInHours);
+                                activeTime = activeTime + " " + (activeTime.equals("1") ? "hour" : "hours");
+
+                                // Get the like num and the array list of liked user
+                                Map<String, ArrayList<String>> likeMap = (Map<String, ArrayList<String>>) document.get(isMonthlyRank ? "monthlyLike" : "dailyLike");
+                                long likeNum = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate))
+                                        ? likeMap.get(isMonthlyRank ? currentMonth : currentDate).size() : 0;
+                                ArrayList<String> likedUsers = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate))
+                                        ? likeMap.get(isMonthlyRank ? currentMonth : currentDate) : new ArrayList<>();
+
+                                // Add the rank row detail to rank model
+                                rankModels.add(new RankModel(String.valueOf(rankNo), userName, activeTime, R.drawable.sample_profile_img, String.valueOf(likeNum), likedUsers, rowUserId));
+
+                                Log.d("RankModels", "Added user: " + userName + ", active time: " + activeTime);
+
+                                rankNo++;
+                            }
+                        }
+
+                        // Set up adapter
+                        Log.d("Likefield", "likefield = "+isMonthlyRank);
+                        RankListAdapter rankListAdapter = new RankListAdapter(requireContext(), rankModels, isMonthlyRank);
+
+                        rankRecyclerView.setAdapter(rankListAdapter);
+
+                    }
+                });
     }
 }
