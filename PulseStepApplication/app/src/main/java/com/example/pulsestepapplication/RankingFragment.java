@@ -450,6 +450,7 @@ public class RankingFragment extends Fragment {
                         // Set up adapter
                         Log.d("Likefield", "likefield = "+isMonthlyRank);
                         RankListAdapter rankListAdapter = new RankListAdapter(requireContext(), rankModels, isMonthlyRank);
+
                         rankRecyclerView.setAdapter(rankListAdapter);
 
                     }

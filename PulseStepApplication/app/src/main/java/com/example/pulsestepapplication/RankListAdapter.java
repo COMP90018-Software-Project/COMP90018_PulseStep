@@ -11,6 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -59,15 +61,16 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
         // Get current user id
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String currentUserId = currentUser.getUid();
+        // get row user (target user)
+        String updateUserId = rankModel.getRowUserId();
 
+        String currentDateOrMonth = isMonthlyRank ? getCurrentMonth() : getCurrentDate();
         // Init like checkbox
         boolean isLiked = rankModel.getLikedUsers() != null && rankModel.getLikedUsers().contains(currentUserId);
         holder.btLike.setChecked(isLiked);
 
         // Set up like check box
         holder.btLike.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            String currentDateOrMonth = isMonthlyRank ? getCurrentMonth() : getCurrentDate();  // 判断使用日期还是月份
-            String updateUserId = rankModel.getRowUserId();
 
             if (isChecked) {
                 // Add new like from firestore
@@ -77,6 +80,14 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
                 removeLikeFromFirestore(updateUserId, currentDateOrMonth, currentUserId, holder.rankLikeNum);
             }
         });
+
+        // Change CardView background to red if this is the current user
+        // Check if the row corresponds to the current user
+        if (updateUserId.equals(currentUserId)) {
+            Log.d("rank row", "this is current user");
+            // Set the tint color to red for the current user
+            holder.rankRowView.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.user_rank_row_orange));
+        }
     }
 
     @Override
@@ -91,6 +102,7 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
         ImageView rankUserImage;
         TextView rankNo, rankUserName, rankWorkoutTime, rankLikeNum;
         CheckBox btLike;
+        CardView rankRowView;
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             rankUserImage = itemView.findViewById(R.id.rank_user_image);
@@ -99,6 +111,7 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
             rankWorkoutTime = itemView.findViewById(R.id.rank_workout_time);
             rankLikeNum = itemView.findViewById(R.id.num_like);
             btLike = itemView.findViewById(R.id.bt_like);
+            rankRowView = itemView.findViewById(R.id.rank_row);
         }
     }
 
