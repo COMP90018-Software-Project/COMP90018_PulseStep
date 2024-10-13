@@ -3,6 +3,7 @@ package com.example.pulsestepapplication;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -20,11 +21,23 @@ public class Settings extends AppCompatActivity {
     private ImageView backButton;
     private Button logOutButton;
     private LinearLayout resetPasswordButton;
+    private LinearLayout editPersonalInfoButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings);
+
+        // 获取从 ProfileFragment 传递的 userId
+        Intent intent = getIntent();
+        String userId = intent.getStringExtra("userId");
+
+        if (userId != null) {
+            Log.d("SettingsActivity", "Received userId: " + userId);
+            // 使用 userId 做进一步操作
+        } else {
+            Log.e("SettingsActivity", "No userId received.");
+        }
 
         // Reference to the back button
         backButton = findViewById(R.id.back_button_setting_page);
@@ -44,6 +57,19 @@ public class Settings extends AppCompatActivity {
             public void onClick(View v) {
                 // Finish the current activity and return to the RunSummaryActivity page
                 Intent intent = new Intent(Settings.this, ResetPassword.class);
+                intent.putExtra("userId", userId);
+                startActivity(intent);
+            }
+        });
+
+        // Reference to the personal info redirecting button
+        editPersonalInfoButton = findViewById(R.id.pesonal_info);
+        editPersonalInfoButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                // Finish the current activity and return to the RunSummaryActivity page
+                Intent intent = new Intent(Settings.this, EditPersonalInfo.class);
+                intent.putExtra("userId", userId);
                 startActivity(intent);
             }
         });

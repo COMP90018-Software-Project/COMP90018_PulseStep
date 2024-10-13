@@ -95,6 +95,9 @@
             android:foregroundServiceType="health" />
 
         <!-- Activity Declarations -->
+        <activity android:name=".EditPersonalInfo"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
         <activity android:name=".NoMapActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>

@@ -1,8 +1,10 @@
 package com.example.pulsestepapplication;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import java.util.Collections;
@@ -145,6 +147,8 @@ public class ProfileFragment extends Fragment {
         ImageView settingButton = view.findViewById(R.id.setting_button_profile_page);
         settingButton.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), Settings.class);
+            // 通过 Intent 传递 userId 到 Settings Activity
+            intent.putExtra("userId", userId);
             startActivity(intent);
         });
 
@@ -182,6 +186,7 @@ public class ProfileFragment extends Fragment {
 
         return view;
     }
+
 
 
     // 根据选择的日期实时监听 Firestore 数据的更改
@@ -353,5 +358,49 @@ public class ProfileFragment extends Fragment {
         return sdf.format(new Date());
     }
 
+    // This method updates the fragment's data
+    public void updateData(String UserId, String fullName, String gender) {
+        this.userId = UserId;
+        this.userName = fullName;
+        this.gender = gender;
+
+        TextView nameTextView = getView().findViewById(R.id.name);
+        nameTextView.setText(userName);
+
+
+        profileImage = getView().findViewById(R.id.profile_image);
+        FirebaseStorage.getInstance().getReference()
+                .child("users")
+                .child(userId)
+                .child("images/profile_image")
+                .getDownloadUrl()
+                .addOnSuccessListener(uri -> {
+                    // 成功获取到图片 URL，设置用户自定义头像
+                    setProfilePic(getContext(), uri, profileImage);
+                })
+                .addOnFailureListener(exception -> {
+                    // 文件不存在，处理 StorageException，并根据性别设置默认头像
+                    if (exception instanceof StorageException) {
+                        StorageException storageException = (StorageException) exception;
+                        if (storageException.getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
+                            // 根据性别设置默认头像
+                            if (gender != null) {
+                                if (gender.equalsIgnoreCase("male")) {
+                                    // 设置男性默认头像
+                                    profileImage.setImageResource(R.drawable.male_default_avatar);
+                                } else if (gender.equalsIgnoreCase("female")) {
+                                    // 设置女性默认头像
+                                    profileImage.setImageResource(R.drawable.female_default_avatar);
+                                }else if (gender.equalsIgnoreCase("other")) {
+                                    // 如果性别为other，设置通用默认头像
+                                    profileImage.setImageResource(R.drawable.default_avatar);
+                                }
+                            }
+                        } else {
+                            Log.e("ProfileFragment", "Error fetching profile image: " + exception.getMessage());
+                        }
+                    }
+                });
+    }
 
 }

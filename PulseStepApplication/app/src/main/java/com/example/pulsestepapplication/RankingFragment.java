@@ -297,28 +297,6 @@ public class RankingFragment extends Fragment {
         }
     }
 
-//    /**
-//     * Fetch the target from firestore.
-//     */
-//    private void fetchDailyActiveHours() {
-//        if (userId != null) {
-//            DocumentReference userRef = db.collection("users").document(userId);
-//            userRef.get().addOnSuccessListener(documentSnapshot -> {
-//                if (documentSnapshot.exists()) {
-//                    Object target = documentSnapshot.get("target");
-//                    if (target != null) {
-//                        targetHours = target.toString();
-//                    } else {
-//                        targetHours = "--";  // Default value
-//                    }
-//                    updateTargetDisplay(targetHours);
-//                }
-//            }).addOnFailureListener(e -> {
-//                targetHours = "--";  // Set default value in case of failure
-//                updateTargetDisplay(targetHours);
-//            });
-//        }
-//    }
     // 将秒转换为小时，并保留小数点后一位
     private double convertSecondsToHours(long seconds) {
         return seconds / 3600.0; // 将秒转换为小时

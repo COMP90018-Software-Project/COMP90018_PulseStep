@@ -117,18 +117,24 @@ public class MainActivity extends AppCompatActivity {
         if (userId != null) {
             DocumentReference userRef = db.collection("users").document(userId);
 
-            userRef.get().addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    // 获取用户信息
+            // Adding a snapshot listener to get real-time updates
+            userRef.addSnapshotListener((documentSnapshot, error) -> {
+                if (error != null) {
+                    Log.e("UserInfo", "Listen failed.", error);
+                    return;
+                }
+
+                if (documentSnapshot != null && documentSnapshot.exists()) {
+                    // Get user information
                     String fullName = documentSnapshot.getString("fullName");
                     String weight = documentSnapshot.getString("weight");
                     String gender = documentSnapshot.getString("gender");
 
-                    // 确保字段存在
+                    // Ensure the fields are not null
                     if (fullName != null && weight != null) {
                         Log.e("UserInfo", "Full Name: " + fullName + ", Weight: " + weight);
 
-                        // 把数据传递给 Fragment
+                        // Pass the data to the Fragment
                         passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
                     } else {
                         Log.e("UserInfo", "Some fields are missing.");
@@ -136,8 +142,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     Log.e("UserInfo", "Document does not exist.");
                 }
-            }).addOnFailureListener(e -> {
-                Log.e("UserInfo", "Error fetching document", e);
             });
         } else {
             Log.e("UserInfo", "User is not logged in or userId is null.");
@@ -154,10 +158,25 @@ public class MainActivity extends AppCompatActivity {
         args.putString("gender", gender);
         Log.e("PassedData", "userId: " + userId + ", Full Name: " + fullName + ", Weight: " + weight + ", Gender: " + gender);
 
-        // 初始化各个 Fragment 并传递数据
-        initWorkoutFragment(true, args);
-        initRankingFragment(args);
-        initProfileFragment(args);
+        // Check if the fragments already exist, update them instead of reinitializing
+        if (workoutFragment != null) {
+            // Update the existing WorkoutFragment
+            ((WorkoutFragment) workoutFragment).updateData(fullName, weight);
+        } else {
+            initWorkoutFragment(true, args); // Initialize for the first time
+        }
+
+        if (rankingFragment != null) {
+        } else {
+            initRankingFragment(args); // Initialize for the first time
+        }
+
+        if (profileFragment != null) {
+            // Update the existing ProfileFragment
+            ((ProfileFragment) profileFragment).updateData(userId, fullName, gender);
+        } else {
+            initProfileFragment(args); // Initialize for the first time
+        }
     }
 
 

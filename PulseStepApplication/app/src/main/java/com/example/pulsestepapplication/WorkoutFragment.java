@@ -2,6 +2,7 @@ package com.example.pulsestepapplication;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -106,8 +107,7 @@ public class WorkoutFragment extends Fragment {
         // greeting text rendered on workout page
         TextView greetingTextView = view.findViewById(R.id.greeting_text);
         greetingTextView.setText("Hi, " + userName);
-        // 如果 TextView 正确初始化，调用显示方法
-//        greetingMessageDisplay(userName);
+
 
         // date text rendered on workout page
         TextView dateTextView = view.findViewById((R.id.date_text));
@@ -599,5 +599,15 @@ public class WorkoutFragment extends Fragment {
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE - MMM d", Locale.getDefault());
         return dateFormat.format(calendar.getTime());
+    }
+
+    // This method updates the fragment's data
+    public void updateData(String fullName, Double weight) {
+        this.userName = fullName;
+        this.userWeight = weight;
+
+        // Now update the UI or other components using this new data
+        TextView greetingTextView = getView().findViewById(R.id.greeting_text);
+        greetingTextView.setText("Hi, " + fullName);
     }
 }
