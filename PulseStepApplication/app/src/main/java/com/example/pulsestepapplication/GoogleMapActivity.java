@@ -1035,7 +1035,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
         // Create an intent to jump to RunSummaryActivity
         Intent intent = new Intent(GoogleMapActivity.this, RunSummaryActivity.class);
-        intent.putExtra("distance", distanceInKm);
+        intent.putExtra("distanceInKm", distanceInKm);
+        intent.putExtra("totalDistance", totalDistance);
         intent.putExtra("avgPace", avg);
         intent.putExtra("time", timeElapsed);
         intent.putExtra("address", address);

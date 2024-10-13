@@ -122,13 +122,14 @@ public class MainActivity extends AppCompatActivity {
                     // 获取用户信息
                     String fullName = documentSnapshot.getString("fullName");
                     String weight = documentSnapshot.getString("weight");
+                    String gender = documentSnapshot.getString("gender");
 
                     // 确保字段存在
                     if (fullName != null && weight != null) {
                         Log.e("UserInfo", "Full Name: " + fullName + ", Weight: " + weight);
 
                         // 把数据传递给 Fragment
-                        passDataToFragments(userId, fullName, Double.parseDouble(weight));
+                        passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
                     } else {
                         Log.e("UserInfo", "Some fields are missing.");
                     }
@@ -144,13 +145,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void passDataToFragments(String userId, String fullName, Double weight) {
+    private void passDataToFragments(String userId, String fullName, Double weight, String gender) {
         // 创建 Bundle 存储数据
         Bundle args = new Bundle();
         args.putString("userId", userId);
         args.putString("fullName", fullName);
         args.putDouble("weight", weight);
-        Log.e("PassedData", "userId: " + userId + ", Full Name: " + fullName + ", Weight: " + weight);
+        args.putString("gender", gender);
+        Log.e("PassedData", "userId: " + userId + ", Full Name: " + fullName + ", Weight: " + weight + ", Gender: " + gender);
 
         // 初始化各个 Fragment 并传递数据
         initWorkoutFragment(true, args);

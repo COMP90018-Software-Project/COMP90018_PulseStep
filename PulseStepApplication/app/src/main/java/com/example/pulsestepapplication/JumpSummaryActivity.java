@@ -110,6 +110,7 @@ public class JumpSummaryActivity extends AppCompatActivity {
                             public void onSuccess(DocumentReference documentReference) {
                                 Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
                                 updateUserActiveTime(userUID, time);
+                                updateUserJumpInfo(userUID, time, jumpCount, Double.parseDouble(calories));
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {
@@ -223,6 +224,65 @@ public class JumpSummaryActivity extends AppCompatActivity {
             Log.w(TAG, "Error fetching user document", e);
         });
     }
+
+    private void updateUserJumpInfo(String userId, String activeTime, int jumpCount, double calories) {
+        // Convert active time from string MM:SS to seconds.
+        int timeInSeconds = convertTimeToSeconds(activeTime);
+
+        // Retrieve current date
+        String today = getCurrentDate();
+
+        // Update dailyActive and monthlyActive in users
+        DocumentReference userRef = db.collection("users").document(userId);
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                // Get current dailyRunningInfo data
+                Map<String, Map<String, Object>> dailyJumpInfo = (Map<String, Map<String, Object>>) documentSnapshot.get("dailyJumpInfo");
+
+                // Initialize if not exist
+                if (dailyJumpInfo == null) {
+                    dailyJumpInfo = new HashMap<>();
+                }
+
+                // Calculate new active time
+                long updatedDailyActiveTime = dailyJumpInfo.containsKey(today) && dailyJumpInfo.get(today).get("activeTime") instanceof Long
+                        ? (Long) dailyJumpInfo.get(today).get("activeTime") + timeInSeconds
+                        : timeInSeconds;
+
+                // Calculate new distance, handle the conversion from Double to Float
+                int updatedDailyJumpCount = dailyJumpInfo.containsKey(today) && dailyJumpInfo.get(today).get("jumpCount") instanceof Integer
+                        ? (Integer) dailyJumpInfo.get(today).get("jumpCount") + jumpCount
+                        : jumpCount;
+
+                // Calculate new calories, handle the conversion from Double to Float if needed
+                double updatedDailyCalories = dailyJumpInfo.containsKey(today) && dailyJumpInfo.get(today).get("calories") instanceof Double
+                        ? (Double) dailyJumpInfo.get(today).get("calories") + calories
+                        : calories;
+
+                // Create or update daily activity entry with time, distance, and calories
+                Map<String, Object> dailyData = new HashMap<>();
+                dailyData.put("activeTime", updatedDailyActiveTime);
+                dailyData.put("jumpCount", updatedDailyJumpCount);
+                dailyData.put("calories", updatedDailyCalories);
+
+                // Update Firestore data
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("dailyJumpInfo." + today, dailyData);
+
+                userRef.update(updates).addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "User daily jump info updated successfully.");
+                }).addOnFailureListener(e -> {
+                    Log.w(TAG, "Error updating user daily jump info", e);
+                });
+            } else {
+                // If user does not exist
+                Log.w(TAG, "User document does not exist.");
+            }
+        }).addOnFailureListener(e -> {
+            Log.w(TAG, "Error fetching user document", e);
+        });
+    }
+
 
     /**
      * Convert active time from string MM:SS to seconds.

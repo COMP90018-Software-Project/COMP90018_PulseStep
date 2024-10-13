@@ -64,7 +64,8 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private TextView caloriesTextView;
 
     // Tracking Data
-    private float distance; // in kilometers
+    private float distanceInKm; // in kilometers
+    private float totalDistance; // in kilometers
     private String time; // formatted as "MM:SS"
     private String address; // optional
     private int stepCount;
@@ -118,7 +119,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
                 userRunningDetails.put("finishDateTime", finishDateTime);
                 userRunningDetails.put("activeTime", time);
                 userRunningDetails.put("avgPace", avgPace);
-                userRunningDetails.put("distance", distance);
+                userRunningDetails.put("distanceInKm", distanceInKm);
                 userRunningDetails.put("calories", calories);
                 userRunningDetails.put("stepCount", stepCount);
                 userRunningDetails.put("location", address);
@@ -131,6 +132,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
                             public void onSuccess(DocumentReference documentReference) {
                                 Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
                                 updateUserActiveTime(userUID, time);
+                                updateUserDailyRunningInfo(userUID, time, totalDistance, Double.parseDouble(calories));
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {
@@ -172,10 +174,11 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private void retrieveIntentData() {
         Intent intent = getIntent();
         if (intent != null) {
-            distance = intent.getFloatExtra("distance", 0.0f);
+            distanceInKm = intent.getFloatExtra("distanceInKm", 0.0f);
+            totalDistance = intent.getFloatExtra("totalDistance", 0.0f);
             time = intent.getStringExtra("time");
             stepCount = intent.getIntExtra("stepCount", 0);
-            if(distance > 0.01){
+            if(distanceInKm > 0.01){
                 trajectory = intent.getParcelableArrayListExtra("trajectory");
             }else{
                 trajectory = null;
@@ -191,7 +194,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
      */
     private void displayData() {
         Log.d("DEBUG", "Average Pace: " + avgPace);
-        distanceTextView.setText(String.format("%.2f", distance));
+        distanceTextView.setText(String.format("%.2f", distanceInKm));
         timeTextView.setText(time != null ? time : "00:00");
         stepCountTextView.setText(String.valueOf(stepCount));
         addressTextView.setText(address != null ? address : "N/A");
@@ -418,6 +421,66 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             Log.w(TAG, "Error fetching user document", e);
         });
     }
+
+
+    private void updateUserDailyRunningInfo(String userId, String activeTime, float distance, double calories) {
+        // Convert active time from string MM:SS to seconds.
+        int timeInSeconds = convertTimeToSeconds(activeTime);
+
+        // Retrieve current date
+        String today = getCurrentDate();
+
+        // Update dailyActive and monthlyActive in users
+        DocumentReference userRef = db.collection("users").document(userId);
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                // Get current dailyRunningInfo data
+                Map<String, Map<String, Object>> dailyRunningInfo = (Map<String, Map<String, Object>>) documentSnapshot.get("dailyRunningInfo");
+
+                // Initialize if not exist
+                if (dailyRunningInfo == null) {
+                    dailyRunningInfo = new HashMap<>();
+                }
+
+                // Calculate new active time
+                long updatedDailyActiveTime = dailyRunningInfo.containsKey(today) && dailyRunningInfo.get(today).get("activeTime") instanceof Long
+                        ? (Long) dailyRunningInfo.get(today).get("activeTime") + timeInSeconds
+                        : timeInSeconds;
+
+                // Calculate new distance, handle the conversion from Double to Float
+                float updatedDailyDistance = dailyRunningInfo.containsKey(today) && dailyRunningInfo.get(today).get("distance") instanceof Double
+                        ? ((Double) dailyRunningInfo.get(today).get("distance")).floatValue() + distance
+                        : distance;
+
+                // Calculate new calories, handle the conversion from Double to Float if needed
+                double updatedDailyCalories = dailyRunningInfo.containsKey(today) && dailyRunningInfo.get(today).get("calories") instanceof Double
+                        ? (Double) dailyRunningInfo.get(today).get("calories") + calories
+                        : calories;
+
+                // Create or update daily activity entry with time, distance, and calories
+                Map<String, Object> dailyData = new HashMap<>();
+                dailyData.put("activeTime", updatedDailyActiveTime);
+                dailyData.put("distance", updatedDailyDistance);
+                dailyData.put("calories", updatedDailyCalories);
+
+                // Update Firestore data
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("dailyRunningInfo." + today, dailyData);
+
+                userRef.update(updates).addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "User daily running info updated successfully.");
+                }).addOnFailureListener(e -> {
+                    Log.w(TAG, "Error updating user daily running info", e);
+                });
+            } else {
+                // If user does not exist
+                Log.w(TAG, "User document does not exist.");
+            }
+        }).addOnFailureListener(e -> {
+            Log.w(TAG, "Error fetching user document", e);
+        });
+    }
+
 
     /**
      * Convert active time from string MM:SS to seconds.
