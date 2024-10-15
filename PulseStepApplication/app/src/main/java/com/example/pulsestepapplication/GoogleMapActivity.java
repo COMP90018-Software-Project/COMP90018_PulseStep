@@ -870,7 +870,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         LocationRequest locationRequest = new LocationRequest.Builder(5000)
                 .setMinUpdateIntervalMillis(2000)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .setMinUpdateDistanceMeters(2)
+                .setMinUpdateDistanceMeters(5)
                 .build();
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
