@@ -96,7 +96,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private static final int LOCATION_REQUEST_CODE = 1001;
     private static final int ACTIVITY_RECOGNITION_REQUEST_CODE = 1002;
     private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1003; // Unique request code
-    private static final float MOVE_ZOOM_LEVEL = 17f;
+    private static final float MOVE_ZOOM_LEVEL = 16f;
     private static final float DEFAULT_ZOOM_LEVEL = 15f;
     private static final float MAX_ZOOM_LEVEL = 19f;
     private static final float DISTANCE_THRESHOLD_METERS = 1.0f; // Distance threshold in meters
@@ -296,7 +296,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             int offsetInDp = 100;
             float scale = getResources().getDisplayMetrics().density;
             layoutParams.y = (int) (offsetInDp * scale + 0.5f);
-            layoutParams.dimAmount = 0.9f;
+            layoutParams.dimAmount = 0.7f;
             window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
 
             window.setAttributes(layoutParams);
@@ -938,7 +938,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 PolylineOptions polylineOptions = new PolylineOptions()
                         .addAll(segment)
                         .color(getResources().getColor(R.color.like_orange))
-                        .width(10);
+                        .width(20);
                 Polyline polyline = googleMap.addPolyline(polylineOptions);
                 polyLines.add(polyline);
             }
