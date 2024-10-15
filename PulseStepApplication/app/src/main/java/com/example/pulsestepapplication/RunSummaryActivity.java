@@ -1,6 +1,9 @@
 package com.example.pulsestepapplication;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -27,10 +31,21 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * RunSummaryActivity displays the summary of a run, including distance, time, address, step count,
@@ -49,7 +64,8 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private TextView caloriesTextView;
 
     // Tracking Data
-    private float distance; // in kilometers
+    private float distanceInKm; // in kilometers
+    private float totalDistance; // in kilometers
     private String time; // formatted as "MM:SS"
     private String address; // optional
     private int stepCount;
@@ -59,11 +75,17 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private TextView avgPaceTextView;
     private Button finishButton;
     private String calories;
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_run_summary);
+
+        // Initialize Firebase Auth and Firestore
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // Initialize UI components
         initializeUIComponents();
@@ -77,9 +99,50 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         // Initialize and set up the map
         setupMap(savedInstanceState);
 
+        // Get user UID
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String userUID = currentUser.getUid();
+
+        // Get passed startDateTime and finishDateTime
+        String startDateTime = getIntent().getStringExtra("startDateTime");
+        String finishDateTime = getIntent().getStringExtra("finishDateTime");
+        Log.d("RunSummary", "startDateTime: " + startDateTime);
+        Log.d("RunSummary", "finishDateTime: " + finishDateTime);
+
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Map<String, Object> userRunningDetails = new HashMap<>();
+
+                userRunningDetails.put("userId", userUID);
+                userRunningDetails.put("startDateTime", startDateTime);
+                userRunningDetails.put("finishDateTime", finishDateTime);
+                userRunningDetails.put("activeTime", time);
+                userRunningDetails.put("avgPace", avgPace);
+                userRunningDetails.put("distanceInKm", distanceInKm);
+                userRunningDetails.put("calories", calories);
+                userRunningDetails.put("stepCount", stepCount);
+                userRunningDetails.put("location", address);
+
+
+                // Save data to Firestore
+                db.collection("run").add(userRunningDetails)
+                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                                updateUserActiveTime(userUID, time);
+                                updateUserDailyRunningInfo(userUID, time, totalDistance, Double.parseDouble(calories));
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w(TAG, "Error adding document", e);
+                            }
+                        });
+
+
                 Intent intent = new Intent(RunSummaryActivity.this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 intent.putExtra("fragment", "WorkoutFragment"); // 可选：传递参数以指示返回到WorkoutFragment
@@ -111,10 +174,11 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
     private void retrieveIntentData() {
         Intent intent = getIntent();
         if (intent != null) {
-            distance = intent.getFloatExtra("distance", 0.0f);
+            distanceInKm = intent.getFloatExtra("distanceInKm", 0.0f);
+            totalDistance = intent.getFloatExtra("totalDistance", 0.0f);
             time = intent.getStringExtra("time");
             stepCount = intent.getIntExtra("stepCount", 0);
-            if(distance > 0.01){
+            if(distanceInKm > 0.01){
                 trajectory = intent.getParcelableArrayListExtra("trajectory");
             }else{
                 trajectory = null;
@@ -130,7 +194,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
      */
     private void displayData() {
         Log.d("DEBUG", "Average Pace: " + avgPace);
-        distanceTextView.setText(String.format("%.2f", distance));
+        distanceTextView.setText(String.format("%.2f", distanceInKm));
         timeTextView.setText(time != null ? time : "00:00");
         stepCountTextView.setText(String.valueOf(stepCount));
         addressTextView.setText(address != null ? address : "N/A");
@@ -307,4 +371,148 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             mapFragment.onSaveInstanceState(outState);
         }
     }
+
+    /**
+     * Update the user daily and monthly active time in users database.
+     */
+    private void updateUserActiveTime(String userId, String activeTime) {
+        // Convert active time from string MM:SS to seconds.
+        int timeInSeconds = convertTimeToSeconds(activeTime);
+
+        // Retrieve current date and month
+        String today = getCurrentDate();
+        String currentMonth = getCurrentMonth();
+
+        //  Update dailyActive and monthlyActive in users
+        DocumentReference userRef = db.collection("users").document(userId);
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                // Get current dailyActive and monthlyActive data
+                Map<String, Long> dailyActive = (Map<String, Long>) documentSnapshot.get("dailyActive");
+                Map<String, Long> monthlyActive = (Map<String, Long>) documentSnapshot.get("monthlyActive");
+
+                // Initialize it if dailyActive or monthlyActive not exist
+                if (dailyActive == null) {
+                    dailyActive = new HashMap<>();
+                }
+                if (monthlyActive == null) {
+                    monthlyActive = new HashMap<>();
+                }
+
+                // Calculate new active time
+                long updatedDailyActive = dailyActive.containsKey(today) ? dailyActive.get(today) + timeInSeconds : timeInSeconds;
+                long updatedMonthlyActive = monthlyActive.containsKey(currentMonth) ? monthlyActive.get(currentMonth) + timeInSeconds : timeInSeconds;
+
+                // Update Firestore data
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("dailyActive." + today, updatedDailyActive);
+                updates.put("monthlyActive." + currentMonth, updatedMonthlyActive);
+
+                userRef.update(updates).addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "User active time updated successfully.");
+                }).addOnFailureListener(e -> {
+                    Log.w(TAG, "Error updating user active time", e);
+                });
+            } else {
+                // If user not exist
+                Log.w(TAG, "User document does not exist.");
+            }
+        }).addOnFailureListener(e -> {
+            Log.w(TAG, "Error fetching user document", e);
+        });
+    }
+
+
+    private void updateUserDailyRunningInfo(String userId, String activeTime, float distance, double calories) {
+        // Convert active time from string MM:SS to seconds.
+        int timeInSeconds = convertTimeToSeconds(activeTime);
+
+        // Retrieve current date
+        String today = getCurrentDate();
+
+        // Update dailyActive and monthlyActive in users
+        DocumentReference userRef = db.collection("users").document(userId);
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                // Get current dailyRunningInfo data
+                Map<String, Map<String, Object>> dailyRunningInfo = (Map<String, Map<String, Object>>) documentSnapshot.get("dailyRunningInfo");
+
+                // Initialize if not exist
+                if (dailyRunningInfo == null) {
+                    dailyRunningInfo = new HashMap<>();
+                }
+
+                // Calculate new active time
+                long updatedDailyActiveTime = dailyRunningInfo.containsKey(today) && dailyRunningInfo.get(today).get("activeTime") instanceof Long
+                        ? (Long) dailyRunningInfo.get(today).get("activeTime") + timeInSeconds
+                        : timeInSeconds;
+
+                // Calculate new distance, handle the conversion from Double to Float
+                float updatedDailyDistance = dailyRunningInfo.containsKey(today) && dailyRunningInfo.get(today).get("distance") instanceof Double
+                        ? ((Double) dailyRunningInfo.get(today).get("distance")).floatValue() + distance
+                        : distance;
+
+                // Calculate new calories, handle the conversion from Double to Float if needed
+                double updatedDailyCalories = dailyRunningInfo.containsKey(today) && dailyRunningInfo.get(today).get("calories") instanceof Double
+                        ? (Double) dailyRunningInfo.get(today).get("calories") + calories
+                        : calories;
+
+                // Create or update daily activity entry with time, distance, and calories
+                Map<String, Object> dailyData = new HashMap<>();
+                dailyData.put("activeTime", updatedDailyActiveTime);
+                dailyData.put("distance", updatedDailyDistance);
+                dailyData.put("calories", updatedDailyCalories);
+
+                // Update Firestore data
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("dailyRunningInfo." + today, dailyData);
+
+                userRef.update(updates).addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "User daily running info updated successfully.");
+                }).addOnFailureListener(e -> {
+                    Log.w(TAG, "Error updating user daily running info", e);
+                });
+            } else {
+                // If user does not exist
+                Log.w(TAG, "User document does not exist.");
+            }
+        }).addOnFailureListener(e -> {
+            Log.w(TAG, "Error fetching user document", e);
+        });
+    }
+
+
+    /**
+     * Convert active time from string MM:SS to seconds.
+     */
+    private int convertTimeToSeconds(String time) {
+        if (time != null && !time.isEmpty()) {
+            String[] parts = time.split(":");
+            int minutes = Integer.parseInt(parts[0]);
+            int seconds = Integer.parseInt(parts[1]);
+            return minutes * 60 + seconds;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Method used to get current date in the format: YYYY-MM-DD
+     */
+    private String getCurrentDate() {
+        Date date = Calendar.getInstance().getTime();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        return dateFormat.format(date);
+    }
+
+    /**
+     * Method used to get current month in the format: YYYY-MM
+     */
+    private String getCurrentMonth() {
+        Date date = Calendar.getInstance().getTime();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
+        return dateFormat.format(date);
+    }
+
+
 }

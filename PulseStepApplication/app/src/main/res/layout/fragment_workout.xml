@@ -68,6 +68,7 @@
         android:layout_height="150dp"
         android:layout_marginTop="92dp"
         android:background="@drawable/bg_ripple"
+        android:backgroundTint="@null"
         android:stateListAnimator="@drawable/bt_state_animator"
         android:text="Run"
         android:textColor="@color/black"

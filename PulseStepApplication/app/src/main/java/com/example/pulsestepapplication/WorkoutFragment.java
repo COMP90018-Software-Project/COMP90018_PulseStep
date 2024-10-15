@@ -2,9 +2,11 @@ package com.example.pulsestepapplication;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.icu.text.SimpleDateFormat;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,7 +23,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -33,6 +34,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+
+import java.util.Calendar;
+import java.util.Locale;
 
 
 public class WorkoutFragment extends Fragment {
@@ -71,6 +75,7 @@ public class WorkoutFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
         // Store savedInstanceState
         this.savedInstanceState = savedInstanceState;
 
@@ -78,11 +83,13 @@ public class WorkoutFragment extends Fragment {
         rootView = inflater.inflate(R.layout.fragment_workout, container, false);
         mapProgressBar = rootView.findViewById(R.id.map_progress_bar);
 
+
         // Get the arguments passed from MainActivity
         Bundle args = getArguments();
         if (args != null) {
-            userName = args.getString("name");
-            userAge = args.getInt("age");
+            userName = args.getString("fullName");
+            Log.e("WorkoutFragment", "userName = "+ userName);
+//            userAge = args.getInt("age");
             userWeight = args.getDouble("weight");
             // Get location permission status
             locationGranted = args.getBoolean("locationGranted", false);
@@ -105,12 +112,16 @@ public class WorkoutFragment extends Fragment {
             }
         }
 
-        //greeting_text
-        TextView greetingText = rootView.findViewById(R.id.greeting_text);
-        greetingText.setText("Hi, " + userName);
+
+        // greeting text rendered on workout page
+        TextView greetingTextView = view.findViewById(R.id.greeting_text);
+        greetingTextView.setText("Hi, " + userName);
 
 
 
+        // date text rendered on workout page
+        TextView dateTextView = view.findViewById((R.id.date_text));
+        dateTextView.setText(getFormattedDate());
 
         // Set up Run button to initiate permission and network checks
         Button runButton = rootView.findViewById(R.id.run_button);
@@ -477,8 +488,8 @@ public class WorkoutFragment extends Fragment {
         boolean activityRecognitionGranted = hasActivityRecognitionPermission();
 
         Intent intent;
-            intent = new Intent(getActivity(), GoogleMapActivity.class);
-            Log.d(TAG, "Launching GoogleMapActivity");
+        intent = new Intent(getActivity(), GoogleMapActivity.class);
+        Log.d(TAG, "Launching GoogleMapActivity");
 
         intent.putExtra("LOCATION_GRANTED", locationGranted);
         intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
@@ -490,7 +501,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("LATITUDE", latitude);
         intent.putExtra("LONGITUDE", longitude);
 
-        intent.putExtra("name", userName);
+        intent.putExtra("name",  userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
         startActivity(intent);
@@ -593,6 +604,23 @@ public class WorkoutFragment extends Fragment {
         }
     }
 
+
+
+    public String getFormattedDate() {
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE - MMM d", Locale.getDefault());
+        return dateFormat.format(calendar.getTime());
+    }
+
+    // This method updates the fragment's data
+    public void updateData(String fullName, Double weight) {
+        this.userName = fullName;
+        this.userWeight = weight;
+
+        // Now update the UI or other components using this new data
+        TextView greetingTextView = getView().findViewById(R.id.greeting_text);
+        greetingTextView.setText("Hi, " + fullName);
+    }
     @Override
     public void onResume() {
         super.onResume();
@@ -616,6 +644,7 @@ public class WorkoutFragment extends Fragment {
                     //proceedToNoMapActivity();
                 }
         }
+
 
     }
 }

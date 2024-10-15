@@ -36,7 +36,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -77,6 +79,11 @@ public class JumpActivity extends AppCompatActivity {
     private long pauseTime = 0L;
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private long elapsedTime;
+
+    private String formattedStartTime;
+    private String formattedFinishTime;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+
     //Button
     private boolean isLongPress = false;
     private Handler handler = new Handler();
@@ -84,6 +91,7 @@ public class JumpActivity extends AppCompatActivity {
     private int progressStatus = 0;
     private boolean isRunning = false;
     private boolean hasTriggeredSuccess = false;
+
 
 
 
@@ -283,6 +291,8 @@ public class JumpActivity extends AppCompatActivity {
     private void handlePauseResumeButtonClick() {
 
         if (isFirstStart) {
+            long currentTime = System.currentTimeMillis();
+            formattedStartTime = dateFormat.format(new Date(currentTime));
             startTracking();
             isFirstStart = false;
         } else if (isPaused) {
@@ -537,6 +547,12 @@ public class JumpActivity extends AppCompatActivity {
      * Shows the speed gif end markers.
      */
     private void showJumpResult() {
+        long currentTime = System.currentTimeMillis();
+        if(formattedStartTime == null){
+            formattedStartTime = dateFormat.format(new Date(currentTime));
+        }
+
+        formattedFinishTime = dateFormat.format(new Date(currentTime));
 
         // Display the end markers
         String timeElapsed = timerTextView.getText().toString();
@@ -557,6 +573,8 @@ public class JumpActivity extends AppCompatActivity {
         intent.putExtra("time", timeElapsed);
         intent.putExtra("address", address);
         intent.putExtra("calories", cTextView.getText().toString());
+        intent.putExtra("startDateTime", formattedStartTime);
+        intent.putExtra("finishDateTime", formattedFinishTime);
 
         // Start the RunSummaryActivity
         startActivity(intent);
