@@ -189,37 +189,53 @@
     <RelativeLayout
         android:id="@+id/jump_button_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="85dp"
         android:layout_above="@id/jump_card_layout"
         android:layout_centerHorizontal="true"
         android:paddingHorizontal="10dp"
         android:layout_marginBottom="-35dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginRight="50dp"
         app:layout_constraintBottom_toTopOf="@+id/jump_card_layout"
         tools:layout_editor_absoluteX="84dp">
+    <!-- Progress Bar around Show Button -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:indeterminate="false"
+        android:max="100"
+        android:progress="0"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:visibility="gone"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:progressDrawable="@drawable/circular_progress_drawable" />
 
-        <!-- Show Button -->
-        <ImageButton
-            android:id="@+id/jump_btn_show"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@drawable/circular_button"
-            android:src="@drawable/ic_finish"
-            android:layout_centerVertical="true"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="20dp"
-            android:contentDescription="Finish"
-            android:visibility="gone"/>
+    <!-- Show Button (centered inside the ProgressBar) -->
+    <ImageButton
+        android:id="@+id/jump_btn_show"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/circular_button"
+        android:src="@drawable/ic_finish"
+
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="15dp"
+        android:contentDescription="Finish"
+        android:visibility="gone" />
 
 
 
-        <!-- Stop Button -->
-        <ImageButton
-            android:id="@+id/jump_btn_stop"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
-            android:layout_centerInParent="true"
-            android:background="@drawable/circular_button"
-            android:src="@drawable/start" />
+    <ImageButton
+        android:id="@+id/jump_btn_stop"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:background="@drawable/circular_button_ripple"
+        android:src="@drawable/start"
+        android:layout_centerInParent="true"
+        android:scaleType="centerInside" />
     </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
