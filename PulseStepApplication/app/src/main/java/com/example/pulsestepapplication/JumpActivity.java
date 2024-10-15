@@ -2,6 +2,8 @@ package com.example.pulsestepapplication;
 
 import static com.example.pulsestepapplication.R.layout.activity_jump;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -14,14 +16,21 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -70,9 +79,19 @@ public class JumpActivity extends AppCompatActivity {
     private long pauseTime = 0L;
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private long elapsedTime;
+
     private String formattedStartTime;
     private String formattedFinishTime;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+
+    //Button
+    private boolean isLongPress = false;
+    private Handler handler = new Handler();
+    private ProgressBar progressBar;
+    private int progressStatus = 0;
+    private boolean isRunning = false;
+    private boolean hasTriggeredSuccess = false;
+
 
 
 
@@ -186,9 +205,84 @@ public class JumpActivity extends AppCompatActivity {
     /**
      * Sets up the button listeners for pause/resume and show actions.
      */
+    @SuppressLint("ClickableViewAccessibility")
     private void setupButtonListeners() {
+        progressBar = findViewById(R.id.progressBar);
         btnPauseResume.setOnClickListener(v -> handlePauseResumeButtonClick());
-        btnShow.setOnClickListener(v -> showJumpResult());
+        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
+        circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
+        progressBar.setProgressDrawable(circularProgressDrawable);
+        btnShow.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (isRunning || hasTriggeredSuccess) {
+                        return true;
+                    }
+                    isRunning = true;
+
+
+                    progressBar.setVisibility(View.VISIBLE);
+                    progressStatus = 0;
+                    circularProgressDrawable.setProgress(progressStatus);
+
+                    if (!hasTriggeredSuccess) {
+                        ObjectAnimator scaleXDown = ObjectAnimator.ofFloat(btnShow, "scaleX", 1f, 1.3f);
+                        ObjectAnimator scaleYDown = ObjectAnimator.ofFloat(btnShow, "scaleY", 1f, 1.3f);
+                        AnimatorSet animatorSetDown = new AnimatorSet();
+                        animatorSetDown.playTogether(scaleXDown, scaleYDown);
+                        animatorSetDown.setDuration(2000);
+                        animatorSetDown.start();
+                    }
+
+                    new Thread(new Runnable() {
+                        public void run() {
+                            while (progressStatus < 100 && isRunning) {
+                                progressStatus += 1;
+                                handler.post(new Runnable() {
+                                    public void run() {
+                                        circularProgressDrawable.setProgress(progressStatus);
+                                    }
+                                });
+                                try {
+                                    Thread.sleep(20);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            if (progressStatus >= 100 && isRunning) {
+                                isLongPress = true;
+                                handler.post(() -> {
+                                    showJumpResult();
+                                    isRunning = false;
+                                    hasTriggeredSuccess = true;
+                                });
+                            }
+                        }
+                    }).start();
+                    break;
+
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (!hasTriggeredSuccess) {
+                        ObjectAnimator scaleXUp = ObjectAnimator.ofFloat(btnShow, "scaleX", 1.3f, 1f);
+                        ObjectAnimator scaleYUp = ObjectAnimator.ofFloat(btnShow, "scaleY", 1.3f, 1f);
+                        AnimatorSet animatorSetUp = new AnimatorSet();
+                        animatorSetUp.playTogether(scaleXUp, scaleYUp);
+                        animatorSetUp.setDuration(300);
+                        animatorSetUp.start();
+                    }
+                    isRunning = false;
+                    if (progressStatus < 100) {
+                        progressBar.setVisibility(View.GONE);
+                        handler.removeCallbacksAndMessages(null);
+                        progressStatus = 0;
+                    }
+                    break;
+            }
+            return true;
+        });
+
     }
 
     /**
@@ -259,20 +353,42 @@ public class JumpActivity extends AppCompatActivity {
     }
 
 
-    private void popUpConfirmDialog(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(JumpActivity.this);
-        builder.setTitle("Confirm Exit");
-        builder.setMessage("Are you sure you want to exit the jump activity?");
+    private void popUpConfirmDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_custom, null);
+        builder.setView(dialogView);
         builder.setCancelable(false);
-        builder.setPositiveButton("Yes", (dialog, which) -> {
-            // Finish the current activity and return to the RunSummaryActivity page
-            Intent intent = new Intent(JumpActivity.this, JumpSummaryActivity.class);
+        AlertDialog dialog = builder.create();
+
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = window.getAttributes();
+            layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.8);
+
+            int offsetInDp = 100;
+            float scale = getResources().getDisplayMetrics().density;
+            layoutParams.y = (int) (offsetInDp * scale + 0.5f);
+            layoutParams.dimAmount = 0.9f;
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
+            window.setAttributes(layoutParams);
+        }
+
+        Button positiveButton = dialogView.findViewById(R.id.positive_button);
+        Button negativeButton = dialogView.findViewById(R.id.negative_button);
+
+        positiveButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.putExtra("fragment", "WorkoutFragment");
             startActivity(intent);
             finish();
         });
-        builder.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
-        builder.create().show();
 
+        negativeButton.setOnClickListener(v -> dialog.dismiss());
     }
 
 
@@ -368,6 +484,14 @@ public class JumpActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && jumpCounter != null) {
             jumpCounter.unregisterListener();
         }
+    }
+    /**
+     * Called when the back button is pressed
+     */
+    @SuppressLint("MissingSuperCall")
+    @Override
+    public void onBackPressed() {
+        popUpConfirmDialog();
     }
 
     /**

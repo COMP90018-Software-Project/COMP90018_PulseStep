@@ -55,10 +55,14 @@ public class WorkoutFragment extends Fragment {
     private GoogleMap mMap;
     private boolean isUsingAmap = false;
     private ProgressBar mapProgressBar;
-
+    public boolean locationGranted = false;
     private String userName;
     private int userAge;
     private double userWeight;
+
+    private View rootView; // Store the root view
+    private Bundle savedInstanceState; // Store savedInstanceState if needed
+
     public WorkoutFragment() {
         // Required empty public constructor
     }
@@ -72,9 +76,13 @@ public class WorkoutFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_workout, container, false);
-        mapProgressBar = view.findViewById(R.id.map_progress_bar);
+        // Store savedInstanceState
+        this.savedInstanceState = savedInstanceState;
+
+        // Inflate the layout for this fragment and store the root view
+        rootView = inflater.inflate(R.layout.fragment_workout, container, false);
+        mapProgressBar = rootView.findViewById(R.id.map_progress_bar);
+
 
         // Get the arguments passed from MainActivity
         Bundle args = getArguments();
@@ -84,7 +92,7 @@ public class WorkoutFragment extends Fragment {
 //            userAge = args.getInt("age");
             userWeight = args.getDouble("weight");
             // Get location permission status
-            boolean locationGranted = args.getBoolean("locationGranted", false);
+            locationGranted = args.getBoolean("locationGranted", false);
             // Initialize map based on location permission status
             if (locationGranted) {
                 mapProgressBar.setVisibility(View.VISIBLE);
@@ -92,10 +100,10 @@ public class WorkoutFragment extends Fragment {
                 fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
 
                 // Initialize the map
-                initializeMap(view, savedInstanceState);
+                initializeMap(rootView, savedInstanceState);
             } else {
                 // Show placeholder or notify the user that location permission is not granted
-                View placeholder = view.findViewById(R.id.map_placeholder);
+                View placeholder = rootView.findViewById(R.id.map_placeholder);
                 if (placeholder != null) {
                     placeholder.setVisibility(View.VISIBLE);
                 }
@@ -104,9 +112,11 @@ public class WorkoutFragment extends Fragment {
             }
         }
 
+
         // greeting text rendered on workout page
         TextView greetingTextView = view.findViewById(R.id.greeting_text);
         greetingTextView.setText("Hi, " + userName);
+
 
 
         // date text rendered on workout page
@@ -114,7 +124,7 @@ public class WorkoutFragment extends Fragment {
         dateTextView.setText(getFormattedDate());
 
         // Set up Run button to initiate permission and network checks
-        Button runButton = view.findViewById(R.id.run_button);
+        Button runButton = rootView.findViewById(R.id.run_button);
         runButton.setOnClickListener(v -> {
             // When the user clicks the Run button, check and request activity recognition permission, then start the map activity
             checkActivityRecognitionPermissionAndProceed();
@@ -123,13 +133,13 @@ public class WorkoutFragment extends Fragment {
 
 
         //Set up Jump button to navigate to JumpActivity
-        Button jumpButton = view.findViewById(R.id.jump_button);
+        Button jumpButton = rootView.findViewById(R.id.jump_button);
         jumpButton.setOnClickListener(v -> {
             // When the user clicks the Jump button, pass user info into intent, then start the jump activity
             proceedToJumpActivity();
         });
 
-        return view;
+        return rootView;
     }
     private void checkActivityRecognitionPermissionAndProceed() {
         if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
@@ -595,6 +605,7 @@ public class WorkoutFragment extends Fragment {
     }
 
 
+
     public String getFormattedDate() {
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE - MMM d", Locale.getDefault());
@@ -609,5 +620,31 @@ public class WorkoutFragment extends Fragment {
         // Now update the UI or other components using this new data
         TextView greetingTextView = getView().findViewById(R.id.greeting_text);
         greetingTextView.setText("Hi, " + fullName);
+    }
+    @Override
+    public void onResume() {
+        super.onResume();
+        boolean currentPermissionStatus = hasLocationPermissions();
+        if (currentPermissionStatus != locationGranted) {
+            locationGranted = currentPermissionStatus;
+                if (locationGranted) {
+                    mapProgressBar.setVisibility(View.VISIBLE);
+                    // Initialize FusedLocationProviderClient for location services
+                    fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+
+                    // Initialize the map
+                    initializeMap(rootView, savedInstanceState);
+                } else {
+                    // Show placeholder or notify the user that location permission is not granted
+                    View placeholder = rootView.findViewById(R.id.map_placeholder);
+                    if (placeholder != null) {
+                        placeholder.setVisibility(View.VISIBLE);
+                    }
+                    showToast("Location permissions not granted");
+                    //proceedToNoMapActivity();
+                }
+        }
+
+
     }
 }
