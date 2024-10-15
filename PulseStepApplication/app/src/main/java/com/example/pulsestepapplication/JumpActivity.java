@@ -199,6 +199,7 @@ public class JumpActivity extends AppCompatActivity {
      */
     @SuppressLint("ClickableViewAccessibility")
     private void setupButtonListeners() {
+        progressBar = findViewById(R.id.progressBar);
         btnPauseResume.setOnClickListener(v -> handlePauseResumeButtonClick());
         CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
         circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
