@@ -35,7 +35,8 @@ public class MainActivity extends AppCompatActivity {
     private Fragment rankingFragment;
     private Fragment profileFragment;
     private Fragment activeFragment; // The currently displayed Fragment
-
+    private String userId; // 保存从上一个页面传递的电子邮件
+    private String fullName;
     private String name;
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -54,6 +55,10 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_COARSE_LOCATION
             }, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
+            // 获取从上一个页面传递的uid
+            userId = getIntent().getStringExtra("USER_ID");
+            fullName = getIntent().getStringExtra("FULL_NAME");
+
             // If location permissions are already granted, initialize the 3 Fragment
             fetchUserData();
         }
