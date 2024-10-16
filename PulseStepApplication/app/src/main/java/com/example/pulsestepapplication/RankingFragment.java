@@ -14,6 +14,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.NumberPicker;
 import android.widget.TextView;
+import android.widget.ToggleButton;
+
+import com.google.android.material.button.MaterialButtonToggleGroup;
 
 import java.util.ArrayList;
 
@@ -68,6 +71,28 @@ public class RankingFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 setUpTargetPickerDialog();
+            }
+        });
+
+        // switch ranking list (monthly/daily)
+        MaterialButtonToggleGroup toggleButton = view.findViewById(R.id.bt_switch_rank);
+        TextView titleTextView = view.findViewById(R.id.rank_title);
+        toggleButton.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+            @Override
+            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
+                // Respond to button selection
+                if (isChecked) {
+                    switch (checkedId) {
+                        case R.id.bt_daily:
+                            titleTextView.setText("Daily Sports Rankings");
+//                            updateRecyclerViewData("daily");
+                            break;
+                        case R.id.bt_monthly:
+                            titleTextView.setText("Monthly Sports Rankings");
+//                            updateRecyclerViewData("monthly");
+                            break;
+                    }
+                }
             }
         });
         return view;

@@ -1,7 +1,6 @@
 package com.example.pulsestepapplication;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
@@ -11,19 +10,19 @@ import android.hardware.SensorManager;
 import android.os.Build;
 import android.util.Log;
 
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * StepCounter class to track the number of steps using the device's step detector sensor.
  */
 public class StepCounter {
     private static final String TAG = "StepCounter";
-    private static final int REQUEST_CODE = 1001; // Permission request code
 
     private final SensorManager sensorManager;
     private final Sensor stepDetectorSensor;
-    private final Activity activity;
     private final Context context;
 
     private SensorEventListener stepListener;
@@ -38,16 +37,16 @@ public class StepCounter {
      */
     public interface StepCounterListener {
         void onStepCountUpdated(int stepCount);
+        void onPermissionRequired();
     }
 
     /**
      * Constructor initializes the sensor manager and step detector sensor.
      *
-     * @param activity The activity context.
+     * @param context The context.
      */
-    public StepCounter(Activity activity) {
-        this.activity = activity;
-        this.context = activity;
+    public StepCounter(Context context) {
+        this.context = context;
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
 
@@ -99,7 +98,6 @@ public class StepCounter {
 
     /**
      * Starts step tracking by registering the sensor listener.
-     * Requests ACTIVITY_RECOGNITION permission if necessary.
      */
     public void startStepTracking() {
         if (stepDetectorSensor == null) {
@@ -111,8 +109,9 @@ public class StepCounter {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION)
                     != PackageManager.PERMISSION_GRANTED) {
                 Log.e(TAG, "Missing ACTIVITY_RECOGNITION permission");
-                ActivityCompat.requestPermissions(activity,
-                        new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, REQUEST_CODE);
+                if (stepCounterListener != null) {
+                    stepCounterListener.onPermissionRequired();
+                }
                 return;
             }
         }
@@ -139,29 +138,5 @@ public class StepCounter {
             stepCount = 0; // Reset current step count
             Log.d(TAG, "Step tracking stopped, steps saved: " + savedStepCount);
         }
-    }
-
-    /**
-     * Resets the step tracking by clearing all step counts.
-     */
-    public void resetStepTracking() {
-        isTrackingSteps = false;
-        stepCount = 0; // Reset current step count
-        savedStepCount = 0; // Reset saved step count
-        Log.d(TAG, "Step tracking reset");
-    }
-
-    /**
-     * Registers the step listener to start tracking steps.
-     */
-    public void registerListener() {
-        startStepTracking();
-    }
-
-    /**
-     * Unregisters the step listener to stop tracking steps.
-     */
-    public void unregisterListener() {
-        stopStepTracking();
     }
 }

@@ -2,7 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/white">
 
     <!-- Toolbar at the top -->
     <FrameLayout
@@ -10,23 +11,28 @@
         android:layout_height="match_parent">
 
         <!-- Google Map Fragment -->
+
+        <!-- Centered Rotating ImageView on Top of the Map -->
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/google_map"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="65dp" />
+            android:layout_marginTop="60dp"
+            android:background="@android:color/white" />
 
-        <!-- Centered Rotating ImageView on Top of the Map -->
+
+
         <ImageView
             android:id="@+id/wait"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginTop="30dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:tint="@color/like_orange"
+            android:layout_marginTop="30dp"
             android:background="@android:color/transparent"
-            app:srcCompat="@android:drawable/stat_notify_sync_noanim" />
+            android:visibility="gone"
+            app:srcCompat="@android:drawable/stat_notify_sync_noanim"
+            app:tint="@color/like_orange" />
 
         <TextView
             android:id="@+id/waitText"
@@ -171,8 +177,8 @@
                     android:layout_height="wrap_content"
                     android:text="--'--''"
                     android:textSize="20sp"
-                android:textColor="@android:color/black"
-                android:textStyle="bold" />
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -189,8 +195,8 @@
                     android:layout_height="wrap_content"
                     android:text="Calories"
                     android:textSize="12sp"
-                android:textColor="#808080"
-                android:textStyle="bold" />
+                    android:textColor="#808080"
+                    android:textStyle="bold" />
 
                 <!-- Calories Value -->
                 <TextView
@@ -199,8 +205,8 @@
                     android:layout_height="wrap_content"
                     android:text="0"
                     android:textSize="20sp"
-                android:textColor="@android:color/black"
-                android:textStyle="bold" />
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -208,12 +214,10 @@
         </LinearLayout>
 
     </LinearLayout>
-
-    <!-- Buttons placed above the card layout -->
     <RelativeLayout
         android:id="@+id/button_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="85dp"
         android:layout_centerHorizontal="true"
         android:layout_above="@id/card_layout"
         android:layout_marginBottom="-35dp"
@@ -221,29 +225,43 @@
         android:layout_marginLeft="50dp"
         android:layout_marginRight="50dp">
 
-        <!-- Show Button -->
+        <!-- Progress Bar around Show Button -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:indeterminate="false"
+            android:max="100"
+            android:progress="0"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:visibility="gone"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:progressDrawable="@drawable/circular_progress_drawable" />
+
+        <!-- Show Button (centered inside the ProgressBar) -->
         <ImageButton
             android:id="@+id/btn_show"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@drawable/circular_button"
             android:src="@drawable/ic_finish"
-            android:layout_centerVertical="true"
             android:layout_alignParentStart="true"
-            android:layout_marginStart="20dp"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="15dp"
             android:contentDescription="Finish"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
-
-        <!-- Stop Button -->
         <ImageButton
             android:id="@+id/btn_stop"
             android:layout_width="70dp"
             android:layout_height="70dp"
-            android:background="@drawable/circular_button"
+            android:background="@drawable/circular_button_ripple"
             android:src="@drawable/start"
-            android:layout_centerInParent="true" />
+            android:layout_centerInParent="true"
+            android:scaleType="centerInside" />
     </RelativeLayout>
+
 
 
 
