@@ -279,7 +279,7 @@ public class WorkoutFragment extends Fragment {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                             LatLng currentLatLng = new LatLng(latitude, longitude);
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
 
                             // Store the new location
                             lastLatitude = latitude;
@@ -310,7 +310,7 @@ public class WorkoutFragment extends Fragment {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                              LatLng currentLatLng = new LatLng(latitude, longitude);
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
 
                             // Store the new location
                             lastLatitude = latitude;
