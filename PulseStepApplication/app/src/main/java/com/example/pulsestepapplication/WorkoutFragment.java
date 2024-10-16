@@ -209,7 +209,7 @@ public class WorkoutFragment extends Fragment {
         GoogleMapOptions options = new GoogleMapOptions();
         if (latitude != null && longitude != null) {
             LatLng lastLatLng = new LatLng(latitude, longitude);
-            options.camera(CameraPosition.fromLatLngZoom(lastLatLng, 18f));
+            options.camera(CameraPosition.fromLatLngZoom(lastLatLng, 15f));
         }
         SupportMapFragment mapFragment = SupportMapFragment.newInstance(options);
         // Replace the placeholder with the map fragment
