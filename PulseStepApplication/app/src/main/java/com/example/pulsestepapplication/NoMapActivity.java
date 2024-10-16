@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -562,8 +563,8 @@ public class NoMapActivity extends AppCompatActivity{
      * Navigates back to the WorkoutActivity.
      */
     private void navigateToWorkoutPage() {
-        Intent intent = new Intent(NoMapActivity.this, MainActivity.class);
-        startActivity(intent);
+        Intent returnIntent = new Intent();
+        setResult(Activity.RESULT_OK, returnIntent);
         finish();
     }
 
@@ -682,11 +683,10 @@ public class NoMapActivity extends AppCompatActivity{
         Button negativeButton = dialogView.findViewById(R.id.negative_button);
 
         positiveButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            intent.putExtra("fragment", "WorkoutFragment");
-            startActivity(intent);
+            Intent returnIntent = new Intent();
+            setResult(Activity.RESULT_OK, returnIntent);
             finish();
+            dialog.dismiss();
         });
 
         negativeButton.setOnClickListener(v -> dialog.dismiss());

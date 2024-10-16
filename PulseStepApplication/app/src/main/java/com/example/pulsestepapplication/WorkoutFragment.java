@@ -2,6 +2,7 @@ package com.example.pulsestepapplication;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -493,7 +494,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name", userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
-        startActivity(intent);
+        startActivityForResult(intent, 123);
     }
     /**
      * Starts the appropriate map activity based on the user's location and permissions.
@@ -520,7 +521,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name", userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
-        startActivity(intent);
+        startActivityForResult(intent, 123);
     }
     /**
      * Starts the appropriate jump activity based on the user's info.
