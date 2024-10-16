@@ -30,6 +30,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 android:paddingTop="30dp"
                 app:singleSelection="true"
+                app:selectionRequired="true"
                 app:checkedButton="@id/bt_daily"
                 >
                 <Button
@@ -126,7 +127,7 @@
                 android:id="@+id/daily_target_hours"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="10 hours"
+                android:text="-- hours"
                 android:textColor="@color/white"
                 android:textSize="28sp"
                 android:fontFamily="@font/inter_bold"
@@ -158,7 +159,7 @@
                 android:layout_marginTop="20dp"
                 android:progressDrawable="@drawable/progress_bar"
                 android:max="100"
-                android:progress="71"
+                android:progress="0"
                 app:layout_constraintTop_toBottomOf="@id/target_title"
                 app:layout_constraintStart_toStartOf="parent"/>  <!-- 当前进度设为 71% -->
 

@@ -4,6 +4,7 @@ import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -15,15 +16,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
-public class PersonalDetails extends AppCompatActivity {
-
+public class EditPersonalInfo extends AppCompatActivity {
     private TextView birthdayTextView;
     private EditText heightEditText, weightEditText;
     private RadioButton maleRadioButton, femaleRadioButton, otherRadioButton;
@@ -31,15 +33,18 @@ public class PersonalDetails extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private ProgressDialog progressDialog; // ProgressDialog to show saving state
+    private String userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_personal_details);
 
-        // Initialize Firebase Auth and Firestore
-        mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+
+        // 获取从 ProfileFragment 传递的 userId
+        Intent intent = getIntent();
+        userId = intent.getStringExtra("userId");
 
         // Initialize UI elements
         birthdayTextView = findViewById(R.id.birthdayTextView);
@@ -55,39 +60,8 @@ public class PersonalDetails extends AppCompatActivity {
         progressDialog.setMessage("Saving details...");
         progressDialog.setCancelable(false);
 
-        // Set up DatePickerDialog for birthday selection
-        birthdayTextView.setOnClickListener(v -> {
-            // Get the current date
-            final Calendar calendar = Calendar.getInstance();
-            int year = calendar.get(Calendar.YEAR);
-            int month = calendar.get(Calendar.MONTH);
-            int day = calendar.get(Calendar.DAY_OF_MONTH);
+        loadUserData();
 
-            // Create a DatePickerDialog with year and month scroll enabled
-            DatePickerDialog datePickerDialog = new DatePickerDialog(
-                    PersonalDetails.this,
-                    (view, selectedYear, selectedMonth, selectedDay) -> {
-                        // Set the selected date to the TextView
-                        String selectedDate = (selectedMonth + 1) + "/" + selectedDay + "/" + selectedYear;
-                        birthdayTextView.setText(selectedDate);
-                    },
-                    year, month, day);
-            datePickerDialog.show();
-        });
-
-        // Get user UID
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) {
-            Toast.makeText(this, "User not authenticated", Toast.LENGTH_SHORT).show();
-            finish(); // Exit if user is not logged in
-            return;
-        }
-
-        String userUID = currentUser.getUid();
-
-        // Get passed fullName and email
-        String fullName = getIntent().getStringExtra("FULL_NAME");
-        String email = getIntent().getStringExtra("EMAIL");
 
         // Set Finish button click listener
         finishButton.setOnClickListener(view -> {
@@ -168,57 +142,99 @@ public class PersonalDetails extends AppCompatActivity {
                 gender = "Other";
             }
 
-            boolean appleHealthEnabled = false; // Change as necessary
-
-            // Set default avatar URL based on gender
-            String avatarUrl;
-            if (isMale) {
-                avatarUrl = "male_default_avatar.png";
-            } else if (isFemale) {
-                avatarUrl = "female_default_avatar.png";
-            } else {
-                avatarUrl = "default_avatar.png"; // Default avatar for "Other"
-            }
 
             // Show ProgressDialog before starting the save operation
             progressDialog.show();
 
             // Create user data map
             Map<String, Object> userDetails = new HashMap<>();
-            userDetails.put("fullName", fullName);
-            userDetails.put("email", email);
             userDetails.put("birthday", birthday);
             userDetails.put("height", heightStr);
             userDetails.put("weight", weightStr);
             userDetails.put("gender", gender);
-            userDetails.put("appleHealthEnabled", appleHealthEnabled);
-            userDetails.put("avatarUrl", avatarUrl);
-            // Default daily target for user
-            userDetails.put("target", 1);
 
-//            userDetails.put("dailyActiveTime",0);
-//            userDetails.put("monthlyActiveTime",0);
-//
-//            List<String> dailyLikeList = new ArrayList<>();
-//            userDetails.put("dailyLike",dailyLikeList);
-//            List<String> monthlyLikeList = new ArrayList<>();
-//            userDetails.put("monthlyLike",monthlyLikeList);
-
-            // Save data to Firestore
-            db.collection("users").document(userUID)
-                    .set(userDetails)
-                    .addOnCompleteListener(task -> {
-                        // Hide ProgressDialog after operation completes
+            // Update data in Firestore using SetOptions.merge() to merge fields with existing data
+            db.collection("users").document(userId)
+                    .set(userDetails, SetOptions.merge())  // Merge new data with existing fields
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(EditPersonalInfo.this, "Details updated successfully", Toast.LENGTH_SHORT).show();
                         progressDialog.dismiss();
-
-                        if (task.isSuccessful()) {
-                            Toast.makeText(PersonalDetails.this, "Details saved successfully!", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(PersonalDetails.this, Login.class);
-                            startActivity(intent);
-                        } else {
-                            Toast.makeText(PersonalDetails.this, "Failed to save details.", Toast.LENGTH_SHORT).show();
-                        }
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(EditPersonalInfo.this, "Error updating details", Toast.LENGTH_SHORT).show();
+                        Log.e("EditPersonalInfo", "Error updating details: ", e);
+                        progressDialog.dismiss();
                     });
         });
     }
+
+    private void loadUserData() {
+        // 从 Firestore 获取用户数据
+        db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // 获取用户的详细信息
+                        String birthday = documentSnapshot.getString("birthday");
+                        String height = documentSnapshot.getString("height");
+                        String weight = documentSnapshot.getString("weight");
+                        String gender = documentSnapshot.getString("gender");
+
+                        // 设置 UI 元素的值
+                        birthdayTextView.setText(birthday);
+                        heightEditText.setText(height);
+                        weightEditText.setText(weight);
+
+                        // 将 birthday 日期解析为年、月、日
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
+                        Calendar calendar = Calendar.getInstance();
+                        try {
+                            Date date = dateFormat.parse(birthday); // 解析从数据库获取的日期
+                            if (date != null) {
+                                calendar.setTime(date); // 设置日期到 Calendar
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        // 获取 year, month, day
+                        int year = calendar.get(Calendar.YEAR);
+                        int month = calendar.get(Calendar.MONTH); // 注意，Calendar.MONTH 是 0-based
+                        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+                        // Set up DatePickerDialog with the selected birthday from the database
+                        birthdayTextView.setOnClickListener(v -> {
+                            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                                    EditPersonalInfo.this,
+                                    (view, selectedYear, selectedMonth, selectedDay) -> {
+                                        // 将用户选择的日期设置为 TextView
+                                        String selectedDate = (selectedMonth + 1) + "/" + selectedDay + "/" + selectedYear;
+                                        birthdayTextView.setText(selectedDate);
+                                    },
+                                    year, month, day); // 传递解析出来的年、月、日作为初始日期
+                            datePickerDialog.show();
+                        });
+
+                        // 设置性别单选按钮
+                        if (gender != null) {
+                            if (gender.equalsIgnoreCase("Male")) {
+                                maleRadioButton.setChecked(true);
+                            } else if (gender.equalsIgnoreCase("Female")) {
+                                femaleRadioButton.setChecked(true);
+                            } else {
+                                otherRadioButton.setChecked(true);
+                            }
+                        }
+
+                    } else {
+                        Toast.makeText(EditPersonalInfo.this, "User data not found", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(EditPersonalInfo.this, "Error loading data", Toast.LENGTH_SHORT).show();
+                    Log.e("EditPersonalInfo", "Error loading details: ", e);
+                });
+    }
+
 }

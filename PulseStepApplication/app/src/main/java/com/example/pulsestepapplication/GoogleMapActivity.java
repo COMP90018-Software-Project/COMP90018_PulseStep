@@ -84,8 +84,10 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -146,6 +148,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private long pauseTime = 0L;
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private long elapsedTime;
+    private String formattedStartTime;
+    private String formattedFinishTime;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+
     private final Runnable timerRunnable = new Runnable() {
         @SuppressLint("DefaultLocale")
         @Override
@@ -641,6 +647,11 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         isPaused = false;
 
         if (isFirstStart) {
+
+            long currentTime = System.currentTimeMillis();
+            formattedStartTime = dateFormat.format(new Date(currentTime));
+          
+
             // Start a new pathPoints list for the new segment
             pathPoints = new ArrayList<>();
             allPathPoints.add(pathPoints);
@@ -1033,6 +1044,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Show the last tracking path, including start and end markers
      */
     private void showLastTrack() {
+        long currentTime = System.currentTimeMillis();
+        if(formattedStartTime == null){
+            formattedStartTime = dateFormat.format(new Date(currentTime));
+        }
+
+        formattedFinishTime = dateFormat.format(new Date(currentTime));
         // Calculate distance
         float distanceInKm;
         if (isMapMode) {
@@ -1056,13 +1073,16 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         }
         // Create an intent to jump to RunSummaryActivity
         Intent intent = new Intent(GoogleMapActivity.this, RunSummaryActivity.class);
-        intent.putExtra("distance", distanceInKm);
+        intent.putExtra("distanceInKm", distanceInKm);
+        intent.putExtra("totalDistance", totalDistance);
         intent.putExtra("avgPace", avg);
         intent.putExtra("time", timeElapsed);
         intent.putExtra("address", address);
         intent.putExtra("stepCount", stepCount);
         intent.putExtra("calories", cTextView.getText().toString());
         intent.putExtra("MODE", isMapMode ? "MAP" : "NO_MAP");
+        intent.putExtra("startDateTime", formattedStartTime);
+        intent.putExtra("finishDateTime", formattedFinishTime);
 
         if (isMapMode) {
             // Collect trajectory points

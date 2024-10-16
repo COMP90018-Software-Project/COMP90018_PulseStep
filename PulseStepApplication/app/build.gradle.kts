@@ -16,6 +16,9 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+//       ndk {
+//            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a","x86_64", "x86"))//,
+//        }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -37,15 +40,22 @@ android {
     buildFeatures {
         viewBinding = true
     }
-
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("libs")
+        }
+    }
 }
 
 dependencies {
     implementation ("androidx.fragment:fragment:1.5.5")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.android.gms:play-services-maps:18.0.0")
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation("com.github.dhaval2404:imagepicker:2.1")
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.google.android.material:material:1.5.0")
+    implementation("com.firebaseui:firebase-ui-storage:8.0.0")
     implementation("de.hdodenhof:circleimageview:3.0.0")
     implementation(libs.appcompat)
     implementation(libs.material)
@@ -62,4 +72,8 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation ("com.google.firebase:firebase-storage")
+
+    implementation ("androidx.lifecycle:lifecycle-extensions:2.2.0")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel:2.2.0")
 }
