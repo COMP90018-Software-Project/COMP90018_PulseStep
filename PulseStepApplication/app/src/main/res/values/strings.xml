@@ -55,8 +55,8 @@
     <string name="bt_cancel">CANCEL</string>
     <string name="bt_set">SET</string>
     <string name="reset_password_context">Forget your password? Click confirm to set a new password</string>
-    <string name="set_new_password_context">Click send rest email to rest your password. Ensure it differs from previous ones for security</string>
-    <string name="successfully_reset_password">Rest email has benn send!\nCheck your email and follow steps.\nClick continue to login.</string>
+    <string name="set_new_password_context">Click send reset email to reset your password. Ensure it differs from previous ones for security</string>
+    <string name="successfully_reset_password">Reset email has benn send!\nCheck your email and follow steps.\nClick continue to login.</string>
     <!-- Switch rank list button    -->
     <string name="bt_daily">Daily</string>
     <string name="bt_monthly">Monthly</string>
