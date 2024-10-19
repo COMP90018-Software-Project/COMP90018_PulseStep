@@ -1,0 +1,62 @@
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/dialog_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/set_target_title"
+        android:textSize="18sp"
+        android:fontFamily="@font/inter_semi_bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <NumberPicker
+        android:id="@+id/targetPicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/dialog_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <Button
+        android:id="@+id/btn_cancel"
+        android:layout_width="75dp"
+        android:layout_height="48dp"
+        android:text="@string/bt_cancel"
+        android:textSize="13sp"
+        android:textColor="@color/orange"
+        android:textStyle="bold"
+        android:background="@drawable/bt_no"
+
+        android:layout_marginEnd="5dp"
+        android:layout_marginTop="10dp"
+        android:padding="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/targetPicker"
+        app:layout_constraintEnd_toStartOf="@id/btn_set"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <Button
+        android:id="@+id/btn_set"
+        android:layout_width="75dp"
+        android:layout_height="48dp"
+        android:background="@drawable/bt_yes"
+        android:textStyle="bold"
+        android:padding="0dp"
+        android:text="@string/bt_set"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="5dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/targetPicker"
+        app:layout_constraintStart_toEndOf="@id/btn_cancel"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
