@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-    private String userId = currentUser != null ? currentUser.getUid() : null;
+    //private String userId = currentUser != null ? currentUser.getUid() : null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

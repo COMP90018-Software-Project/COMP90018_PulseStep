@@ -114,13 +114,13 @@ public class WorkoutFragment extends Fragment {
 
 
         // greeting text rendered on workout page
-        TextView greetingTextView = view.findViewById(R.id.greeting_text);
+        TextView greetingTextView = rootView.findViewById(R.id.greeting_text);
         greetingTextView.setText("Hi, " + userName);
 
 
 
         // date text rendered on workout page
-        TextView dateTextView = view.findViewById((R.id.date_text));
+        TextView dateTextView = rootView.findViewById((R.id.date_text));
         dateTextView.setText(getFormattedDate());
 
         // Set up Run button to initiate permission and network checks

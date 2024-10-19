@@ -118,6 +118,7 @@ public class Password extends AppCompatActivity {
         // 设置 "Forgot password?" 的点击事件
         forgotPasswordText.setOnClickListener(view -> {
             Intent intent = new Intent(Password.this, ResetPassword.class);
+            intent.putExtra("EMAIL", email); // 传递email到下一个页面
             startActivity(intent);
         });
     }
