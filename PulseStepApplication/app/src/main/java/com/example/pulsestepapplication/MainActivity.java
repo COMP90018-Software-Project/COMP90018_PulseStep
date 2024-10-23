@@ -44,6 +44,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        // 获取从上一个页面传递的uid
+        userId = getIntent().getStringExtra("USER_ID");
+
+        // If location permissions are already granted, initialize the 3 Fragment
+        fetchUserData();
 
         if (!hasLocationPermissions()) {
             requestPermissions(new String[]{
@@ -51,11 +56,7 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_COARSE_LOCATION
             }, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
-            // 获取从上一个页面传递的uid
-            userId = getIntent().getStringExtra("USER_ID");
 
-            // If location permissions are already granted, initialize the 3 Fragment
-            fetchUserData();
         }
 
         // Initialize bottom navigation view
@@ -156,14 +157,16 @@ public class MainActivity extends AppCompatActivity {
         args.putString("fullName", fullName);
         args.putDouble("weight", weight);
         args.putString("gender", gender);
+        args.putBoolean("locationGranted", hasLocationPermissions());
+
         Log.e("PassedData", "userId: " + userId + ", Full Name: " + fullName + ", Weight: " + weight + ", Gender: " + gender);
 
         // Check if the fragments already exist, update them instead of reinitializing
         if (workoutFragment != null && workoutFragment.isAdded()) {
             // Update the existing WorkoutFragment
-            ((WorkoutFragment) workoutFragment).updateData(fullName, weight);
+            ((WorkoutFragment) workoutFragment).updateData(fullName, weight, hasLocationPermissions());
         } else {
-            initWorkoutFragment(true, args); // Initialize for the first time
+            initWorkoutFragment(hasLocationPermissions(), args); // Initialize for the first time
         }
 
         if (rankingFragment != null) {

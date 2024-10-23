@@ -622,9 +622,10 @@ public class WorkoutFragment extends Fragment {
     }
 
     // This method updates the fragment's data
-    public void updateData(String fullName, Double weight) {
+    public void updateData(String fullName, Double weight, Boolean locationGranted) {
         this.userName = fullName;
         this.userWeight = weight;
+        this.locationGranted=locationGranted;
 
         // Now update the UI or other components using this new data
         TextView greetingTextView = getView().findViewById(R.id.greeting_text);
