@@ -25,6 +25,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -99,20 +100,28 @@ public class WorkoutFragment extends Fragment {
             // Initialize map based on location permission status
             if (locationGranted) {
                 mapProgressBar.setVisibility(View.VISIBLE);
-                // Initialize FusedLocationProviderClient for location services
+                View placeholder = rootView.findViewById(R.id.map_placeholder);
+                if (placeholder != null) {
+                    placeholder.setVisibility(View.GONE);
+                }
+                View mapContainer = rootView.findViewById(R.id.map_container);
+                if (mapContainer != null) {
+                    mapContainer.setVisibility(View.VISIBLE);
+                }
                 fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-
-                // Initialize the map
                 initializeMap(rootView, savedInstanceState);
             } else {
-                // Show placeholder or notify the user that location permission is not granted
                 View placeholder = rootView.findViewById(R.id.map_placeholder);
                 if (placeholder != null) {
                     placeholder.setVisibility(View.VISIBLE);
                 }
+                View mapContainer = rootView.findViewById(R.id.map_container);
+                if (mapContainer != null) {
+                    mapContainer.setVisibility(View.GONE);
+                }
                 showToast("Location permissions not granted");
-                //proceedToNoMapActivity();
             }
+
         }
 
 
@@ -178,6 +187,9 @@ public class WorkoutFragment extends Fragment {
      */
     @SuppressLint("MissingPermission")
     private void initializeMap(View view, Bundle savedInstanceState) {
+        if (!hasLocationPermissions()) {
+            return;
+        }
         // Obtain user's location before initializing the map
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
@@ -280,13 +292,16 @@ public class WorkoutFragment extends Fragment {
      * Called when the map is ready (either AMap or Google Map).
      */
     private void onMapReady() {
-        // Hide the placeholder image
         if (mapProgressBar != null) {
             mapProgressBar.setVisibility(View.GONE);
         }
-        // Proceed with map setup
+        View placeholder = rootView.findViewById(R.id.map_placeholder);
+        if (placeholder != null) {
+            placeholder.setVisibility(View.GONE);
+        }
         getUserLocationAndZoom();
     }
+
 
     /**
      * Retrieves the user's current location and moves the map camera to that position with zoom.
@@ -415,7 +430,7 @@ public class WorkoutFragment extends Fragment {
      */
     private void checkLocationAndStartMapActivity() {
         if (!hasLocationPermissions()) {
-            showToast("Location permissions not granted");
+            showToast("Location permissions not granted 2");
             proceedToNoMapActivity();
             return;
         }
@@ -637,24 +652,35 @@ public class WorkoutFragment extends Fragment {
         boolean currentPermissionStatus = hasLocationPermissions();
         if (currentPermissionStatus != locationGranted) {
             locationGranted = currentPermissionStatus;
-                if (locationGranted) {
-                    mapProgressBar.setVisibility(View.VISIBLE);
-                    // Initialize FusedLocationProviderClient for location services
-                    fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-
-                    // Initialize the map
-                    initializeMap(rootView, savedInstanceState);
-                } else {
-                    // Show placeholder or notify the user that location permission is not granted
-                    View placeholder = rootView.findViewById(R.id.map_placeholder);
-                    if (placeholder != null) {
-                        placeholder.setVisibility(View.VISIBLE);
-                    }
-                    showToast("Location permissions not granted");
-                    //proceedToNoMapActivity();
+            if (locationGranted) {
+                mapProgressBar.setVisibility(View.VISIBLE);
+                View placeholder = rootView.findViewById(R.id.map_placeholder);
+                if (placeholder != null) {
+                    placeholder.setVisibility(View.GONE);
                 }
+                View mapContainer = rootView.findViewById(R.id.map_container);
+                if (mapContainer != null) {
+                    mapContainer.setVisibility(View.VISIBLE);
+                }
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+                initializeMap(rootView, savedInstanceState);
+            } else {
+                FragmentManager fragmentManager = getChildFragmentManager();
+                Fragment mapFragment = fragmentManager.findFragmentById(R.id.map_container);
+                if (mapFragment != null) {
+                    fragmentManager.beginTransaction().remove(mapFragment).commit();
+                }
+                View placeholder = rootView.findViewById(R.id.map_placeholder);
+                if (placeholder != null) {
+                    placeholder.setVisibility(View.VISIBLE);
+                }
+                View mapContainer = rootView.findViewById(R.id.map_container);
+                if (mapContainer != null) {
+                    mapContainer.setVisibility(View.GONE);
+                }
+                showToast("Location permissions not granted");
+            }
         }
-
-
     }
+
 }

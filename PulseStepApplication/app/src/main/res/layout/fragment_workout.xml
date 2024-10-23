@@ -7,31 +7,37 @@
     android:id="@+id/constraint_layout"
     tools:context=".WorkoutFragment">
     <!-- fragment_workout.xml -->
+    <!-- Map container -->
     <FrameLayout
         android:id="@+id/map_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <!-- Placeholder ImageView -->
-        <ImageView
-            android:id="@+id/map_placeholder"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:src="@drawable/bg_workout" />
-        <ProgressBar
-            android:id="@+id/map_progress_bar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="40dp"
-            android:layout_gravity="center_horizontal|bottom"
-            android:visibility="gone"
-            android:indeterminate="true"
-            android:indeterminateTint="@color/bar_orange"
-            android:backgroundTint="@color/bar_orange" />
-     <!-- The map will be added programmatically and will appear above this ImageView -->
+        android:layout_height="match_parent"
+        android:visibility="gone">
     </FrameLayout>
+
+    <!-- Placeholder ImageView -->
+    <ImageView
+        android:id="@+id/map_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="visible"
+        android:src="@drawable/bg_workout" />
+
+    <!-- ProgressBar -->
+    <ProgressBar
+        android:id="@+id/map_progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:visibility="gone"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/bar_orange"
+        android:backgroundTint="@color/bar_orange"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 
     <!-- Greeting text   -->
     <TextView
