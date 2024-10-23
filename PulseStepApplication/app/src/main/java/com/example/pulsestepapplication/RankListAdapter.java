@@ -106,7 +106,7 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String currentUserId = currentUser.getUid();
         // get row user (target user)
-        String updateUserId = rankModel.getRowUserId();
+        String updateUserId = rankModels.get(position).getRowUserId();
 
         String currentDateOrMonth = isMonthlyRank ? getCurrentMonth() : getCurrentDate();
         // Init like checkbox

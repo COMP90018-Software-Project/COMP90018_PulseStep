@@ -91,14 +91,23 @@ public class MainActivity extends AppCompatActivity {
      * Displays the specified Fragment using show() and hide() to avoid refreshing.
      */
     private void showFragment(Fragment fragment) {
+
+        if (isFinishing() || isDestroyed()) {
+            Log.e("FragmentTransaction", "Activity is not in a valid state to perform a transaction.");
+            return;
+        }
+
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
         if (activeFragment != null) {
             transaction.hide(activeFragment);
         }
 
-        if (!isFinishing() && !isDestroyed()) {
+        // 确保只在Activity状态未保存时执行Fragment事务
+        if (!getSupportFragmentManager().isStateSaved()) {
             transaction.show(fragment).commit();
+        } else {
+            Log.e("FragmentTransaction", "State already saved, skipping fragment transaction.");
         }
 
         activeFragment = fragment;
@@ -133,8 +142,10 @@ public class MainActivity extends AppCompatActivity {
                     if (fullName != null && weight != null) {
                         Log.e("UserInfo", "Full Name: " + fullName + ", Weight: " + weight);
 
-
-                        passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
+                        runOnUiThread(() -> {
+                            passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
+                        });
+//                        passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
                     } else {
                         Log.e("UserInfo", "Some fields are missing.");
                     }
@@ -160,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (workoutFragment == null) {
             initWorkoutFragment(hasLocationPermissions(), args);
-        } else {
+        } else if (workoutFragment.isAdded()) {
             ((WorkoutFragment) workoutFragment).updateData(fullName, weight, hasLocationPermissions());
         }
 
@@ -170,9 +181,10 @@ public class MainActivity extends AppCompatActivity {
 
         if (profileFragment == null) {
             initProfileFragment(args);
-        } else {
+        } else if (profileFragment.isAdded()) {
             ((ProfileFragment) profileFragment).updateData(userId, fullName, gender);
         }
+
 
         if (activeFragment == null) {
             activeFragment = workoutFragment;
