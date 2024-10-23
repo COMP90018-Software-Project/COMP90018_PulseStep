@@ -16,9 +16,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -41,6 +43,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import com.bumptech.glide.Glide;
+
 
 public class JumpActivity extends AppCompatActivity {
     private static final String TAG = "JumpRopeActivity";
@@ -291,17 +296,70 @@ public class JumpActivity extends AppCompatActivity {
     private void handlePauseResumeButtonClick() {
 
         if (isFirstStart) {
+            // 动态调整 ImageView 的 LayoutParams
+            updateImageViewForMedia(true);
+
+            // Switch to jump gif
+            Glide.with(this)
+                    .asGif()  // 指定加载为 GIF
+                    .load(R.drawable.jump_gif)  // 加载 GIF
+                    .into(jumpImageView);
+
             long currentTime = System.currentTimeMillis();
             formattedStartTime = dateFormat.format(new Date(currentTime));
             startTracking();
             isFirstStart = false;
         } else if (isPaused) {
+            // 动态调整 ImageView 的 LayoutParams
+            updateImageViewForMedia(true);
+
+            // Switch to jump gif
+            Glide.with(this)
+                    .asGif()  // 指定加载为 GIF
+                    .load(R.drawable.jump_gif)  // 加载 GIF
+                    .into(jumpImageView);
             resumeTracking();
         } else {
+            // 恢复 PNG 的 margin
+            updateImageViewForMedia(false);
+            // Switch to jump PNG
+            Glide.with(this)
+                    .load(R.drawable.bg_jump)  // 加载 PNG
+                    .into(jumpImageView);
             pauseTracking();
         }
 
     }
+
+    private void updateImageViewForMedia(boolean isGif) {
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) jumpImageView.getLayoutParams();
+
+        if (isGif) {
+            // 如果是 GIF，设置高度为 600dp，且边距为 0
+            params.height = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, 800, jumpImageView.getResources().getDisplayMetrics());
+            params.setMargins(0, -150, 0, 0);  // 移除所有边距
+
+            // 使用 Glide 加载 GIF
+            Glide.with(this)
+                    .asGif()
+                    .load(R.drawable.jump_gif)
+                    .into(jumpImageView);
+        } else {
+            // 如果是 PNG，设置高度为 270dp，且恢复原始边距
+            params.height = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, 250, jumpImageView.getResources().getDisplayMetrics());
+            params.setMargins(0, 40, 0, 0);  // 恢复原始边距
+
+            // 使用 Glide 加载 PNG
+            Glide.with(this)
+                    .load(R.drawable.bg_jump)
+                    .into(jumpImageView);
+        }
+
+        jumpImageView.setLayoutParams(params);  // 应用更改
+    }
+
 
     /**
      * Starts the tracking process, including location updates and step tracking.
@@ -533,8 +591,9 @@ public class JumpActivity extends AppCompatActivity {
      */
     private void showDefaultBackground() {
         // Display default image
-        jumpImageView.setImageResource(R.drawable.bg_jump);
-        jumpImageView.setVisibility(View.VISIBLE);
+//        jumpImageView.setImageResource(R.drawable.bg_jump);
+//        jumpImageView.setImageResource(R.drawable.jump_gif);
+//        jumpImageView.setVisibility(View.VISIBLE);
 
             // Ensure step count and timer views are visible
         jumpTextView.setVisibility(View.VISIBLE);
