@@ -16,6 +16,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.pulsestepapplication.databinding.ActivityMainBinding;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private String userId;
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private ListenerRegistration userListenerRegistration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
      * Displays the specified Fragment using show() and hide() to avoid refreshing.
      */
     private void showFragment(Fragment fragment) {
-
         if (isFinishing() || isDestroyed()) {
             Log.e("FragmentTransaction", "Activity is not in a valid state to perform a transaction.");
             return;
@@ -103,15 +104,16 @@ public class MainActivity extends AppCompatActivity {
             transaction.hide(activeFragment);
         }
 
-        // 确保只在Activity状态未保存时执行Fragment事务
+        // Check if state is saved
         if (!getSupportFragmentManager().isStateSaved()) {
-            transaction.show(fragment).commit();
+            transaction.show(fragment).commitAllowingStateLoss();
         } else {
             Log.e("FragmentTransaction", "State already saved, skipping fragment transaction.");
         }
 
         activeFragment = fragment;
     }
+
 
     /**
      * Checks if location permissions are granted.
@@ -127,8 +129,7 @@ public class MainActivity extends AppCompatActivity {
         if (userId != null) {
             DocumentReference userRef = db.collection("users").document(userId);
 
-
-            userRef.addSnapshotListener((documentSnapshot, error) -> {
+            userListenerRegistration = userRef.addSnapshotListener(this, (documentSnapshot, error) -> {
                 if (error != null) {
                     Log.e("UserInfo", "Listen failed.", error);
                     return;
@@ -142,10 +143,10 @@ public class MainActivity extends AppCompatActivity {
                     if (fullName != null && weight != null) {
                         Log.e("UserInfo", "Full Name: " + fullName + ", Weight: " + weight);
 
-                        runOnUiThread(() -> {
+                        // Only update fragments if activity is in a valid state
+                        if (!isFinishing() && !isDestroyed()) {
                             passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
-                        });
-//                        passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
+                        }
                     } else {
                         Log.e("UserInfo", "Some fields are missing.");
                     }
@@ -233,4 +234,15 @@ public class MainActivity extends AppCompatActivity {
         }
         outState.putInt("selectedItemId", binding.bottomNavigationView.getSelectedItemId());
     }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (userListenerRegistration != null) {
+            userListenerRegistration.remove();
+            userListenerRegistration = null;
+        }
+    }
+
+
+
 }
