@@ -439,11 +439,10 @@ public class JumpActivity extends AppCompatActivity {
         Button negativeButton = dialogView.findViewById(R.id.negative_button);
 
         positiveButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            intent.putExtra("fragment", "WorkoutFragment");
-            startActivity(intent);
+            Intent intent = new Intent();
+            setResult(RESULT_OK, intent);  // Set the result to pass back to MainActivity
             finish();
+            dialog.dismiss();
         });
 
         negativeButton.setOnClickListener(v -> dialog.dismiss());

@@ -1,7 +1,10 @@
 package com.example.pulsestepapplication;
 
 import android.Manifest;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -18,6 +21,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -26,6 +30,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -97,6 +102,13 @@ public class NoMapActivity extends AppCompatActivity{
     private static final double metValue = 8.0;
     private static final int LOCATION_TIMEOUT = 10000; // Location timeout in milliseconds
 
+    //Button
+    private boolean isLongPress = false;
+    private Handler handler = new Handler();
+    private ProgressBar progressBar;
+    private int progressStatus = 0;
+    private boolean isRunning = false;
+    private boolean hasTriggeredSuccess = false;
     // Timer Variables
     private long startTime = 0L;
     private long pauseTime = 0L;
@@ -224,11 +236,85 @@ public class NoMapActivity extends AppCompatActivity{
     /**
      * Sets up the button listeners for pause/resume and show actions.
      */
+    @SuppressLint("ClickableViewAccessibility")
     private void setupButtonListeners() {
+        progressBar = findViewById(R.id.progressBar);
         btnPauseResume.setOnClickListener(v -> handleStartStopButtonClick());
-        btnShow.setOnClickListener(v -> showLastTrack());
-    }
+        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
+        circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
+        progressBar.setProgressDrawable(circularProgressDrawable);
+        btnShow.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (isRunning || hasTriggeredSuccess) {
+                        return true;
+                    }
+                    isRunning = true;
 
+
+                    progressBar.setVisibility(View.VISIBLE);
+                    progressStatus = 0;
+                    circularProgressDrawable.setProgress(progressStatus);
+
+                    if (!hasTriggeredSuccess) {
+                        ObjectAnimator scaleXDown = ObjectAnimator.ofFloat(btnShow, "scaleX", 1f, 1.3f);
+                        ObjectAnimator scaleYDown = ObjectAnimator.ofFloat(btnShow, "scaleY", 1f, 1.3f);
+                        AnimatorSet animatorSetDown = new AnimatorSet();
+                        animatorSetDown.playTogether(scaleXDown, scaleYDown);
+                        animatorSetDown.setDuration(2000);
+                        animatorSetDown.start();
+                    }
+
+                    new Thread(new Runnable() {
+                        public void run() {
+                            while (progressStatus < 100 && isRunning) {
+                                progressStatus += 1;
+                                handler.post(new Runnable() {
+                                    public void run() {
+                                        circularProgressDrawable.setProgress(progressStatus);
+                                    }
+                                });
+                                try {
+                                    Thread.sleep(20);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            if (progressStatus >= 100 && isRunning) {
+                                isLongPress = true;
+                                handler.post(() -> {
+                                    showLastTrack();
+                                    isRunning = false;
+                                    hasTriggeredSuccess = true;
+                                });
+                            }
+                        }
+                    }).start();
+                    break;
+
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (!hasTriggeredSuccess) {
+                        ObjectAnimator scaleXUp = ObjectAnimator.ofFloat(btnShow, "scaleX", 1.3f, 1f);
+                        ObjectAnimator scaleYUp = ObjectAnimator.ofFloat(btnShow, "scaleY", 1.3f, 1f);
+                        AnimatorSet animatorSetUp = new AnimatorSet();
+                        animatorSetUp.playTogether(scaleXUp, scaleYUp);
+                        animatorSetUp.setDuration(300);
+                        animatorSetUp.start();
+                    }
+                    isRunning = false;
+                    if (progressStatus < 100) {
+                        progressBar.setVisibility(View.GONE);
+                        handler.removeCallbacksAndMessages(null);
+                        progressStatus = 0;
+                    }
+                    break;
+            }
+            return true;
+        });
+
+    }
     /**
      * Handles the start/stop button click event.
      */
@@ -477,8 +563,8 @@ public class NoMapActivity extends AppCompatActivity{
      * Navigates back to the WorkoutActivity.
      */
     private void navigateToWorkoutPage() {
-        Intent intent = new Intent(NoMapActivity.this, MainActivity.class);
-        startActivity(intent);
+        Intent returnIntent = new Intent();
+        setResult(Activity.RESULT_OK, returnIntent);
         finish();
     }
 
@@ -597,11 +683,10 @@ public class NoMapActivity extends AppCompatActivity{
         Button negativeButton = dialogView.findViewById(R.id.negative_button);
 
         positiveButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            intent.putExtra("fragment", "WorkoutFragment");
-            startActivity(intent);
+            Intent returnIntent = new Intent();
+            setResult(Activity.RESULT_OK, returnIntent);
             finish();
+            dialog.dismiss();
         });
 
         negativeButton.setOnClickListener(v -> dialog.dismiss());

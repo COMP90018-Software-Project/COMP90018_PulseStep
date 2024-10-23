@@ -229,7 +229,7 @@ public class WorkoutFragment extends Fragment {
         GoogleMapOptions options = new GoogleMapOptions();
         if (latitude != null && longitude != null) {
             LatLng lastLatLng = new LatLng(latitude, longitude);
-            options.camera(CameraPosition.fromLatLngZoom(lastLatLng, 18f));
+            options.camera(CameraPosition.fromLatLngZoom(lastLatLng, 15f));
         }
         SupportMapFragment mapFragment = SupportMapFragment.newInstance(options);
         // Replace the placeholder with the map fragment
@@ -299,7 +299,7 @@ public class WorkoutFragment extends Fragment {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                             LatLng currentLatLng = new LatLng(latitude, longitude);
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
 
                             // Store the new location
                             lastLatitude = latitude;
@@ -330,7 +330,7 @@ public class WorkoutFragment extends Fragment {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                              LatLng currentLatLng = new LatLng(latitude, longitude);
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
 
                             // Store the new location
                             lastLatitude = latitude;
@@ -513,7 +513,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name",  userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
-        startActivity(intent);
+        startActivityForResult(intent, 123);
     }
     /**
      * Starts the appropriate map activity based on the user's location and permissions.
@@ -540,7 +540,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name", userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
-        startActivity(intent);
+        startActivityForResult(intent, 123);
     }
     /**
      * Starts the appropriate jump activity based on the user's info.

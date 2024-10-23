@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -312,11 +313,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         Button negativeButton = dialogView.findViewById(R.id.negative_button);
 
         positiveButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            intent.putExtra("fragment", "WorkoutFragment");
-            startActivity(intent);
-            finish();
+            Intent intent = new Intent();
+            setResult(RESULT_OK, intent);  // Set the result to pass back to MainActivity
+            finish();  // Close GoogleMapActivity and return to the previous Activity (WorkoutFragment)
+            dialog.dismiss();
         });
 
         negativeButton.setOnClickListener(v -> dialog.dismiss());
@@ -867,10 +867,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     @SuppressLint("MissingPermission")
     private void requestLocationUpdates() {
-        LocationRequest locationRequest = new LocationRequest.Builder(5000)
-                .setMinUpdateIntervalMillis(2000)
+        LocationRequest locationRequest = new LocationRequest.Builder(7000)
+                .setMinUpdateIntervalMillis(3000)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .setMinUpdateDistanceMeters(2)
+                .setMinUpdateDistanceMeters(5)
                 .build();
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
@@ -1098,8 +1098,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Navigate back to MainActivity
      */
     private void navigateToWorkoutPage() {
-        Intent intent = new Intent(GoogleMapActivity.this, MainActivity.class);
-        startActivity(intent);
+        Intent returnIntent = new Intent();
+        setResult(Activity.RESULT_OK, returnIntent);
         finish();
     }
 
