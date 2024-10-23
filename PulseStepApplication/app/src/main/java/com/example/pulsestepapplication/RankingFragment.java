@@ -41,16 +41,6 @@ import java.util.Locale;
 public class RankingFragment extends Fragment {
 
     ArrayList<RankModel> rankModels = new ArrayList<>();
-    int[] rankUserImages = {R.drawable.sample_profile_img,
-            R.drawable.sample_profile_img,
-            R.drawable.sample_profile_img,
-            R.drawable.sample_profile_img,
-            R.drawable.sample_profile_img,
-            R.drawable.sample_profile_img,
-            R.drawable.sample_profile_img,
-            R.drawable.sample_profile_img,
-            R.drawable.sample_profile_img,
-            R.drawable.sample_profile_img};
 
     private TextView dailyTargetTextView;
     private TextView dailyActiveTimeTextView;

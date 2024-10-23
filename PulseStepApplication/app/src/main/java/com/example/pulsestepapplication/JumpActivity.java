@@ -337,7 +337,7 @@ public class JumpActivity extends AppCompatActivity {
         if (isGif) {
             // 如果是 GIF，设置高度为 600dp，且边距为 0
             params.height = (int) TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP, 800, jumpImageView.getResources().getDisplayMetrics());
+                    TypedValue.COMPLEX_UNIT_DIP, 500, jumpImageView.getResources().getDisplayMetrics());
             params.setMargins(0, -150, 0, 0);  // 移除所有边距
 
             // 使用 Glide 加载 GIF
@@ -348,7 +348,7 @@ public class JumpActivity extends AppCompatActivity {
         } else {
             // 如果是 PNG，设置高度为 270dp，且恢复原始边距
             params.height = (int) TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP, 250, jumpImageView.getResources().getDisplayMetrics());
+                    TypedValue.COMPLEX_UNIT_DIP, 270, jumpImageView.getResources().getDisplayMetrics());
             params.setMargins(0, 40, 0, 0);  // 恢复原始边距
 
             // 使用 Glide 加载 PNG

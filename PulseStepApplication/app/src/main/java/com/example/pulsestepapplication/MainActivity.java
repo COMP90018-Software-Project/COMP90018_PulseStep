@@ -159,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
         Log.e("PassedData", "userId: " + userId + ", Full Name: " + fullName + ", Weight: " + weight + ", Gender: " + gender);
 
         // Check if the fragments already exist, update them instead of reinitializing
-        if (workoutFragment != null) {
+        if (workoutFragment != null && workoutFragment.isAdded()) {
             // Update the existing WorkoutFragment
             ((WorkoutFragment) workoutFragment).updateData(fullName, weight);
         } else {
