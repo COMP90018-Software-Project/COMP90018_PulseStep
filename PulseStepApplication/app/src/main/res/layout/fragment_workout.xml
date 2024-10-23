@@ -39,7 +39,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="40dp"
         android:layout_marginTop="72dp"
         android:text="Hi, XXX"
         android:fontFamily="@font/inter_semi_bold"
@@ -53,7 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="40dp"
         android:layout_marginTop="52dp"
         android:text="Monday - Sep 16"
         android:textSize="18dp"
@@ -102,8 +102,8 @@
 
     <ImageView
         android:id="@+id/my_star"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:layout_marginTop="50dp"
         android:src="@drawable/ic_message"
         app:layout_constraintEnd_toEndOf="parent"
