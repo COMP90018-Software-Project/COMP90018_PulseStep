@@ -96,7 +96,10 @@ public class MainActivity extends AppCompatActivity {
         if (activeFragment != null) {
             transaction.hide(activeFragment);
         }
-        transaction.show(fragment).commit();
+
+        if (!isFinishing() && !isDestroyed()) {
+            transaction.show(fragment).commit();
+        }
 
         activeFragment = fragment;
     }
@@ -191,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
     private void initRankingFragment(Bundle args) {
         if (getSupportFragmentManager().findFragmentByTag("ranking") == null) {
             rankingFragment = new RankingFragment();
-            rankingFragment.setArguments(args);
+//            rankingFragment.setArguments(args);
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.frameLayout, rankingFragment, "ranking")
                     .hide(rankingFragment)

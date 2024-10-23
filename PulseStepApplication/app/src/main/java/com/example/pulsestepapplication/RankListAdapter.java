@@ -73,9 +73,9 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
                 .getDownloadUrl()
                 .addOnSuccessListener(uri -> {
                     // 成功获取到图片 URL，设置用户自定义头像
-//                    ProfileFragment.setProfilePic(getContext(), uri, profileImage);
-                    Glide.with(context).load(uri).apply(RequestOptions.circleCropTransform()).into(holder.rankUserImage);
-                    Log.d("UserImage","userImage = yyyyyyyyyyyyyyyyyy");
+//                    ProfileFragment.setProfilePic(getContext(), uri, profileImage)
+                        Glide.with(context).load(uri).apply(RequestOptions.circleCropTransform()).into(holder.rankUserImage);
+                        Log.d("UserImage", "userImage = yyyyyyyyyyyyyyyyyy");
                 })
                 .addOnFailureListener(exception -> {
                     Log.d("UserImage","userImage = nnnnnnnnnnnnnnnnnnnnnnn");
