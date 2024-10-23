@@ -16,11 +16,15 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageException;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -33,6 +37,7 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
     Context context;
     public static ArrayList<RankModel> rankModels;
     private boolean isMonthlyRank;
+    private ImageView profileImage;
 
     public RankListAdapter(Context context, ArrayList<RankModel> rankModels, boolean isMonthlyRank){
         this.context = context;
@@ -56,8 +61,46 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
         holder.rankNo.setText(rankModels.get(position).getRankNo());
         holder.rankUserName.setText(rankModels.get(position).getRankUserName());
         holder.rankWorkoutTime.setText(rankModels.get(position).getRankWorkoutTime());
-        holder.rankUserImage.setImageResource(rankModels.get(position).getRankUserImage());
+//        holder.rankUserImage.setImageResource(rankModels.get(position).getRankUserImage());
         holder.rankLikeNum.setText(rankModels.get(position).getRankLikeNum());
+
+        // set rank user Image
+        String gender = rankModels.get(position).getUserGender();
+        FirebaseStorage.getInstance().getReference()
+                .child("users")
+                .child(rankModels.get(position).getRowUserId())
+                .child("images/profile_image")
+                .getDownloadUrl()
+                .addOnSuccessListener(uri -> {
+                    // 成功获取到图片 URL，设置用户自定义头像
+//                    ProfileFragment.setProfilePic(getContext(), uri, profileImage);
+                    Glide.with(context).load(uri).apply(RequestOptions.circleCropTransform()).into(holder.rankUserImage);
+                    Log.d("UserImage","userImage = yyyyyyyyyyyyyyyyyy");
+                })
+                .addOnFailureListener(exception -> {
+                    Log.d("UserImage","userImage = nnnnnnnnnnnnnnnnnnnnnnn");
+                    // 文件不存在，处理 StorageException，并根据性别设置默认头像
+                    if (exception instanceof StorageException) {
+                        StorageException storageException = (StorageException) exception;
+                        if (storageException.getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
+                            // 根据性别设置默认头像
+                            if (gender != null) {
+                                if (gender.equalsIgnoreCase("male")) {
+                                    // 设置男性默认头像
+                                    holder.rankUserImage.setImageResource(R.drawable.male_default_avatar);
+                                } else if (gender.equalsIgnoreCase("female")) {
+                                    // 设置女性默认头像
+                                    holder.rankUserImage.setImageResource(R.drawable.female_default_avatar);
+                                }else if (gender.equalsIgnoreCase("other")) {
+                                    // 如果性别为other，设置通用默认头像
+                                    holder.rankUserImage.setImageResource(R.drawable.default_avatar);
+                                }
+                            }
+                        } else {
+                            Log.e("ProfileFragment", "Error fetching profile image: " + exception.getMessage());
+                        }
+                    }
+                });
 
         // Get current user id
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();

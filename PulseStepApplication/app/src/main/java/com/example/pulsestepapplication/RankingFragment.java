@@ -426,28 +426,32 @@ public class RankingFragment extends Fragment {
                             // Get row user name
                             String rowUserId = document.getId();
                             String userName = document.getString("fullName");
+                            String gender = document.getString("gender");
 
                             // Get row user active time (daily or monthly)
                             Map<String, Long> activeMap = (Map<String, Long>) document.get(isMonthlyRank ? "monthlyActive" : "dailyActive");
                             if (activeMap != null && activeMap.containsKey(isMonthlyRank ? currentMonth : currentDate)) {
                                 long activeInSeconds = activeMap.get(isMonthlyRank ? currentMonth : currentDate);
-                                double activeInHours = convertSecondsToHours(activeInSeconds);
-                                String activeTime = convertTimeFormat(activeInHours);
-                                activeTime = activeTime + " " + (activeTime.equals("1") ? "hour" : "hours");
 
-                                // Get the like num and the array list of liked user
-                                Map<String, ArrayList<String>> likeMap = (Map<String, ArrayList<String>>) document.get(isMonthlyRank ? "monthlyLike" : "dailyLike");
-                                long likeNum = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate))
-                                        ? likeMap.get(isMonthlyRank ? currentMonth : currentDate).size() : 0;
-                                ArrayList<String> likedUsers = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate))
-                                        ? likeMap.get(isMonthlyRank ? currentMonth : currentDate) : new ArrayList<>();
+                                if (activeInSeconds > 299) {
+                                    double activeInHours = convertSecondsToHours(activeInSeconds);
+                                    String activeTime = convertTimeFormat(activeInHours);
+                                    activeTime = activeTime + " " + (activeTime.equals("1") ? "hour" : "hours");
 
-                                // Add the rank row detail to rank model
-                                rankModels.add(new RankModel(String.valueOf(rankNo), userName, activeTime, R.drawable.sample_profile_img, String.valueOf(likeNum), likedUsers, rowUserId));
+                                    // Get the like num and the array list of liked user
+                                    Map<String, ArrayList<String>> likeMap = (Map<String, ArrayList<String>>) document.get(isMonthlyRank ? "monthlyLike" : "dailyLike");
+                                    long likeNum = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate))
+                                            ? likeMap.get(isMonthlyRank ? currentMonth : currentDate).size() : 0;
+                                    ArrayList<String> likedUsers = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate))
+                                            ? likeMap.get(isMonthlyRank ? currentMonth : currentDate) : new ArrayList<>();
 
-                                Log.d("RankModels", "Added user: " + userName + ", active time: " + activeTime);
+                                    // Add the rank row detail to rank model
+                                    rankModels.add(new RankModel(String.valueOf(rankNo), userName, activeTime, String.valueOf(likeNum), likedUsers, rowUserId, gender));
 
-                                rankNo++;
+                                    Log.d("RankModels", "Added user: " + userName + ", active time: " + activeTime);
+
+                                    rankNo++;
+                                }
                             }
                         }
 
