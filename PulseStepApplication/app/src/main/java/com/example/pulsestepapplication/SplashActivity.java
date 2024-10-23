@@ -23,6 +23,7 @@ public class SplashActivity extends AppCompatActivity {
         // Check if user is already logged in
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
+            System.out.println(currentUser);
             // If user is logged in, go to the main activity
             startActivity(new Intent(SplashActivity.this, MainActivity.class));
         } else {
