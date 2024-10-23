@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class Settings extends AppCompatActivity {
 
@@ -112,6 +113,9 @@ public class Settings extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int which) {
                                 // Handle the logout action here
                                 performLogout();
+                                FirebaseAuth.getInstance().signOut();
+                                startActivity(new Intent(Settings.this, Login.class));
+                                finish(); // Close the main activity
                             }
                         })
                         .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

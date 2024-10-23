@@ -24,17 +24,12 @@
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" /> <!-- Bluetooth Permissions -->
     <!-- Allows access to Bluetooth information for indoor positioning -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <!-- Allows management of Bluetooth settings -->
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <!-- Allows recognition of user activities (required for step counting) -->
+    <uses-permission android:name="android.permission.BLUETOOTH" /> <!-- Allows management of Bluetooth settings -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" /> <!-- Allows recognition of user activities (required for step counting) -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" /> <!-- Allows access to body sensors (required for step counting) -->
-    <uses-permission android:name="android.permission.BODY_SENSORS" />
-
-    <!-- Background Location and Foreground Service Permissions -->
+    <uses-permission android:name="android.permission.BODY_SENSORS" /> <!-- Background Location and Foreground Service Permissions -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <!-- Add new permission declarations -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- Add new permission declarations -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
 
@@ -48,42 +43,41 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PulseStepApplication"
         tools:targetApi="31">
+        <!-- SplashActivity as the launcher activity -->
+        <activity android:name=".SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".PersonalDetails"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".SetPassword"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".Registration"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".Password"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".Login"
             android:exported="true"
             android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <!-- Google Play Services Version -->
+        </activity> <!-- Google Play Services Version -->
         <meta-data
             android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
-        <!-- Google Maps API Key -->
+            android:value="@integer/google_play_services_version" /> <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
-        
-        <!-- Service Declarations -->
+            android:value="${MAPS_API_KEY}" /> <!-- Service Declarations -->
         <service
             android:name=".LocationTrackingService"
             android:exported="false"
@@ -92,59 +86,60 @@
         <service
             android:name=".StepTrackingService"
             android:exported="false"
-            android:foregroundServiceType="health" />
-
-        <!-- Activity Declarations -->
+            android:foregroundServiceType="health" /> <!-- Activity Declarations -->
         <activity
             android:name=".LikeActivity"
             android:exported="false"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".RankRowDetail"
+            android:screenOrientation="portrait"></activity>
+        <activity
+            android:name=".RankRowDetail"
             android:exported="false"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".EditPersonalInfo"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".EditPersonalInfo"
             android:exported="false"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".NoMapActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".NoMapActivity"
             android:exported="false"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".GoogleMapActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".GoogleMapActivity"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ResetPassword"
             android:exported="false"
-            android:theme="@style/Theme.PulseStepApplication"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.PulseStepApplication" />
         <activity
             android:name=".Settings"
             android:exported="false"
-            android:theme="@style/Theme.PulseStepApplication"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.PulseStepApplication" />
         <activity
             android:name=".JumpSummaryActivity"
             android:exported="false"
-            android:theme="@style/Theme.PulseStepApplication"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.PulseStepApplication" />
         <activity
             android:name=".JumpActivity"
             android:exported="false"
-            android:theme="@style/Theme.PulseStepApplication"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.PulseStepApplication" />
         <activity
             android:name=".RunSummaryActivity"
             android:exported="false"
-            android:theme="@style/Theme.PulseStepApplication"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.PulseStepApplication" />
         <activity
             android:name=".RunningActivity"
             android:exported="false"
-            android:theme="@style/Theme.PulseStepApplication"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.PulseStepApplication" />
         <activity
             android:name=".MainActivity"
-            android:exported="true"
+            android:exported="false"
             android:screenOrientation="portrait">
         </activity>
     </application>
