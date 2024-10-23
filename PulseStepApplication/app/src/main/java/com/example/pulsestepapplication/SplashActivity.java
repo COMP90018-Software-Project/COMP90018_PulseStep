@@ -23,9 +23,10 @@ public class SplashActivity extends AppCompatActivity {
         // Check if user is already logged in
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            System.out.println(currentUser);
             // If user is logged in, go to the main activity
-            startActivity(new Intent(SplashActivity.this, MainActivity.class));
+            Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+            intent.putExtra("USER_ID", currentUser.getUid()); // 传递 UID 到下一个页面
+            startActivity(intent);
         } else {
             // If user is not logged in, go to the login activity
             startActivity(new Intent(SplashActivity.this, Login.class));
