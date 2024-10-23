@@ -95,6 +95,11 @@
             android:foregroundServiceType="health" />
 
         <!-- Activity Declarations -->
+        <activity
+            android:name=".LikeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
         <activity android:name=".RankRowDetail"
             android:exported="false"
             android:screenOrientation="portrait"/>

@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -56,6 +57,7 @@ public class WorkoutFragment extends Fragment {
     private boolean isUsingAmap = false;
     private ProgressBar mapProgressBar;
     public boolean locationGranted = false;
+    private String userId;
     private String userName;
     private int userAge;
     private double userWeight;
@@ -87,6 +89,7 @@ public class WorkoutFragment extends Fragment {
         // Get the arguments passed from MainActivity
         Bundle args = getArguments();
         if (args != null) {
+            userId = args.getString("userId");
             userName = args.getString("fullName");
             Log.e("WorkoutFragment", "userName = "+ userName);
 //            userAge = args.getInt("age");
@@ -117,11 +120,12 @@ public class WorkoutFragment extends Fragment {
         TextView greetingTextView = rootView.findViewById(R.id.greeting_text);
         greetingTextView.setText("Hi, " + userName);
 
-
-
         // date text rendered on workout page
         TextView dateTextView = rootView.findViewById((R.id.date_text));
         dateTextView.setText(getFormattedDate());
+
+        ImageView myStar = rootView.findViewById(R.id.my_star);
+        myStar.setOnClickListener(view -> jumpToStarActivity());
 
         // Set up Run button to initiate permission and network checks
         Button runButton = rootView.findViewById(R.id.run_button);
@@ -129,8 +133,6 @@ public class WorkoutFragment extends Fragment {
             // When the user clicks the Run button, check and request activity recognition permission, then start the map activity
             checkActivityRecognitionPermissionAndProceed();
         });
-
-
 
         //Set up Jump button to navigate to JumpActivity
         Button jumpButton = rootView.findViewById(R.id.jump_button);
@@ -141,6 +143,13 @@ public class WorkoutFragment extends Fragment {
 
         return rootView;
     }
+
+    private void jumpToStarActivity() {
+        Intent intent = new Intent(getActivity(), LikeActivity.class);
+        intent.putExtra("USER_ID", userId); // 传递 UID 到下一个页面)
+        startActivity(intent);
+    }
+
     private void checkActivityRecognitionPermissionAndProceed() {
         if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
             // Request activity recognition permission
