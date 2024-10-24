@@ -15,7 +15,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.LayoutInflater;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -29,11 +31,16 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class Settings extends AppCompatActivity {
 
     private ImageView backButton;
     private Button logOutButton;
+    private TextView deactivateButton;
     private LinearLayout resetPasswordButton;
 
     private LinearLayout editPersonalInfoButton;
@@ -116,7 +123,7 @@ public class Settings extends AppCompatActivity {
                                 FirebaseAuth.getInstance().signOut();
 
                                 // Clear history activity
-                                Intent intent = new Intent(Settings.this, StartActivity.class);
+                                Intent intent = new Intent(Settings.this, Login.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                 startActivity(intent);
                                 finish(); // close Activity
@@ -129,9 +136,45 @@ public class Settings extends AppCompatActivity {
                                 dialog.dismiss();
                             }
                         })
-                        .show();
+                        .show()
+                        .getButton(AlertDialog.BUTTON_NEGATIVE)
+                        .setTextColor(getResources().getColor(android.R.color.black));
             }
         });
+
+        // Deactivate logic
+        deactivateButton = findViewById(R.id.bt_deactivate);
+        // Handle logout button click
+        deactivateButton.setOnClickListener(v -> {
+            // Show the Material AlertDialog for logout confirmation
+            new MaterialAlertDialogBuilder(Settings.this)
+                    .setTitle("Deactivate Account")
+                    .setMessage("Are you sure you want to deactivate?")
+                    .setPositiveButton("Yes :(", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+                            if (user != null) {
+                                // Show password input dialog for reCheck password
+                                showPasswordInputDialog(user);
+                            }
+                        }
+                    })
+                    .setNegativeButton("Cancel :)", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Dismiss the dialog if "Cancel" is clicked
+                            dialog.dismiss();
+                        }
+                    })
+                    .show()
+                    .getButton(AlertDialog.BUTTON_NEGATIVE)
+                    .setTextColor(getResources().getColor(android.R.color.black));
+        });
+
+
+
         locationSwitch = findViewById(R.id.location_switch);
         updateLocationSwitchState();
 
@@ -154,6 +197,89 @@ public class Settings extends AppCompatActivity {
         });
     }
 
+    // ReEnter password to confirm deactivate
+    private void showPasswordInputDialog(FirebaseUser user) {
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View view = inflater.inflate(R.layout.dialog_password_input, null);
+        EditText passwordEditText = view.findViewById(R.id.et_password);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Re-enter Password")
+                .setView(view)
+                .setPositiveButton("Confirm", (dialog, which) -> {
+                    String password = passwordEditText.getText().toString().trim();
+                    if (!password.isEmpty()) {
+                        // recheck user auth
+                        reauthenticateAndDelete(user, password);
+                    } else {
+                        Toast.makeText(Settings.this, "Password cannot be empty", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show()
+                .getButton(AlertDialog.BUTTON_NEGATIVE)
+                .setTextColor(getResources().getColor(android.R.color.black));
+    }
+
+    // Recheck user authentication
+    private void reauthenticateAndDelete(FirebaseUser user, String password) {
+        // Get the user's email and create credentials with the provided password
+        String email = user.getEmail();
+        if (email == null) {
+            Toast.makeText(this, "Email not found. Cannot authenticate.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AuthCredential credential = EmailAuthProvider.getCredential(email, password);
+
+        // Reauthenticate the user
+        user.reauthenticate(credential)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("Reauthentication", "User reauthenticated.");
+                        // If reauthentication is successful, proceed to delete the user
+                        deleteUserAuth(user);
+                        deleteUser(user);
+                    } else {
+                        Log.e("Reauthentication", "Failed: " + task.getException().getMessage());
+                        Toast.makeText(this, "Reauthentication failed. Please try again.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // Delete user from auth
+    private void deleteUserAuth(FirebaseUser user) {
+        // delete user auth
+        user.delete().addOnCompleteListener(deleteTask -> {
+            if (deleteTask.isSuccessful()) {
+                Log.d("DeleteUser", "User account deleted.");
+                Toast.makeText(this, "Account deleted, hope to see you again!", Toast.LENGTH_SHORT).show();
+                // navigate to login page
+                Intent intent = new Intent(this, Login.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+        });
+    }
+
+    // Delete user firestore
+    private void deleteUser(FirebaseUser user) {
+        String userId = user.getUid();  // Get the user's UID
+
+        // Delete the user from Firestore's 'users' collection
+        FirebaseFirestore.getInstance().collection("users").document(userId)
+                .delete()
+                .addOnCompleteListener(deleteTask -> {
+                    if (deleteTask.isSuccessful()) {
+                        Log.d("Firestore", "User document deleted from Firestore.");
+                        // Now delete the Firebase Authentication user
+                        deleteUserAuth(user);
+                    } else {
+                        Log.e("Firestore", "Failed to delete user document: " + deleteTask.getException().getMessage());
+                        Toast.makeText(this, "Failed to delete user data.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
 
     // Function to perform the logout action
     private void performLogout() {
