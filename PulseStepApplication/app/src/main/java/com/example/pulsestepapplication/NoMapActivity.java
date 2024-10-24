@@ -153,7 +153,7 @@ public class NoMapActivity extends AppCompatActivity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_google_map);
+        setContentView(R.layout.activity_no_map);
 
         // Get the mode from the intent
         Intent intent = getIntent();
@@ -429,7 +429,7 @@ public class NoMapActivity extends AppCompatActivity{
      */
     private void showDefaultMap() {
         // Display default image
-        mapImageView.setImageResource(R.drawable.bg_workout);
+        mapImageView.setImageResource(R.drawable.ic_avg_pace);
         mapImageView.setVisibility(View.VISIBLE);
     }
 

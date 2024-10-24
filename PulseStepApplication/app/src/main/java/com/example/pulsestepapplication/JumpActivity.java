@@ -461,12 +461,8 @@ public class JumpActivity extends AppCompatActivity {
         jumpCounter = new JumpCounter(this);
         jumpCounter.setJumpCounterListener(jumpCount -> {
             runOnUiThread(() -> {
-                if (jumpCount < 1) {
-                    jumpTextView.setText("0");
-                } else {
-                    jumpTextView.setText(String.valueOf(jumpCount));
-                }
-                currentJumpCount = jumpCount;
+                currentJumpCount = Math.max(0, jumpCount / 2 - 1);
+                jumpTextView.setText(String.valueOf(currentJumpCount));
             });
         });
     }

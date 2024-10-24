@@ -106,10 +106,13 @@ public class JumpCounter {
     private JumpCounterListener jumpCounterListener;
 
     // Thresholds for detecting jumps (adjust as needed)
+    private final float minThreshold = 0.10f;
+    private final float maxThreshold = 0.4f;
     private static final float JUMP_THRESHOLD_GRAVITY = 4f;  // Gravity threshold to consider it a jump
-    private static final int JUMP_DETECTION_WINDOW_MS = 200; // Time window to detect a jump (ms)
+    private static final int JUMP_DETECTION_WINDOW_MS = 10; // Time window to detect a jump (ms)
     private long lastJumpTime = 0;
     private boolean is_initial = true;
+    boolean is_this_jump_finished = true;
 
     private float x_last = 0f;
     private float y_last = 0f;
@@ -135,6 +138,7 @@ public class JumpCounter {
     }
 
     private void initializeJumpListener() {
+
         jumpListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
@@ -143,21 +147,33 @@ public class JumpCounter {
                 float y = event.values[1];
                 float z = event.values[2];
 
+
                 if (is_initial) {
                     is_initial = false;
                     x_last = x;
                     y_last = y;
                     z_last = z;
+                    is_this_jump_finished = true;
                 }
 
                 // Calculate the total acceleration value including gravity
-                float x_diff = x - x_last;
-                float y_diff = y - y_last;
-                float z_diff = z - z_last;
+
+                float nowAcc = (float) Math.sqrt(x * x + y * y + z * z);
+                float pastAcc = (float) Math.sqrt(x_last * x_last + y_last * y_last + z_last * z_last);
 
                 //TODO： 需增加检测趋势，以及检测是否为跳跃的条件，在跳跃时加速度持续变化时现在每过一个threadhood都会计数
-                float gForce_diff = (float) Math.sqrt(x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
+                // 10.24更新：采用了全新的老算法：检测波峰波谷，然后除以2，这样可以减少误差
+                // 同时更新：检测到超过上限值时认为完成了此跳跃，然后再次检测到下限值时认为完成了此跳跃
+                float gForce_diff = (float) Math.abs(nowAcc - pastAcc);
 
+                if (gForce_diff < maxThreshold && gForce_diff > minThreshold && is_this_jump_finished) {
+                    jumpCount++;
+                    is_this_jump_finished = false;
+                    if (jumpCounterListener != null) {
+                        jumpCounterListener.onJumpCountUpdated(jumpCount);
+                    }
+                    Log.d(TAG, "Jump detected! Total jumps (/2): " + jumpCount);
+                }
                 // Check if the gForce exceeds the jump threshold and ensure there's enough time between jumps
 
                 long now = System.currentTimeMillis();
@@ -169,16 +185,12 @@ public class JumpCounter {
 
                     lastJumpTime = now;
 
-                    if (gForce_diff > JUMP_THRESHOLD_GRAVITY) {
-                        jumpCount++;
-                        if (jumpCounterListener != null) {
-                            jumpCounterListener.onJumpCountUpdated(jumpCount);
-                        }
-                        Log.d(TAG, "Jump detected! Total jumps: " + jumpCount);
+                    if (gForce_diff > maxThreshold) {
+                        is_this_jump_finished = true;
                     }
                 }
-
             }
+
 
             @Override
             public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -186,7 +198,7 @@ public class JumpCounter {
             }
         };
     }
-
+    
     public void unregisterListener() {
         if (isTrackingJumps && jumpListener != null) {
             sensorManager.unregisterListener(jumpListener, accelerometerSensor);
@@ -220,7 +232,7 @@ public class JumpCounter {
      *
      * @param listener The JumpCounterListener implementation.
      */
-    public void setJumpCounterListener(JumpCounter.JumpCounterListener listener) {
+    public void setJumpCounterListener(JumpCounterListener listener) {
         if (listener != null) {
             this.jumpCounterListener = listener;
         } else {
