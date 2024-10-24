@@ -46,7 +46,7 @@ public class WorkoutFragment extends Fragment {
     // Permission request codes
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE = 2;
-    private static final float DISTANCE_THRESHOLD_METERS = 16093.4f; // 10 miles in meters
+    private static final float DISTANCE_THRESHOLD_METERS = 30000f; // 10 miles in meters
     private static final int BACKGROUND_PERMISSION_REQUEST_CODE = 3;
 
     private Double lastLatitude = null;
@@ -111,6 +111,7 @@ public class WorkoutFragment extends Fragment {
                 fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
                 initializeMap(rootView, savedInstanceState);
             } else {
+                mapProgressBar.setVisibility(View.GONE);
                 View placeholder = rootView.findViewById(R.id.map_placeholder);
                 if (placeholder != null) {
                     placeholder.setVisibility(View.VISIBLE);
@@ -119,7 +120,7 @@ public class WorkoutFragment extends Fragment {
                 if (mapContainer != null) {
                     mapContainer.setVisibility(View.GONE);
                 }
-                showToast("Location permissions not granted");
+                //showToast("Location permissions not granted");
             }
 
         }
@@ -430,7 +431,7 @@ public class WorkoutFragment extends Fragment {
      */
     private void checkLocationAndStartMapActivity() {
         if (!hasLocationPermissions()) {
-            showToast("Location permissions not granted 2");
+            //showToast("Location permissions not granted 2");
             proceedToNoMapActivity();
             return;
         }
@@ -670,6 +671,7 @@ public class WorkoutFragment extends Fragment {
                 if (mapFragment != null) {
                     fragmentManager.beginTransaction().remove(mapFragment).commit();
                 }
+                mapProgressBar.setVisibility(View.GONE);
                 View placeholder = rootView.findViewById(R.id.map_placeholder);
                 if (placeholder != null) {
                     placeholder.setVisibility(View.VISIBLE);
@@ -678,7 +680,7 @@ public class WorkoutFragment extends Fragment {
                 if (mapContainer != null) {
                     mapContainer.setVisibility(View.GONE);
                 }
-                showToast("Location permissions not granted");
+                //showToast("Location permissions not granted");
             }
         }
     }
