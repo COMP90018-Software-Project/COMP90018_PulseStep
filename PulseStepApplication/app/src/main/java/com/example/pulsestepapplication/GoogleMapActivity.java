@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -27,8 +28,10 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -38,6 +41,7 @@ import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -95,7 +99,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private static final int LOCATION_REQUEST_CODE = 1001;
     private static final int ACTIVITY_RECOGNITION_REQUEST_CODE = 1002;
     private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1003; // Unique request code
-    private static final float MOVE_ZOOM_LEVEL = 17f;
+    private static final float MOVE_ZOOM_LEVEL = 16f;
     private static final float DEFAULT_ZOOM_LEVEL = 15f;
     private static final float MAX_ZOOM_LEVEL = 19f;
     private static final float DISTANCE_THRESHOLD_METERS = 1.0f; // Distance threshold in meters
@@ -118,8 +122,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private LocationCallback locationCallback;
 
     // Tracking Variables
+    private final List<List<LatLng>> allPathPoints = new ArrayList<>(); // Modified to hold segments
+    private List<LatLng> pathPoints; // Modified to be a segment
     private final List<Polyline> polyLines = new ArrayList<>();
-    private final List<LatLng> pathPoints = new ArrayList<>();
     private final List<LatLng> trajectory = new ArrayList<>();
     private boolean isTracking = false;
     private boolean isPaused = false;
@@ -204,7 +209,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     // Flags to track permission states
     private boolean hasRequestedBackgroundPermission = false;
     private boolean hasDeniedBackgroundPermission = false;
-    private ImageButton btnGrantPermissions;
 
     @SuppressLint("NewApi")
     @Override
@@ -226,9 +230,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         // Initialize UI Components
         initializeUIComponents();
 
-        // Initialize "Grant Permissions" button
-        btnGrantPermissions = findViewById(R.id.btn_grant_permissions);
-        setupGrantPermissionsButton();
         // Check permissions
         checkPermissions();
     }
@@ -253,7 +254,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             mapFragment.setVisibility(View.GONE);  // Initially hide the map
         }
         // Set up back button click listener
-        backButton.setOnClickListener(v -> navigateToMainActivity());
+        backButton.setOnClickListener(v -> popUpConfirmDialog());
 
         if (isMapMode) {
             // Start rotation animation
@@ -280,27 +281,45 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Set up the click listener for the "Grant Permissions" button
+     * Shows a confirmation dialog to exit the current running activity.
+     * - "Yes" will finish the activity and navigate to the WorkoutFragment.
+     * - "No" will close the dialog without exiting.
      */
-    private void setupGrantPermissionsButton() {
-        btnGrantPermissions.setOnClickListener(v -> {
-            // Open application settings page
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts("package", getPackageName(), null));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        });
-    }
+    private void popUpConfirmDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_custom, null);
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+        AlertDialog dialog = builder.create();
 
-    /**
-     * Show or hide the "Grant Permissions" button based on permission status
-     */
-    private void updateGrantPermissionsButton() {
-        if (isMapMode && hasDeniedBackgroundPermission) {
-            btnGrantPermissions.setVisibility(View.VISIBLE);
-        } else {
-            btnGrantPermissions.setVisibility(View.GONE);
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = window.getAttributes();
+            layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.8);
+
+            int offsetInDp = 100;
+            float scale = getResources().getDisplayMetrics().density;
+            layoutParams.y = (int) (offsetInDp * scale + 0.5f);
+            layoutParams.dimAmount = 0.7f;
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
+            window.setAttributes(layoutParams);
         }
+
+        Button positiveButton = dialogView.findViewById(R.id.positive_button);
+        Button negativeButton = dialogView.findViewById(R.id.negative_button);
+
+        positiveButton.setOnClickListener(v -> {
+            Intent intent = new Intent();
+            setResult(RESULT_OK, intent);  // Set the result to pass back to MainActivity
+            finish();  // Close GoogleMapActivity and return to the previous Activity (WorkoutFragment)
+            dialog.dismiss();
+        });
+
+        negativeButton.setOnClickListener(v -> dialog.dismiss());
     }
 
     /**
@@ -327,8 +346,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         }
 
-        // Update the visibility of the "Grant Permissions" button
-        updateGrantPermissionsButton();
     }
 
     /**
@@ -482,6 +499,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         });
 
     }
+
     /**
      * Handle the start/pause button click event
      */
@@ -629,9 +647,15 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         isPaused = false;
 
         if (isFirstStart) {
+
             long currentTime = System.currentTimeMillis();
             formattedStartTime = dateFormat.format(new Date(currentTime));
-            pathPoints.clear();
+          
+
+            // Start a new pathPoints list for the new segment
+            pathPoints = new ArrayList<>();
+            allPathPoints.add(pathPoints);
+
             totalDistance = 0.0f;
             startTime = SystemClock.elapsedRealtime();
             timerHandler.postDelayed(timerRunnable, 0);
@@ -651,6 +675,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             long pauseDuration = SystemClock.elapsedRealtime() - pauseTime;
             startTime += pauseDuration;
             timerHandler.postDelayed(timerRunnable, 0);
+
+            // Start a new pathPoints list for the new segment
+            pathPoints = new ArrayList<>();
+            allPathPoints.add(pathPoints);
         }
 
         btnPauseResume.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pause));
@@ -673,10 +701,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         timerHandler.removeCallbacks(timerRunnable);
         btnPauseResume.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.start));
         btnShow.setVisibility(View.VISIBLE);
-        if (isMapMode) {
-            drawCurrentPolyline();
-        }
         trajectory.add(null);
+        // Draw the current polyline and clear the current pathPoints
+        drawCurrentPolyline();
+        pathPoints = null;
 
         // Send broadcast to the service to pause step counting
         Intent pauseIntent = new Intent(LocationTrackingService.ACTION_PAUSE_STEP_COUNTING);
@@ -839,10 +867,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     @SuppressLint("MissingPermission")
     private void requestLocationUpdates() {
-        LocationRequest locationRequest = new LocationRequest.Builder(5000)
-                .setMinUpdateIntervalMillis(2000)
+        LocationRequest locationRequest = new LocationRequest.Builder(7000)
+                .setMinUpdateIntervalMillis(3000)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .setMinUpdateDistanceMeters(2)
+                .setMinUpdateDistanceMeters(5)
                 .build();
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
@@ -855,7 +883,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     @SuppressLint("DefaultLocale")
     private void updatePath(LatLng latLng) {
-        if (!isTracking || isPaused) {
+        if (!isTracking || isPaused || pathPoints == null) {
             return;
         }
 
@@ -894,26 +922,36 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 runOnUiThread(() -> avgPaceTextView.setText("--'--\""));
             }
 
-            // Only add the current point to pathPoints and draw the lines if conditions are met
+            // Add the new point to the current pathPoints
             pathPoints.add(latLng);
             trajectory.add(latLng);
+
+            // Draw the polyline
             drawCurrentPolyline();
         }
     }
 
     /**
-     * Draw the current polyline
+     * Draw the current polylines for all segments
      */
     private void drawCurrentPolyline() {
-        if (!pathPoints.isEmpty() && googleMap != null) {
-            PolylineOptions polylineOptions = new PolylineOptions().addAll(pathPoints).color(getResources().getColor(R.color.like_orange)).width(10);
-            if (polyLines.isEmpty() || isPaused) {
+        if (googleMap == null) return;
+
+        // Remove existing polylines from the map
+        for (Polyline polyline : polyLines) {
+            polyline.remove();
+        }
+        polyLines.clear();
+
+        // Draw each segment separately
+        for (List<LatLng> segment : allPathPoints) {
+            if (!segment.isEmpty()) {
+                PolylineOptions polylineOptions = new PolylineOptions()
+                        .addAll(segment)
+                        .color(getResources().getColor(R.color.like_orange))
+                        .width(20);
                 Polyline polyline = googleMap.addPolyline(polylineOptions);
                 polyLines.add(polyline);
-            } else {
-                polyLines.get(polyLines.size() - 1).remove();
-                Polyline polyline = googleMap.addPolyline(polylineOptions);
-                polyLines.set(polyLines.size() - 1, polyline);
             }
         }
     }
@@ -1056,13 +1094,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         finish();
     }
 
-
     /**
      * Navigate back to MainActivity
      */
     private void navigateToWorkoutPage() {
-        Intent intent = new Intent(GoogleMapActivity.this, MainActivity.class);
-        startActivity(intent);
+        Intent returnIntent = new Intent();
+        setResult(Activity.RESULT_OK, returnIntent);
         finish();
     }
 
@@ -1095,8 +1132,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             if (isBackgroundLocationPermissionGranted()) {
                 hasDeniedBackgroundPermission = false;
                 sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, false).apply();
-                // Update button visibility
-                updateGrantPermissionsButton();
+
                 // Resume tracking
                 resumeTracking();
             }
@@ -1162,7 +1198,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 hasDeniedBackgroundPermission = false;
                 sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, false).apply();
                 //resumeTracking();
-                updateGrantPermissionsButton();
             } else {
                 // Background location permission denied
                 hasDeniedBackgroundPermission = true;
@@ -1170,7 +1205,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 //Toast.makeText(this, "Background location permission denied, the app will stop tracking in the background.", Toast.LENGTH_LONG).show();
                 // Show guidance dialog, guiding the user to manually grant permission in settings
                 //showPermissionDeniedDialog();
-                updateGrantPermissionsButton();
 
             }
         } else if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
@@ -1233,10 +1267,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     /**
      * Called when the back button is pressed
      */
+    @SuppressLint("MissingSuperCall")
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        finish();
+        popUpConfirmDialog();
     }
 
     /**

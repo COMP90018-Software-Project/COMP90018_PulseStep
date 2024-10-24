@@ -41,7 +41,7 @@
                     android:text="@string/bt_daily"
                     android:textColor="@drawable/bt_text_color_selector"
                     app:strokeColor="@color/white"
-                    android:textStyle="bold"
+                    android:fontFamily="@font/inter_bold"
                     />
                 <Button
                     style="?attr/materialButtonOutlinedStyle"
@@ -51,7 +51,7 @@
                     android:text="@string/bt_monthly"
                     android:textColor="@drawable/bt_text_color_selector"
                     app:strokeColor="@color/white"
-                    android:textStyle="bold"
+                    android:fontFamily="@font/inter_bold"
                     />
 
             </com.google.android.material.button.MaterialButtonToggleGroup>

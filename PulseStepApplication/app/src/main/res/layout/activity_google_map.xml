@@ -77,16 +77,6 @@
             android:textSize="20sp"
             android:layout_gravity="center"
             android:paddingTop="8dp" />
-        <ImageButton
-            android:id="@+id/btn_grant_permissions"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="20dp"
-            android:layout_gravity="top|end"
-            android:backgroundTint="@color/like_orange"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_setting" />
 
     </androidx.appcompat.widget.Toolbar>
     <ImageView
@@ -259,8 +249,8 @@
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:layout_marginStart="15dp"
-            android:contentDescription="Finish"
-            android:visibility="gone" />
+            android:contentDescription="Finish"/>
+<!--            android:visibility="gone" />-->
 
         <ImageButton
             android:id="@+id/btn_stop"

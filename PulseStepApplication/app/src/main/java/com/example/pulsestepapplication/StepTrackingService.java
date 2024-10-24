@@ -124,7 +124,7 @@ public class StepTrackingService extends Service {
         }
 
         // Start step counting
-        stepCounter.startStepTracking();
+        //stepCounter.startStepTracking();
         Log.d(TAG, "Service onStartCommand");
         return START_STICKY;
     }
