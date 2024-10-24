@@ -840,20 +840,17 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void setupLocationCallback() {
         locationCallback = new LocationCallback() {
-            @SuppressLint("MissingPermission")
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                // Update location regardless of tracking state
                 for (Location location : locationResult.getLocations()) {
                     if (location.hasAccuracy() && location.getAccuracy() < 50.0) {
                         isLocationReady = true;
                         waitView.clearAnimation();
                         waitView.setVisibility(View.GONE);
                         waitTextView.setVisibility(View.GONE);
-                        // Once the location is ready, show the map
                         View mapFragment = findViewById(R.id.google_map);
                         if (mapFragment != null) {
-                            mapFragment.setVisibility(View.VISIBLE);  // Show map after location is ready
+                            mapFragment.setVisibility(View.VISIBLE);
                         }
                         btnPauseResume.setClickable(true);
                         if (ActivityCompat.checkSelfPermission(GoogleMapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(GoogleMapActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -862,31 +859,29 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                         googleMap.setMyLocationEnabled(true);
                         locationTimeoutHandler.removeCallbacks(locationTimeoutRunnable);
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                        if (isFirstStart) {
-                            // Initially move the camera to the current location
-                            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM_LEVEL));
+                        if (isTracking || isPaused) {
+                            CameraPosition cameraPosition = new CameraPosition.Builder()
+                                    .target(currentLatLng)
+                                    .zoom(MOVE_ZOOM_LEVEL)
+                                    .tilt(0)
+                                    .bearing(0)
+                                    .build();
+                            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 200, null);
+
+                        }
+                        if (isTracking && !isPaused) {
+                            updatePath(currentLatLng);
                         }
                     } else {
                         if (!isLocationReady) {
                             Log.d(TAG, "Location accuracy insufficient, trying again...");
                         }
                     }
-
-                    if (isTracking && !isPaused && isLocationReady) {
-                        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                        updatePath(currentLatLng);
-                        CameraPosition cameraPosition = new CameraPosition.Builder()
-                                .target(currentLatLng)
-                                .zoom(MOVE_ZOOM_LEVEL)
-                                .tilt(0)
-                                .bearing(0)
-                                .build();
-                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 200, null);
-                    }
                 }
             }
         };
     }
+
 
     /**
      * Start requesting location updates
