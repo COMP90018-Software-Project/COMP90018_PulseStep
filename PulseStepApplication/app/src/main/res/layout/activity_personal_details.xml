@@ -65,6 +65,7 @@
         </LinearLayout>
         <!-- Horizontal line -->
         <View
+            android:id="@+id/horizontalLine"
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginBottom="16dp"

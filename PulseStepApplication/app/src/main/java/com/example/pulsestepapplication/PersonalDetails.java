@@ -34,6 +34,7 @@ public class PersonalDetails extends AppCompatActivity {
     private TextView birthdayTextView;
     private EditText heightEditText, weightEditText;
     private RadioButton maleRadioButton, femaleRadioButton, otherRadioButton;
+    private View horizontalLine;
     private ImageView backButton;
     private Button finishButton;
     private FirebaseAuth mAuth;
@@ -60,10 +61,12 @@ public class PersonalDetails extends AppCompatActivity {
         finishButton = findViewById(R.id.finishButton);
         backButton = findViewById(R.id.back_button);
         fullNameLayoutView = findViewById(R.id.fullNameLayoutView);
+        horizontalLine = findViewById(R.id.horizontalLine);
 
         // Hide the view
         backButton.setVisibility(View.GONE);  // Use View.GONE or View.INVISIBLE as needed
         fullNameLayoutView.setVisibility(View.GONE);
+        horizontalLine.setVisibility(View.GONE);
 
         // Initialize ProgressDialog
         progressDialog = new ProgressDialog(this);
