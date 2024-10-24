@@ -29,7 +29,7 @@ public class SplashActivity extends AppCompatActivity {
             startActivity(intent);
         } else {
             // If user is not logged in, go to the login activity
-            startActivity(new Intent(SplashActivity.this, Login.class));
+            startActivity(new Intent(SplashActivity.this, StartActivity.class));
         }
 
         finish(); // Close the splash activity

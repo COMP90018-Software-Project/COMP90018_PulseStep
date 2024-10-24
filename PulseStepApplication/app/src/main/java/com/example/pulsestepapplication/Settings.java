@@ -114,8 +114,12 @@ public class Settings extends AppCompatActivity {
                                 // Handle the logout action here
                                 performLogout();
                                 FirebaseAuth.getInstance().signOut();
-                                startActivity(new Intent(Settings.this, StartActivity.class));
-                                finish(); // Close the main activity
+
+                                // Clear history activity
+                                Intent intent = new Intent(Settings.this, StartActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                                finish(); // close Activity
                             }
                         })
                         .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

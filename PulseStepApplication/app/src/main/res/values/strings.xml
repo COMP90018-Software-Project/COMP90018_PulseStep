@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PulseStep Application</string>
+    <string name="app_name">PulseStep</string>
     <string name="light">fonts/Light.otf</string>
     <string name="bold">fonts/extrabold.otf</string>
     <string name="empty_label"></string>
