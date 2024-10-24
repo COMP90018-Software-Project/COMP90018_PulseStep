@@ -453,13 +453,16 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         btnPauseResume.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (musicPlayer.isPlaying()) {
-                    Log.d(TAG, "Pausing music...");
-                    musicPlayer.pause();
-                } else {
-                    Log.d(TAG, "Playing music...");
-                    musicPlayer.play();
+                if (isMapMode && isLocationReady) {
+                    if (musicPlayer.isPlaying()) {
+                        Log.d(TAG, "Pausing music...");
+                        musicPlayer.pause();
+                    } else {
+                        Log.d(TAG, "Playing music...");
+                        musicPlayer.play();
+                    }
                 }
+
                 handleStartStopButtonClick();
             }
         });

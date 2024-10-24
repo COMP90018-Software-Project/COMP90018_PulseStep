@@ -4,12 +4,18 @@ import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -27,6 +33,7 @@ public class PersonalDetails extends AppCompatActivity {
     private TextView birthdayTextView;
     private EditText heightEditText, weightEditText;
     private RadioButton maleRadioButton, femaleRadioButton, otherRadioButton;
+    private ImageView backButton;
     private Button finishButton;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -49,6 +56,10 @@ public class PersonalDetails extends AppCompatActivity {
         femaleRadioButton = findViewById(R.id.femaleRadioButton);
         otherRadioButton = findViewById(R.id.otherRadioButton);
         finishButton = findViewById(R.id.finishButton);
+        backButton = findViewById(R.id.back_button);
+
+        // Hide the back button
+        backButton.setVisibility(View.GONE);  // Use View.GONE or View.INVISIBLE as needed
 
         // Initialize ProgressDialog
         progressDialog = new ProgressDialog(this);
@@ -196,13 +207,6 @@ public class PersonalDetails extends AppCompatActivity {
             // Default daily target for user
             userDetails.put("target", 1);
 
-//            userDetails.put("dailyActiveTime",0);
-//            userDetails.put("monthlyActiveTime",0);
-//
-//            List<String> dailyLikeList = new ArrayList<>();
-//            userDetails.put("dailyLike",dailyLikeList);
-//            List<String> monthlyLikeList = new ArrayList<>();
-//            userDetails.put("monthlyLike",monthlyLikeList);
 
             // Save data to Firestore
             db.collection("users").document(userUID)
