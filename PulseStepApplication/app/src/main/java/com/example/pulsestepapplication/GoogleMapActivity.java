@@ -18,6 +18,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -113,6 +114,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private TextView cTextView;
     private ImageView waitView;
     private TextView waitTextView;
+    private ImageView muteMusicView;
 
     // Map and Location
     private GoogleMap googleMap;
@@ -143,6 +145,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private int progressStatus = 0;
     private boolean isRunning = false;
     private boolean hasTriggeredSuccess = false;
+    private boolean shouldLoop = true;
 
     // Timer Variables
     private long startTime = 0L;
@@ -152,6 +155,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private String formattedStartTime;
     private String formattedFinishTime;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+
+    // music player
+    private MusicPlayer musicPlayer;
 
     private final Runnable timerRunnable = new Runnable() {
         @SuppressLint("DefaultLocale")
@@ -248,6 +254,25 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         mapImageView = findViewById(R.id.default_image_view);
         waitView = findViewById(R.id.wait);
         waitTextView = findViewById(R.id.waitText);
+        muteMusicView = findViewById(R.id.music_control);
+
+        // Initialize MusicPlayer with audio resource
+        musicPlayer = new MusicPlayer(this, R.raw.pulsestep_fever);
+
+        // Enable or disable looping based on user input
+        musicPlayer.setLooping(shouldLoop);
+
+        // Set up mute button click listener
+        muteMusicView.setOnClickListener(v -> {
+            if (musicPlayer.isMuted()) {
+                muteMusicView.setImageResource(R.drawable.ic_music_launcher);
+                musicPlayer.unmute();
+            } else {
+                muteMusicView.setImageResource(R.drawable.ic_mute_music);
+                musicPlayer.mute();
+            }
+        });
+
         // Initially hide the map
         View mapFragment = findViewById(R.id.google_map);
         if (mapFragment != null) {
@@ -279,6 +304,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             btnPauseResume.setClickable(true);
         }
     }
+
 
     /**
      * Shows a confirmation dialog to exit the current running activity.
@@ -423,7 +449,20 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     @SuppressLint("ClickableViewAccessibility")
     private void setupButtonListeners() {
         progressBar = findViewById(R.id.progressBar);
-        btnPauseResume.setOnClickListener(v -> handleStartStopButtonClick());
+
+        btnPauseResume.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (musicPlayer.isPlaying()) {
+                    Log.d(TAG, "Pausing music...");
+                    musicPlayer.pause();
+                } else {
+                    Log.d(TAG, "Playing music...");
+                    musicPlayer.play();
+                }
+                handleStartStopButtonClick();
+            }
+        });
         CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
         circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
         progressBar.setProgressDrawable(circularProgressDrawable);
@@ -1280,6 +1319,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onDestroy() {
         super.onDestroy();
         stopTrackingService();
+        musicPlayer.release(); // Release resources when activity is destroyed
         if (fusedLocationClient != null && locationCallback != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
