@@ -27,6 +27,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import org.w3c.dom.Text;
 
@@ -47,7 +48,6 @@ public class RankingFragment extends Fragment {
     private TextView topNameTextView;
     private TextView topActiveTimeTextView;
     private RecyclerView rankRecyclerView;
-    private CardView rankRowView;
     private ImageView editTarget;
     private ProgressBar progressBar;
 
@@ -59,20 +59,17 @@ public class RankingFragment extends Fragment {
     private String currentMonth;
     private String userId;
     private String userName;
-    private boolean isMonthlyRank;
+    private boolean isMonthlyRank = false;
 
     private FirebaseFirestore db;
     private FirebaseUser currentUser;
+
+    private ListenerRegistration registration;
 
     public RankingFragment() {
         // Required empty public constructor
     }
 
-//    @Override
-//    public void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setUpRankModels();
-//    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -80,7 +77,7 @@ public class RankingFragment extends Fragment {
         // Initialize FirebaseFirestore
         db = FirebaseFirestore.getInstance();
 
-        // 获取当前用户的 UID
+        // Get current UID
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
         userId = currentUser.getUid();
 
@@ -91,20 +88,6 @@ public class RankingFragment extends Fragment {
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_ranking, container, false);
         initView(view);
-//        // View of daily target and active time TextView
-//        dailyTargetTextView = view.findViewById(R.id.daily_target_hours);
-//        dailyActiveTimeTextView = view.findViewById(R.id.progress_detail);
-//        // View of progress bar
-//        progressBar = view.findViewById(R.id.progressBar);
-//        ImageView editTarget = view.findViewById(R.id.bt_set_target);
-//
-//        // View of the row above rank list (you daily or monthly active time)
-//        topNameTextView = view.findViewById(R.id.you_name);
-//        topActiveTimeTextView = view.findViewById(R.id.you_time);
-//
-//        // View of rank list
-//        rankRecyclerView = view.findViewById(R.id.ranking_List);
-//        rankRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         // setTarget Dialog
         editTarget.setOnClickListener(new View.OnClickListener() {
@@ -116,6 +99,7 @@ public class RankingFragment extends Fragment {
 
         // Fetch target and progress data from firestore
         fetchTargetData();
+
         // Set up init rank list (daily)
         setUpRankModels();
 
@@ -123,33 +107,28 @@ public class RankingFragment extends Fragment {
         MaterialButtonToggleGroup toggleButton = view.findViewById(R.id.bt_switch_rank);
         toggleButton.check(R.id.bt_daily);
         TextView titleTextView = view.findViewById(R.id.rank_title);
-        toggleButton.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
-            @Override
-            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
-                // Respond to button selection
-                if (isChecked) {
-                    switch (checkedId) {
-                        case R.id.bt_daily:
-                            titleTextView.setText("Daily Sports Rankings");
-                            isMonthlyRank = false;
-                            // Fetch target and progress data from firestore
-                            fetchTargetData();
-                            // Set up daily rank list
-                            setUpRankModels();
-                            break;
-                        case R.id.bt_monthly:
-                            titleTextView.setText("Monthly Sports Rankings");
-                            isMonthlyRank = true;
-                            // Fetch target and progress data from firestore
-                            fetchTargetData();
-                            // Set up monthly rank list
-                            setUpRankModels();
-                            break;
-                    }
+        toggleButton.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            // Respond to button selection
+            if (isChecked) {
+                if (!isAdded()) {
+                    Log.e("RankingFragment", "Fragment not attached, skipping update.");
+                    return;
                 }
+                switch (checkedId) {
+                    case R.id.bt_daily:
+                        titleTextView.setText("Daily Sports Rankings");
+                        isMonthlyRank = false;
+                        break;
+                    case R.id.bt_monthly:
+                        titleTextView.setText("Monthly Sports Rankings");
+                        isMonthlyRank = true;
+                        break;
+                }
+                Log.e("isMonthlyRank","isMonthlyRank = "+ isMonthlyRank);
+                // Set up daily rank list
+                setUpRankModels();
             }
         });
-
         return view;
     }
 
@@ -171,7 +150,6 @@ public class RankingFragment extends Fragment {
         // View of rank list
         rankRecyclerView = view.findViewById(R.id.ranking_List);
         rankRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        rankRowView = view.findViewById(R.id.rank_row);
     }
 
 
@@ -180,7 +158,7 @@ public class RankingFragment extends Fragment {
      */
     private void setUpTargetPickerDialog(){
         final Dialog dialog = new Dialog(requireContext());
-        dialog.setContentView(R.layout.dialog_set_target); // 使用自定义布局 dialog_time_picker.xml
+        dialog.setContentView(R.layout.dialog_set_target);
 
         // Get NumberPicker and button
         final NumberPicker targetPicker = dialog.findViewById(R.id.targetPicker);
@@ -397,9 +375,15 @@ public class RankingFragment extends Fragment {
         Log.d("CurrentDate", "Current Date: " + currentDate);
         rankModels.clear();
 
+        Log.e("isMonthlyRank!!!!!!!!!!!!!","isMonthlyRank = "+ isMonthlyRank);
         String rankTypeField = isMonthlyRank ? "monthlyActive." + currentMonth : "dailyActive." + currentDate;
 
-        db.collection("users")
+        // Ensure no repeat listener been registered
+        if (registration != null) {
+            registration.remove();
+        }
+
+        registration = db.collection("users")
                 .whereGreaterThan(rankTypeField, 299)  // active time greater than 5min can join the rank competition
                 .orderBy(rankTypeField, Query.Direction.DESCENDING)
                 .addSnapshotListener((queryDocumentSnapshots, error) -> {
@@ -409,6 +393,11 @@ public class RankingFragment extends Fragment {
                     }
 
                     if (queryDocumentSnapshots != null) {
+                        // Check if fragment is attached
+                        if (!isAdded()) {
+                            Log.e("RankingFragment", "Fragment not attached, skipping update.");
+                            return;
+                        }
                         rankModels.clear();  // reset the rank list data when retrieving new data
                         int rankNo = 1;
 
@@ -423,35 +412,47 @@ public class RankingFragment extends Fragment {
                             if (activeMap != null && activeMap.containsKey(isMonthlyRank ? currentMonth : currentDate)) {
                                 long activeInSeconds = activeMap.get(isMonthlyRank ? currentMonth : currentDate);
 
-                                if (activeInSeconds > 299) {
-                                    double activeInHours = convertSecondsToHours(activeInSeconds);
-                                    String activeTime = convertTimeFormat(activeInHours);
-                                    activeTime = activeTime + " " + (activeTime.equals("1") ? "hour" : "hours");
+                                double activeInHours = convertSecondsToHours(activeInSeconds);
+                                String activeTime = convertTimeFormat(activeInHours);
+                                activeTime = activeTime + " " + (activeTime.equals("1") ? "hour" : "hours");
 
-                                    // Get the like num and the array list of liked user
-                                    Map<String, ArrayList<String>> likeMap = (Map<String, ArrayList<String>>) document.get(isMonthlyRank ? "monthlyLike" : "dailyLike");
-                                    long likeNum = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate))
-                                            ? likeMap.get(isMonthlyRank ? currentMonth : currentDate).size() : 0;
-                                    ArrayList<String> likedUsers = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate))
-                                            ? likeMap.get(isMonthlyRank ? currentMonth : currentDate) : new ArrayList<>();
+                                // Get the like num and the array list of liked user
+                                Map<String, ArrayList<String>> likeMap = (Map<String, ArrayList<String>>) document.get(isMonthlyRank ? "monthlyLike" : "dailyLike");
 
-                                    // Add the rank row detail to rank model
-                                    rankModels.add(new RankModel(String.valueOf(rankNo), userName, activeTime, String.valueOf(likeNum), likedUsers, rowUserId, gender));
+                                long likeNum = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate)) ? likeMap.get(isMonthlyRank ? currentMonth : currentDate).size() : 0;
 
-                                    Log.d("RankModels", "Added user: " + userName + ", active time: " + activeTime);
+                                ArrayList<String> likedUsers = (likeMap != null && likeMap.containsKey(isMonthlyRank ? currentMonth : currentDate))
+                                        ? likeMap.get(isMonthlyRank ? currentMonth : currentDate) : new ArrayList<>();
 
-                                    rankNo++;
-                                }
+                                // Add the rank row detail to rank model
+                                rankModels.add(new RankModel(String.valueOf(rankNo), userName, activeTime, String.valueOf(likeNum), likedUsers, rowUserId, gender));
+
+                                Log.d("RankModels", "Added user: " + userName + ", active time: " + activeTime+"rankNo" + rankNo);
+
+                                rankNo++;
                             }
                         }
-
                         // Set up adapter
-                        Log.d("Likefield", "likefield = "+isMonthlyRank);
+                        Log.d("AdapterIsMonthly", "isMonthly = "+isMonthlyRank);
                         RankListAdapter rankListAdapter = new RankListAdapter(requireContext(), rankModels, isMonthlyRank);
-
                         rankRecyclerView.setAdapter(rankListAdapter);
 
                     }
                 });
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        setUpRankModels();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (registration != null) {
+            registration.remove();
+            registration = null;
+        }
     }
 }

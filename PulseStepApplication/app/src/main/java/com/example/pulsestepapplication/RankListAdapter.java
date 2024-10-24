@@ -3,6 +3,8 @@ package com.example.pulsestepapplication;
 import android.content.Context;
 import android.content.Intent;
 import android.icu.text.SimpleDateFormat;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +34,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 
+
 public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyViewHolder> {
 
     Context context;
@@ -58,41 +61,40 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
     public void onBindViewHolder(@NonNull RankListAdapter.MyViewHolder holder, int position) {
         RankModel rankModel = rankModels.get(position);
         // assigning values to the views based on the position of the recycler view
-        holder.rankNo.setText(rankModels.get(position).getRankNo());
-        holder.rankUserName.setText(rankModels.get(position).getRankUserName());
-        holder.rankWorkoutTime.setText(rankModels.get(position).getRankWorkoutTime());
+        holder.rankNo.setText(rankModel.getRankNo());
+        holder.rankUserName.setText(rankModel.getRankUserName());
+        holder.rankWorkoutTime.setText(rankModel.getRankWorkoutTime());
 //        holder.rankUserImage.setImageResource(rankModels.get(position).getRankUserImage());
-        holder.rankLikeNum.setText(rankModels.get(position).getRankLikeNum());
+        holder.rankLikeNum.setText(rankModel.getRankLikeNum());
 
         // set rank user Image
-        String gender = rankModels.get(position).getUserGender();
+        String gender = rankModel.getUserGender();
         FirebaseStorage.getInstance().getReference()
                 .child("users")
-                .child(rankModels.get(position).getRowUserId())
+                .child(rankModel.getRowUserId())
                 .child("images/profile_image")
                 .getDownloadUrl()
                 .addOnSuccessListener(uri -> {
-                    // 成功获取到图片 URL，设置用户自定义头像
-//                    ProfileFragment.setProfilePic(getContext(), uri, profileImage)
-                        Glide.with(context).load(uri).apply(RequestOptions.circleCropTransform()).into(holder.rankUserImage);
-                        Log.d("UserImage", "userImage = yyyyyyyyyyyyyyyyyy");
+                    // Get user image url
+                    Glide.with(context).load(uri).apply(RequestOptions.circleCropTransform()).into(holder.rankUserImage);
+                    Log.d("UserImage", "userImage = yyyyyyyyyyyyyyyyyy");
                 })
                 .addOnFailureListener(exception -> {
                     Log.d("UserImage","userImage = nnnnnnnnnnnnnnnnnnnnnnn");
-                    // 文件不存在，处理 StorageException，并根据性别设置默认头像
+                    // Set default user image when no user image file retrieve
                     if (exception instanceof StorageException) {
                         StorageException storageException = (StorageException) exception;
                         if (storageException.getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
-                            // 根据性别设置默认头像
+                            // Set default user image
                             if (gender != null) {
                                 if (gender.equalsIgnoreCase("male")) {
-                                    // 设置男性默认头像
+                                    // male
                                     holder.rankUserImage.setImageResource(R.drawable.male_default_avatar);
                                 } else if (gender.equalsIgnoreCase("female")) {
-                                    // 设置女性默认头像
+                                    // female
                                     holder.rankUserImage.setImageResource(R.drawable.female_default_avatar);
                                 }else if (gender.equalsIgnoreCase("other")) {
-                                    // 如果性别为other，设置通用默认头像
+                                    // other
                                     holder.rankUserImage.setImageResource(R.drawable.default_avatar);
                                 }
                             }
@@ -106,7 +108,7 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String currentUserId = currentUser.getUid();
         // get row user (target user)
-        String updateUserId = rankModels.get(position).getRowUserId();
+        String updateUserId = rankModel.getRowUserId();
 
         String currentDateOrMonth = isMonthlyRank ? getCurrentMonth() : getCurrentDate();
         // Init like checkbox
@@ -180,8 +182,11 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
         DocumentReference docRef = db.collection("users").document(updateUserId);
         docRef.update(likeField + "." + currentDateOrMonth, FieldValue.arrayUnion(userId))
                 .addOnSuccessListener(aVoid -> {
-                    // update like num display
-                    updateLikeCount(docRef, currentDateOrMonth, likeField, likeNumTextView);
+                    // delay update
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        // update like num display
+                        updateLikeCount(docRef, currentDateOrMonth, likeField, likeNumTextView);
+                    }, 500);  // delay 500ms
                 })
                 .addOnFailureListener(e -> {
                     Log.e("Firestore", "Error updating (increase like num) document", e);
