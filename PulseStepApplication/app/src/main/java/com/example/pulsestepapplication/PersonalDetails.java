@@ -11,6 +11,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +39,7 @@ public class PersonalDetails extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private ProgressDialog progressDialog; // ProgressDialog to show saving state
+    private LinearLayout fullNameLayoutView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,9 +59,11 @@ public class PersonalDetails extends AppCompatActivity {
         otherRadioButton = findViewById(R.id.otherRadioButton);
         finishButton = findViewById(R.id.finishButton);
         backButton = findViewById(R.id.back_button);
+        fullNameLayoutView = findViewById(R.id.fullNameLayoutView);
 
-        // Hide the back button
+        // Hide the view
         backButton.setVisibility(View.GONE);  // Use View.GONE or View.INVISIBLE as needed
+        fullNameLayoutView.setVisibility(View.GONE);
 
         // Initialize ProgressDialog
         progressDialog = new ProgressDialog(this);

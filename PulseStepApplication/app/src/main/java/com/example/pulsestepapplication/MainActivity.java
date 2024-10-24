@@ -15,6 +15,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.example.pulsestepapplication.databinding.ActivityMainBinding;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
@@ -46,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
             }, LOCATION_PERMISSION_REQUEST_CODE);
         }
         if (savedInstanceState == null) {
-
             fetchUserData();
         } else {
             String activeFragmentTag = savedInstanceState.getString("activeFragmentTag");
@@ -127,31 +127,33 @@ public class MainActivity extends AppCompatActivity {
 
     private void fetchUserData() {
         if (userId != null) {
-            DocumentReference userRef = db.collection("users").document(userId);
+            DocumentReference userRef = FirebaseFirestore.getInstance().collection("users").document(userId);
 
-            userListenerRegistration = userRef.addSnapshotListener(this, (documentSnapshot, error) -> {
-                if (error != null) {
-                    Log.e("UserInfo", "Listen failed.", error);
-                    return;
-                }
+            // Fetch data once using get()
+            userRef.get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    // Successfully retrieved document
+                    DocumentSnapshot documentSnapshot = task.getResult();
+                    if (documentSnapshot != null && documentSnapshot.exists()) {
+                        String fullName = documentSnapshot.getString("fullName");
+                        String weight = documentSnapshot.getString("weight");
+                        String gender = documentSnapshot.getString("gender");
 
-                if (documentSnapshot != null && documentSnapshot.exists()) {
-                    String fullName = documentSnapshot.getString("fullName");
-                    String weight = documentSnapshot.getString("weight");
-                    String gender = documentSnapshot.getString("gender");
+                        if (fullName != null && weight != null) {
+                            Log.e("UserInfo", "Full Name: " + fullName + ", Weight: " + weight);
 
-                    if (fullName != null && weight != null) {
-                        Log.e("UserInfo", "Full Name: " + fullName + ", Weight: " + weight);
-
-                        // Only update fragments if activity is in a valid state
-                        if (!isFinishing() && !isDestroyed()) {
-                            passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
+                            // Only update fragments if activity is in a valid state
+                            if (!isFinishing() && !isDestroyed()) {
+                                passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
+                            }
+                        } else {
+                            Log.e("UserInfo", "Some fields are missing.");
                         }
                     } else {
-                        Log.e("UserInfo", "Some fields are missing.");
+                        Log.e("UserInfo", "Document does not exist.");
                     }
                 } else {
-                    Log.e("UserInfo", "Document does not exist.");
+                    Log.e("UserInfo", "Fetch failed: ", task.getException());
                 }
             });
         } else {
@@ -172,8 +174,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (workoutFragment == null) {
             initWorkoutFragment(hasLocationPermissions(), args);
-        } else if (workoutFragment.isAdded()) {
-            ((WorkoutFragment) workoutFragment).updateData(fullName, weight, hasLocationPermissions());
         }
 
         if (rankingFragment == null) {
@@ -182,10 +182,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (profileFragment == null) {
             initProfileFragment(args);
-        } else if (profileFragment.isAdded()) {
-            ((ProfileFragment) profileFragment).updateData(userId, fullName, gender);
         }
-
 
         if (activeFragment == null) {
             activeFragment = workoutFragment;
