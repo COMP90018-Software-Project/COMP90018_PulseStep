@@ -125,6 +125,8 @@ public class RankingFragment extends Fragment {
                         break;
                 }
                 Log.e("isMonthlyRank","isMonthlyRank = "+ isMonthlyRank);
+                // Fetch target and progress data from firestore
+                fetchTargetData();
                 // Set up daily rank list
                 setUpRankModels();
             }
