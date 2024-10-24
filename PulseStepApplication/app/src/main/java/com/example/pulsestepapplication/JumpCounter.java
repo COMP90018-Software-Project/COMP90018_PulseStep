@@ -106,9 +106,14 @@ public class JumpCounter {
     private JumpCounterListener jumpCounterListener;
 
     // Thresholds for detecting jumps (adjust as needed)
-    private static final float JUMP_THRESHOLD_GRAVITY = 0.5f;  // Gravity threshold to consider it a jump
-    private static final int JUMP_DETECTION_WINDOW_MS = 500; // Time window to detect a jump (ms)
+    private static final float JUMP_THRESHOLD_GRAVITY = 4f;  // Gravity threshold to consider it a jump
+    private static final int JUMP_DETECTION_WINDOW_MS = 200; // Time window to detect a jump (ms)
     private long lastJumpTime = 0;
+    private boolean is_initial = true;
+
+    private float x_last = 0f;
+    private float y_last = 0f;
+    private float z_last = 0f;
 
     /**
      * Constructor initializes the sensor manager and accelerometer sensor.
@@ -135,18 +140,36 @@ public class JumpCounter {
             public void onSensorChanged(SensorEvent event) {
                 // Get acceleration values on x, y, and z axes
                 float x = event.values[0];
-                float y = event.values[1] - 9.81f; // Subtract gravity from y-axis
+                float y = event.values[1];
                 float z = event.values[2];
 
+                if (is_initial) {
+                    is_initial = false;
+                    x_last = x;
+                    y_last = y;
+                    z_last = z;
+                }
+
                 // Calculate the total acceleration value including gravity
-                //TODO： 这里的逻辑要改成x，y，z各自减去before
-                float gForce = (float) Math.sqrt(x * x + y * y + z * z) / SensorManager.GRAVITY_EARTH;
+                float x_diff = x - x_last;
+                float y_diff = y - y_last;
+                float z_diff = z - z_last;
+
+                //TODO： 需增加检测趋势，以及检测是否为跳跃的条件，在跳跃时加速度持续变化时现在每过一个threadhood都会计数
+                float gForce_diff = (float) Math.sqrt(x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
 
                 // Check if the gForce exceeds the jump threshold and ensure there's enough time between jumps
-                if (gForce > JUMP_THRESHOLD_GRAVITY) {
-                    long now = System.currentTimeMillis();
-                    if (now - lastJumpTime > JUMP_DETECTION_WINDOW_MS) {
-                        lastJumpTime = now;
+
+                long now = System.currentTimeMillis();
+
+                if (now - lastJumpTime > JUMP_DETECTION_WINDOW_MS) {
+                    x_last = x;
+                    y_last = y;
+                    z_last = z;
+
+                    lastJumpTime = now;
+
+                    if (gForce_diff > JUMP_THRESHOLD_GRAVITY) {
                         jumpCount++;
                         if (jumpCounterListener != null) {
                             jumpCounterListener.onJumpCountUpdated(jumpCount);
@@ -154,6 +177,7 @@ public class JumpCounter {
                         Log.d(TAG, "Jump detected! Total jumps: " + jumpCount);
                     }
                 }
+
             }
 
             @Override
