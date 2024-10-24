@@ -70,7 +70,7 @@
             android:id="@+id/run"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Run"
+            android:text="Outdoor Running"
             android:textColor="@color/black"
             android:fontFamily="@font/overpass_bold"
             android:paddingLeft="10dp"
