@@ -114,7 +114,7 @@ public class Settings extends AppCompatActivity {
                                 // Handle the logout action here
                                 performLogout();
                                 FirebaseAuth.getInstance().signOut();
-                                startActivity(new Intent(Settings.this, Login.class));
+                                startActivity(new Intent(Settings.this, StartActivity.class));
                                 finish(); // Close the main activity
                             }
                         })
