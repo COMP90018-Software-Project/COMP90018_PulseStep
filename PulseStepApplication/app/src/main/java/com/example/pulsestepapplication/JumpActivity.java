@@ -97,8 +97,7 @@ public class JumpActivity extends AppCompatActivity {
     private boolean isRunning = false;
     private boolean hasTriggeredSuccess = false;
 
-
-
+    private final String popUpMessage = "Are you sure you want to leave the jump rope session? Your progress will not be saved.";
 
     private final Runnable timerRunnable = new Runnable() {
         @SuppressLint("DefaultLocale")
@@ -434,6 +433,10 @@ public class JumpActivity extends AppCompatActivity {
 
             window.setAttributes(layoutParams);
         }
+
+        // Find the TextView in the dialog and set the dynamic message
+        TextView dialogMessage = dialogView.findViewById(R.id.dialog_message);
+        dialogMessage.setText(popUpMessage);  // Set the custom message
 
         Button positiveButton = dialogView.findViewById(R.id.positive_button);
         Button negativeButton = dialogView.findViewById(R.id.negative_button);

@@ -56,18 +56,20 @@
         app:layout_constraintTop_toBottomOf="@id/profile_image" />
 
     <!-- CardView for Workout (Jump) -->
+
+    <!-- CardView for Workout (Running) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/card_jump"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:layout_constraintTop_toBottomOf="@id/name"
-        android:layout_marginTop="24dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="45dp"
         app:cardCornerRadius="35dp"
-        app:cardElevation="1dp">
+        app:cardElevation="1dp"
+        app:layout_constraintTop_toBottomOf="@id/name">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_marginTop="30dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp">
@@ -79,23 +81,23 @@
                 android:layout_marginEnd="16dp"
                 android:src="@drawable/ic_jump"
 
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/label_jump"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="Jump"
                 android:fontFamily="@font/overpass_bold"
+                android:text="Jump"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@id/workout_duration_jump"
                 app:layout_constraintStart_toEndOf="@id/icon_jump"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toTopOf="@id/workout_duration_jump" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/workout_duration_jump"
@@ -103,8 +105,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="5dp"
-                android:text="24 min"
                 android:fontFamily="@font/overpass_black_italic"
+                android:text="24 min"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="14sp"
                 app:layout_constraintStart_toEndOf="@id/icon_jump"
@@ -115,8 +117,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="5dp"
-                android:text="100 times"
                 android:fontFamily="@font/overpass_bold"
+                android:text="100 times"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -129,8 +131,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:layout_marginRight="5dp"
-                android:text="348 kcal"
                 android:fontFamily="@font/overpass_black_italic"
+                android:text="348 kcal"
                 android:textColor="@color/black"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -142,18 +144,17 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:layout_marginTop="5dp"
+                android:layout_marginEnd="4dp"
                 android:layout_marginRight="5dp"
                 android:src="@drawable/ic_calories"
-                app:layout_constraintEnd_toStartOf="@id/workout_calories_jump"
-                app:layout_constraintTop_toTopOf="@id/workout_calories_jump"
                 app:layout_constraintBottom_toBottomOf="@id/workout_calories_jump"
-                android:layout_marginEnd="4dp" />
+                app:layout_constraintEnd_toStartOf="@id/workout_calories_jump"
+                app:layout_constraintTop_toTopOf="@id/workout_calories_jump" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.cardview.widget.CardView>
 
-    <!-- CardView for Workout (Running) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/card_running"
         android:layout_width="match_parent"
