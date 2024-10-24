@@ -33,7 +33,7 @@ import java.util.Map;
 
 public class EditPersonalInfo extends AppCompatActivity {
     private TextView birthdayTextView;
-    private EditText heightEditText, weightEditText;
+    private EditText fullNameEditText, heightEditText, weightEditText;
     private RadioButton maleRadioButton, femaleRadioButton, otherRadioButton;
     private ImageView backButton;
     private Button finishButton;
@@ -57,6 +57,7 @@ public class EditPersonalInfo extends AppCompatActivity {
 
         // Initialize UI elements
         birthdayTextView = findViewById(R.id.birthdayTextView);
+        fullNameEditText = findViewById(R.id.fullNameEditText);
         heightEditText = findViewById(R.id.heightEditText);
         weightEditText = findViewById(R.id.weightEditText);
         maleRadioButton = findViewById(R.id.maleRadioButton);
@@ -78,6 +79,7 @@ public class EditPersonalInfo extends AppCompatActivity {
         // Set Finish button click listener
         finishButton.setOnClickListener(view -> {
             // Get user input data
+            String fullName = fullNameEditText.getText().toString();
             String birthday = birthdayTextView.getText().toString();
             String heightStr = heightEditText.getText().toString();
             String weightStr = weightEditText.getText().toString();
@@ -86,6 +88,17 @@ public class EditPersonalInfo extends AppCompatActivity {
             boolean isOther = otherRadioButton.isChecked();
 
             boolean hasError = false;
+
+            // Validate full name
+            if (fullName.isEmpty()) {
+                fullNameEditText.setError("Full name cannot be empty.");
+                return;
+            } else if (!fullName.matches("[a-zA-Z ]+")) { // 只允许字母和空格
+                fullNameEditText.setError("Full name can only contain letters and spaces.");
+                return;
+            } else {
+                fullNameEditText.setError(null); // 清除错误
+            }
 
             // Validate birthday
             if (birthday.isEmpty()) {
@@ -160,6 +173,7 @@ public class EditPersonalInfo extends AppCompatActivity {
 
             // Create user data map
             Map<String, Object> userDetails = new HashMap<>();
+            userDetails.put("fullName", fullName);
             userDetails.put("birthday", birthday);
             userDetails.put("height", heightStr);
             userDetails.put("weight", weightStr);
@@ -188,12 +202,14 @@ public class EditPersonalInfo extends AppCompatActivity {
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         // 获取用户的详细信息
+                        String fullName = documentSnapshot.getString("fullName");
                         String birthday = documentSnapshot.getString("birthday");
                         String height = documentSnapshot.getString("height");
                         String weight = documentSnapshot.getString("weight");
                         String gender = documentSnapshot.getString("gender");
 
                         // 设置 UI 元素的值
+                        fullNameEditText.setText(fullName);
                         birthdayTextView.setText(birthday);
                         heightEditText.setText(height);
                         weightEditText.setText(weight);

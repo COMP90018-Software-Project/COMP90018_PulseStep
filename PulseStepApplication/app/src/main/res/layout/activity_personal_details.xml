@@ -22,13 +22,53 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginTop="50dp"
+            android:layout_marginTop="40dp"
             android:layout_marginBottom="100dp"
             android:text="Personal Details"
             android:textColor="@color/black"
             android:fontFamily="@font/overpass_bold"
             android:textSize="24sp"
             android:textStyle="bold" />
+        <!-- Full Name -->
+        <LinearLayout
+            android:id="@+id/fullNameLayoutView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-60dp"
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:text="Full Name"
+                android:fontFamily="@font/overpass_bold"
+                android:textColor="@color/gray"
+                android:textSize="16sp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.8"
+                android:hint="Full Name">
+                <EditText
+                    android:id="@+id/fullNameEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="aaaaaa aaaa"
+                    android:padding="12dp"
+                    android:fontFamily="@font/overpass_bold"
+                    android:textColor="@color/orange"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+        <!-- Horizontal line -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="16dp"
+            android:background="#66000000" />
         <!-- Birthday -->
         <LinearLayout
             android:layout_width="match_parent"

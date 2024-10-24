@@ -36,6 +36,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -64,7 +67,9 @@ public class WorkoutFragment extends Fragment {
     private double userWeight;
 
     private View rootView; // Store the root view
+    private TextView greetingTextView;
     private Bundle savedInstanceState; // Store savedInstanceState if needed
+    private ListenerRegistration userListenerRegistration; // Store Firestore listener
 
     public WorkoutFragment() {
         // Required empty public constructor
@@ -92,7 +97,6 @@ public class WorkoutFragment extends Fragment {
         if (args != null) {
             userId = args.getString("userId");
             userName = args.getString("fullName");
-            Log.e("WorkoutFragment", "userName = "+ userName);
 //            userAge = args.getInt("age");
             userWeight = args.getDouble("weight");
             // Get location permission status
@@ -125,10 +129,12 @@ public class WorkoutFragment extends Fragment {
 
         }
 
-
         // greeting text rendered on workout page
-        TextView greetingTextView = rootView.findViewById(R.id.greeting_text);
+        greetingTextView = rootView.findViewById(R.id.greeting_text);
         greetingTextView.setText("Hi, " + userName);
+
+        startUserDataListener();
+
 
         // date text rendered on workout page
         TextView dateTextView = rootView.findViewById((R.id.date_text));
@@ -153,6 +159,58 @@ public class WorkoutFragment extends Fragment {
 
         return rootView;
     }
+
+    /**
+     * Starts a real-time listener to monitor changes to the user's full name and weight in Firestore.
+     */
+    private void startUserDataListener() {
+        if (userId == null) {
+            Log.e(TAG, "User ID is null. Cannot set up listener.");
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference userRef = db.collection("users").document(userId);
+
+        // Real-time listener for user data
+        userListenerRegistration = userRef.addSnapshotListener((documentSnapshot, e) -> {
+            if (e != null) {
+                Log.e(TAG, "Failed to listen for user data changes", e);
+                return;
+            }
+
+            if (documentSnapshot != null && documentSnapshot.exists()) {
+                // Get the updated fields from Firestore
+                String fullName = documentSnapshot.getString("fullName");
+                String weight = documentSnapshot.getString("weight");
+
+                if (fullName != null && weight != null) {
+                    Log.d(TAG, "Real-time update: Full Name = " + fullName + ", Weight = " + weight);
+                    // Update the UI with the new data
+                    updateUserData(fullName,  Double.parseDouble(weight));
+                } else {
+                    Log.e(TAG, "Missing fields in user document.");
+                }
+            } else {
+                Log.e(TAG, "User document does not exist.");
+            }
+        });
+    }
+
+    /**
+     * Updates the UI with the latest full name and weight.
+     *
+     * @param fullName The updated full name.
+     * @param weight   The updated weight.
+     */
+    private void updateUserData(String fullName, Double weight) {
+        this.userName = fullName;
+        this.userWeight = weight;
+
+        // Update the greeting text with the new full name
+        greetingTextView.setText("Hi, " + fullName);
+    }
+
 
     private void jumpToStarActivity() {
         Intent intent = new Intent(getActivity(), LikeActivity.class);
