@@ -41,6 +41,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -76,7 +78,7 @@ public class NoMapActivity extends AppCompatActivity{
     private TextView timerTextView, stepTextView, avgPaceTextView;
     private ImageButton btnShow;
     private ImageView backButton;
-    private ImageView mapImageView;
+    private ImageView runImageView;
     private TextView cTextView;
     private ImageView waitView;
     private TextView waitTextView;
@@ -219,7 +221,7 @@ public class NoMapActivity extends AppCompatActivity{
         avgPaceTextView = findViewById(R.id.avg_text_view);
         cTextView = findViewById(R.id.calories_text_view);
         backButton = findViewById(R.id.back_button_running_page);
-        mapImageView = findViewById(R.id.default_image_view);
+        runImageView = findViewById(R.id.default_image_view);
         waitView = findViewById(R.id.wait);
         waitTextView = findViewById(R.id.waitText);
         muteMusicView = findViewById(R.id.music_control);
@@ -357,8 +359,19 @@ public class NoMapActivity extends AppCompatActivity{
      */
     private void handleStartStopButtonClick() {
         if (isTracking) {
+            // Switch to run PNG
+            Glide.with(this)
+                    .asBitmap()  // Load the first frame of the GIF as a static image
+                    .load("https://media.giphy.com/media/a5pbFALzIeohN8YEHz/giphy.gif")  // 加载 PNG
+                    .into(runImageView);
             pauseTracking();
         } else {
+            // Switch to run gif
+            Glide.with(this)
+                    .asGif()  // Ensure Glide knows to handle this as a GIF
+                    .load("https://media.giphy.com/media/a5pbFALzIeohN8YEHz/giphy.gif")  // Use direct GIF link
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
+                    .into(runImageView);  // Load into your ImageView
             resumeTracking();
         }
     }
@@ -429,8 +442,12 @@ public class NoMapActivity extends AppCompatActivity{
      */
     private void showDefaultMap() {
         // Display default image
-        mapImageView.setImageResource(R.drawable.ic_avg_pace);
-        mapImageView.setVisibility(View.VISIBLE);
+        // Switch to run PNG
+        Glide.with(this)
+                .asBitmap()  // Load the first frame of the GIF as a static image
+                .load("https://media.giphy.com/media/a5pbFALzIeohN8YEHz/giphy.gif")  // 加载 PNG
+                .into(runImageView);
+        runImageView.setVisibility(View.VISIBLE);
     }
 
 

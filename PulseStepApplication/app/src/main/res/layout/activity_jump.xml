@@ -73,11 +73,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="270dp"
                 android:layout_marginTop="40dp"
-                android:src="@drawable/bg_jump"
                 app:layout_constraintBottom_toTopOf="@id/jump_button_layout"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+<!--            android:src="@drawable/bg_jump"-->
 
             <LinearLayout
                 android:id="@+id/jump_card_layout"

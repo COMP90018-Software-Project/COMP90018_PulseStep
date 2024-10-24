@@ -34,6 +34,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
@@ -295,35 +296,40 @@ public class JumpActivity extends AppCompatActivity {
     private void handlePauseResumeButtonClick() {
 
         if (isFirstStart) {
-            // 动态调整 ImageView 的 LayoutParams
-            updateImageViewForMedia(true);
-
+            // dynamic adjust image size
+            // updateImageViewForMedia(true);
             // Switch to jump gif
             Glide.with(this)
-                    .asGif()  // 指定加载为 GIF
-                    .load(R.drawable.jump_gif)  // 加载 GIF
-                    .into(jumpImageView);
+                    .asGif()  // Ensure Glide knows to handle this as a GIF
+                    .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
+                            "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
+                            "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // Use direct GIF link
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
+                    .into(jumpImageView);  // Load into your ImageView
 
             long currentTime = System.currentTimeMillis();
             formattedStartTime = dateFormat.format(new Date(currentTime));
             startTracking();
             isFirstStart = false;
         } else if (isPaused) {
-            // 动态调整 ImageView 的 LayoutParams
-            updateImageViewForMedia(true);
-
+            // updateImageViewForMedia(true);
             // Switch to jump gif
             Glide.with(this)
-                    .asGif()  // 指定加载为 GIF
-                    .load(R.drawable.jump_gif)  // 加载 GIF
-                    .into(jumpImageView);
+                    .asGif()  // Ensure Glide knows to handle this as a GIF
+                    .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
+                            "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
+                            "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // Use direct GIF link
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
+                    .into(jumpImageView);  // Load into your ImageView
             resumeTracking();
         } else {
-            // 恢复 PNG 的 margin
-            updateImageViewForMedia(false);
+            // updateImageViewForMedia(false);
             // Switch to jump PNG
             Glide.with(this)
-                    .load(R.drawable.bg_jump)  // 加载 PNG
+                    .asBitmap()  // Load the first frame of the GIF as a static image
+                    .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
+                            "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
+                            "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // 加载 PNG
                     .into(jumpImageView);
             pauseTracking();
         }
@@ -589,10 +595,12 @@ public class JumpActivity extends AppCompatActivity {
      */
     private void showDefaultBackground() {
         // Display default image
-//        jumpImageView.setImageResource(R.drawable.bg_jump);
-//        jumpImageView.setImageResource(R.drawable.jump_gif);
-//        jumpImageView.setVisibility(View.VISIBLE);
-
+        Glide.with(this)
+                .asBitmap()  // Load the first frame of the GIF as a static image
+                .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
+                        "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
+                        "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // 加载 PNG
+                .into(jumpImageView);
             // Ensure step count and timer views are visible
         jumpTextView.setVisibility(View.VISIBLE);
         timerTextView.setVisibility(View.VISIBLE);
