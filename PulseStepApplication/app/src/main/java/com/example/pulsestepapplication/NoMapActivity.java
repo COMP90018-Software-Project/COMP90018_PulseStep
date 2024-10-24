@@ -80,6 +80,7 @@ public class NoMapActivity extends AppCompatActivity{
     private TextView cTextView;
     private ImageView waitView;
     private TextView waitTextView;
+    private ImageView muteMusicView;
 
     // Map and Location
     private GoogleMap googleMap;
@@ -114,6 +115,11 @@ public class NoMapActivity extends AppCompatActivity{
     private long pauseTime = 0L;
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private long elapsedTime;
+
+    // music player
+    private MusicPlayer musicPlayer;
+    private boolean shouldLoop = true;
+
     private final Runnable timerRunnable = new Runnable() {
         @SuppressLint("DefaultLocale")
         @Override
@@ -216,6 +222,25 @@ public class NoMapActivity extends AppCompatActivity{
         mapImageView = findViewById(R.id.default_image_view);
         waitView = findViewById(R.id.wait);
         waitTextView = findViewById(R.id.waitText);
+        muteMusicView = findViewById(R.id.music_control);
+
+        // Initialize MusicPlayer with audio resource
+        musicPlayer = new MusicPlayer(this, R.raw.pulsestep_fever);
+
+        // Enable or disable looping based on user input
+        musicPlayer.setLooping(shouldLoop);
+
+        // Set up mute button click listener
+        muteMusicView.setOnClickListener(v -> {
+            if (musicPlayer.isMuted()) {
+                muteMusicView.setImageResource(R.drawable.ic_music_launcher);
+                musicPlayer.unmute();
+            } else {
+                muteMusicView.setImageResource(R.drawable.ic_mute_music);
+                musicPlayer.mute();
+            }
+        });
+
         // Hide the map initially
         // Set click listener for the back button
         backButton.setOnClickListener(v -> popUpConfirmDialog());
@@ -239,7 +264,19 @@ public class NoMapActivity extends AppCompatActivity{
     @SuppressLint("ClickableViewAccessibility")
     private void setupButtonListeners() {
         progressBar = findViewById(R.id.progressBar);
-        btnPauseResume.setOnClickListener(v -> handleStartStopButtonClick());
+        btnPauseResume.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (musicPlayer.isPlaying()) {
+                    Log.d(TAG, "Pausing music...");
+                    musicPlayer.pause();
+                } else {
+                    Log.d(TAG, "Playing music...");
+                    musicPlayer.play();
+                }
+                handleStartStopButtonClick();
+            }
+        });
         CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
         circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
         progressBar.setProgressDrawable(circularProgressDrawable);

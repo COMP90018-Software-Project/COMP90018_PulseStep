@@ -145,7 +145,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private int progressStatus = 0;
     private boolean isRunning = false;
     private boolean hasTriggeredSuccess = false;
-    private boolean shouldLoop = true;
 
     // Timer Variables
     private long startTime = 0L;
@@ -158,6 +157,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     // music player
     private MusicPlayer musicPlayer;
+    private boolean shouldLoop = true;
 
     private final Runnable timerRunnable = new Runnable() {
         @SuppressLint("DefaultLocale")
