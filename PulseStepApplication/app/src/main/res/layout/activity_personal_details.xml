@@ -1,252 +1,273 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    android:padding="30dp">
-    <LinearLayout
+    android:background="@color/white"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="40dp">
+
+    <ImageView
+        android:id="@+id/back_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:contentDescription="Back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:src="@drawable/ic_back_arrow" />
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:gravity="center"
+        android:layout_marginTop="65dp"
+        android:layout_marginBottom="100dp"
+        android:text="Personal Details"
+        android:textColor="@color/black"
+        android:fontFamily="@font/overpass_bold"
+        android:textSize="24sp"
+        app:layout_constraintTop_toTopOf="parent"/>
 
-        <ImageView
-            android:id="@+id/back_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="start"
-            android:contentDescription="Back"
-            android:src="@drawable/ic_back_arrow" />
-
-        <!-- Title -->
+    <!-- Full Name -->
+    <LinearLayout
+        android:id="@+id/fullNameLayoutView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="55dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/title">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="40dp"
-            android:layout_marginBottom="100dp"
-            android:text="Personal Details"
-            android:textColor="@color/black"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:text="Full Name"
             android:fontFamily="@font/overpass_bold"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-        <!-- Full Name -->
-        <LinearLayout
-            android:id="@+id/fullNameLayoutView"
-            android:layout_width="match_parent"
+            android:textColor="@color/gray"
+            android:textSize="16sp" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="-60dp"
-            android:layout_marginBottom="16dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
+            android:layout_weight="1.8"
+            android:hint="Full Name">
+            <EditText
+                android:id="@+id/fullNameEditText"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="Full Name"
+                android:text="aaaaaa aaaa"
+                android:padding="12dp"
                 android:fontFamily="@font/overpass_bold"
-                android:textColor="@color/gray"
-                android:textSize="16sp" />
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1.8"
-                android:hint="Full Name">
-                <EditText
-                    android:id="@+id/fullNameEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="aaaaaa aaaa"
-                    android:padding="12dp"
-                    android:fontFamily="@font/overpass_bold"
-                    android:textColor="@color/orange"
-                    android:textSize="16sp" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-        <!-- Horizontal line -->
-        <View
-            android:id="@+id/horizontalLine"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginBottom="16dp"
-            android:background="#66000000" />
-        <!-- Birthday -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="Birthday"
-                android:fontFamily="@font/overpass_bold"
-                android:textColor="@color/gray"
-                android:textSize="16sp" />
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.8"
-                android:hint="Select your birthday">
-
-                <TextView
-                    android:id="@+id/birthdayTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:drawable/edit_text"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:fontFamily="@font/overpass_bold"
-                    android:text="12/12/2222"
-                    android:padding="12dp"
-                    android:textColor="@color/orange"
-                    android:textSize="16sp" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-        <!-- Horizontal line -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginBottom="16dp"
-            android:background="#66000000" />
-        <!-- Height -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.8"
-                android:gravity="center_vertical"
-                android:text="Height"
-                android:fontFamily="@font/overpass_bold"
-                android:textColor="@color/gray"
-                android:textSize="16sp" />
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.3"
-                android:hint="cm">
-                <EditText
-                    android:id="@+id/heightEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="12dp"
-                    android:inputType="number"
-                    android:text="122"
-                    android:fontFamily="@font/overpass_bold"
-                    android:textColor="@color/orange"
-                    android:textSize="16sp" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-        <!-- Horizontal line -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginBottom="16dp"
-            android:background="#66000000" />
-        <!-- Weight -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.8"
-                android:gravity="center_vertical"
-                android:text="Weight"
-                android:textColor="@color/gray"
+                android:textColor="@color/orange"
                 android:textSize="16sp"
-                android:fontFamily="@font/overpass_bold"/>
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.3"
-                android:hint="kg">
-                <EditText
-                    android:id="@+id/weightEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:text="50"
-                    android:padding="12dp"
-                    android:fontFamily="@font/overpass_bold"
-                    android:textColor="@color/orange"
-                    android:textSize="16sp" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-        <!-- Horizontal line -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginBottom="16dp"
-            android:background="#66000000" />
-        <!-- Gender Selection -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="Gender"
-                android:textColor="@color/gray"
-                android:textSize="16sp"
-                android:fontFamily="@font/overpass_bold"/>
-            <RadioGroup
-                android:id="@+id/genderRadioGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <RadioButton
-                    android:id="@+id/maleRadioButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:buttonTint="@color/lighter_orange"
-                    android:text="Male"
-                    android:fontFamily="@font/overpass_bold"
-                    android:textColor="@color/orange" />
-                <RadioButton
-                    android:id="@+id/femaleRadioButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:buttonTint="@color/lighter_orange"
-                    android:text="Female"
-                    android:fontFamily="@font/overpass_bold"
-                    android:textColor="@color/orange" />
-                <RadioButton
-                    android:id="@+id/otherRadioButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:buttonTint="@color/lighter_orange"
-                    android:text="Other"
-                    android:fontFamily="@font/overpass_bold"
-                    android:textColor="@color/orange" />
-            </RadioGroup>
-        </LinearLayout>
-        <!-- Finish Button -->
-        <Button
-            android:id="@+id/finishButton"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/sign_in_bt_bacground"
-            android:text="Finish"
-            android:textAllCaps="false"
-            android:fontFamily="@font/overpass_bold"
-            android:textSize="16dp"
-            android:textColor="@color/white" />
+                android:inputType="text"
+                android:imeOptions="actionDone"/>
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
-</ScrollView>
+    <!-- Horizontal line -->
+    <View
+        android:id="@+id/horizontalLine"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="13dp"
+        android:background="#66000000"
+        app:layout_constraintTop_toBottomOf="@+id/fullNameLayoutView"/>
+    <!-- Birthday -->
+    <LinearLayout
+        android:id="@+id/birthdayLayoutView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@+id/horizontalLine">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:text="Birthday"
+            android:fontFamily="@font/overpass_bold"
+            android:textColor="@color/gray"
+            android:textSize="16sp" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:hint="Select your birthday">
+
+            <TextView
+                android:id="@+id/birthdayTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:drawable/edit_text"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="@font/overpass_bold"
+                android:text="12/12/2222"
+                android:padding="12dp"
+                android:textColor="@color/orange"
+                android:textSize="16sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+    <!-- Horizontal line -->
+    <View
+        android:id="@+id/horizontalLine2"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="13dp"
+        android:background="#66000000"
+        app:layout_constraintTop_toBottomOf="@+id/birthdayLayoutView"/>
+    <!-- Height -->
+    <LinearLayout
+        android:id="@+id/heightLayoutView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/horizontalLine2">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:gravity="center_vertical"
+            android:text="Height"
+            android:fontFamily="@font/overpass_bold"
+            android:textColor="@color/gray"
+            android:textSize="16sp" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.3"
+            android:hint="cm">
+            <EditText
+                android:id="@+id/heightEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:inputType="number"
+                android:text="122"
+                android:fontFamily="@font/overpass_bold"
+                android:textColor="@color/orange"
+                android:textSize="16sp"
+                android:imeOptions="actionDone"/>
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+    <!-- Horizontal line -->
+    <View
+        android:id="@+id/horizontalLine3"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="13dp"
+        android:background="#66000000"
+        app:layout_constraintTop_toBottomOf="@+id/heightLayoutView"/>
+    <!-- Weight -->
+    <LinearLayout
+        android:id="@+id/weightLayoutView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/horizontalLine3">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:gravity="center_vertical"
+            android:text="Weight"
+            android:textColor="@color/gray"
+            android:textSize="16sp"
+            android:fontFamily="@font/overpass_bold"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.3"
+            android:hint="kg">
+            <EditText
+                android:id="@+id/weightEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="50"
+                android:padding="12dp"
+                android:fontFamily="@font/overpass_bold"
+                android:textColor="@color/orange"
+                android:textSize="16sp"
+                android:imeOptions="actionDone"/>
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+    <!-- Horizontal line -->
+    <View
+        android:id="@+id/horizontalLine4"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="13dp"
+        android:background="#66000000"
+        app:layout_constraintTop_toBottomOf="@+id/weightLayoutView"/>
+    <!-- Gender Selection -->
+    <LinearLayout
+        android:id="@+id/genderLayoutView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/horizontalLine4">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:text="Gender"
+            android:textColor="@color/gray"
+            android:textSize="16sp"
+            android:fontFamily="@font/overpass_bold"/>
+        <RadioGroup
+            android:id="@+id/genderRadioGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton
+                android:id="@+id/maleRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/lighter_orange"
+                android:text="Male"
+                android:fontFamily="@font/overpass_bold"
+                android:textColor="@color/orange" />
+            <RadioButton
+                android:id="@+id/femaleRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/lighter_orange"
+                android:text="Female"
+                android:fontFamily="@font/overpass_bold"
+                android:textColor="@color/orange" />
+            <RadioButton
+                android:id="@+id/otherRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/lighter_orange"
+                android:text="Other"
+                android:fontFamily="@font/overpass_bold"
+                android:textColor="@color/orange" />
+        </RadioGroup>
+    </LinearLayout>
+    <!-- Finish Button -->
+    <Button
+        android:id="@+id/finishButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="28dp"
+        android:background="@drawable/sign_in_bt_bacground"
+        android:text="Finish"
+        android:textAllCaps="false"
+        android:fontFamily="@font/overpass_bold"
+        android:textSize="16dp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@+id/genderLayoutView"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
