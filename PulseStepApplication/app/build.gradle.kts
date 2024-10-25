@@ -57,6 +57,8 @@ dependencies {
     implementation("com.google.android.material:material:1.5.0")
     implementation("com.firebaseui:firebase-ui-storage:8.0.0")
     implementation("de.hdodenhof:circleimageview:3.0.0")
+    implementation ("pl.droidsonroids.gif:android-gif-drawable:1.2.23")
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

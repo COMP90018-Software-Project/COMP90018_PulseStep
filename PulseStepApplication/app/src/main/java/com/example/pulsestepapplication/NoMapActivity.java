@@ -58,12 +58,14 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import pl.droidsonroids.gif.GifDrawable;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class NoMapActivity extends AppCompatActivity{
+public class NoMapActivity extends AppCompatActivity {
     // Constants
     private static final String TAG = "GoogleMapActivity";
     private static final int PERMISSION_REQUEST_CODE = 1001;
@@ -101,7 +103,7 @@ public class NoMapActivity extends AppCompatActivity{
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
-    private static final Double realDistance = 0.05;
+    private static final Double realDistance = 0.01;
     private static final double metValue = 8.0;
     private static final int LOCATION_TIMEOUT = 10000; // Location timeout in milliseconds
 
@@ -150,6 +152,7 @@ public class NoMapActivity extends AppCompatActivity{
     private int userAge;
     private double userWeight;
     private Geocoder geocoder;
+    private double avgPace;
 
     @SuppressLint("NewApi")
     @Override
@@ -354,27 +357,59 @@ public class NoMapActivity extends AppCompatActivity{
         });
 
     }
+
     /**
      * Handles the start/stop button click event.
      */
     private void handleStartStopButtonClick() {
         if (isTracking) {
-            // Switch to run PNG
-            Glide.with(this)
-                    .asBitmap()  // Load the first frame of the GIF as a static image
-                    .load("https://media.giphy.com/media/a5pbFALzIeohN8YEHz/giphy.gif")  // 加载 PNG
-                    .into(runImageView);
+            setGifWithSpeed(avgPace);
             pauseTracking();
         } else {
-            // Switch to run gif
-            Glide.with(this)
-                    .asGif()  // Ensure Glide knows to handle this as a GIF
-                    .load("https://media.giphy.com/media/a5pbFALzIeohN8YEHz/giphy.gif")  // Use direct GIF link
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
-                    .into(runImageView);  // Load into your ImageView
+            setGifWithSpeed(avgPace);
             resumeTracking();
         }
     }
+
+    /**
+     * Load a GIF from local resources, adjust its playback speed based on the average pace,
+     * and set it to the provided ImageView.
+     *
+     * @param avgPace The average pace to determine the speed factor.
+     */
+    private void setGifWithSpeed(double avgPace) {
+        try {
+            // Load GIF from local resources
+            GifDrawable gifDrawable = new GifDrawable(getResources(), R.drawable.run);
+
+            // Adjust GIF speed based on avgPace
+            float speedFactor = getGifSpeedFactor(avgPace);
+            gifDrawable.setSpeed(speedFactor);
+
+            // Set the GIF to the ImageView
+            runImageView.setImageDrawable(gifDrawable);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Get speed factor for GIF animation based on average pace.
+     *
+     * @param avgPace The average pace in minutes per kilometer.
+     * @return Speed factor (e.g., 1.0 for normal, < 1.0 for faster, > 1.0 for slower).
+     */
+    private float getGifSpeedFactor(double avgPace) {
+        if (avgPace < 6 && avgPace > 0) { // Fast pace (running)
+            return 2.0f; // Increase speed for fast running
+        } else if (avgPace < 9 && avgPace > 6) { // Medium pace (jogging)
+            return 1.5f; // Normal speed for jogging
+        } else { // Slow pace (walking)
+            return 1.0f; // Slow down for walking
+        }
+    }
+
 
     /**
      * Starts the tracking process.
@@ -445,7 +480,7 @@ public class NoMapActivity extends AppCompatActivity{
         // Switch to run PNG
         Glide.with(this)
                 .asBitmap()  // Load the first frame of the GIF as a static image
-                .load("https://media.giphy.com/media/a5pbFALzIeohN8YEHz/giphy.gif")  // 加载 PNG
+                .load(R.drawable.run)
                 .into(runImageView);
         runImageView.setVisibility(View.VISIBLE);
     }
@@ -464,12 +499,11 @@ public class NoMapActivity extends AppCompatActivity{
 
         // Ensure distance and time are valid before calculating pace
         if (totalDistanceKm > realDistance && totalTimeMinutes > 0) {
-            double avgPace = totalTimeMinutes / totalDistanceKm;  // Calculate average pace, in minutes/kilometer
+            avgPace = totalTimeMinutes / totalDistanceKm;  // Calculate average pace, in minutes/kilometer
             double elapsedTimeInMinutes = elapsedTime / 60000.0;  // Convert to minutes
             double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, avgPace);  // Calculate calories burned
-
             runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
-
+            setGifWithSpeed(avgPace);
             // Check if the calculated pace is within a reasonable range
             if (avgPace >= 1.0 && avgPace <= 30.0) {
                 runOnUiThread(() -> avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60))));
@@ -492,16 +526,22 @@ public class NoMapActivity extends AppCompatActivity{
         double distanceKm = distance / 1000.0;
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
         if (distanceKm > realDistance && totalTimeMinutes > 0) {
-            double avgPace = totalTimeMinutes / distanceKm;
-            double elapsedTimeInMinutes = elapsedTime / 60000.0;
-            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, avgPace);
+            avgPace = totalTimeMinutes / distanceKm;  // Calculate average pace, in minutes/kilometer
+            double elapsedTimeInMinutes = elapsedTime / 60000.0;  // Convert to minutes
+            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, avgPace);  // Calculate calories burned
             runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
-            // Update avgPaceTextView
-            runOnUiThread(() -> avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60))));
+            setGifWithSpeed(avgPace);
+            // Check if the calculated pace is within a reasonable range
+            if (avgPace >= 1.0 && avgPace <= 30.0) {
+                runOnUiThread(() -> avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60))));
+            } else {
+                runOnUiThread(() -> avgPaceTextView.setText("--'--\""));
+            }
         } else {
             runOnUiThread(() -> avgPaceTextView.setText("--'--\""));
         }
     }
+
     /**
      * Calculate MET value based on average pace.
      *
@@ -510,9 +550,9 @@ public class NoMapActivity extends AppCompatActivity{
      */
     private double getDynamicMetValue(double avgPace) {
         // Example: Adjust MET value based on avgPace (higher pace reduces metValue)
-        if (avgPace < 6) { // Fast pace (running)
+        if (avgPace < 6 && avgPace > 0) { // Fast pace (running)
             return 10.0; // Higher MET for running
-        } else if (avgPace < 9) { // Medium pace (jogging)
+        } else if (avgPace < 9 && avgPace > 6) { // Medium pace (jogging)
             return 8.0; // Medium MET for jogging
         } else { // Slow pace (walking)
             return 4.0; // Lower MET for walking
@@ -581,6 +621,7 @@ public class NoMapActivity extends AppCompatActivity{
 
         return address;
     }
+
     /**
      * Shows the last tracked path on the map with start and end markers.
      */
@@ -722,6 +763,7 @@ public class NoMapActivity extends AppCompatActivity{
             }
         }
     }
+
     /**
      * Shows a confirmation dialog to exit the current running activity.
      * - "Yes" will finish the activity and navigate to the WorkoutFragment.
@@ -763,6 +805,7 @@ public class NoMapActivity extends AppCompatActivity{
 
         negativeButton.setOnClickListener(v -> dialog.dismiss());
     }
+
     /**
      * BroadcastReceiver to receive location and step updates from the service.
      */
@@ -793,6 +836,7 @@ public class NoMapActivity extends AppCompatActivity{
             currentStepCount = stepCount;
         });
     }
+
     /**
      * Called when the back button is pressed
      */
