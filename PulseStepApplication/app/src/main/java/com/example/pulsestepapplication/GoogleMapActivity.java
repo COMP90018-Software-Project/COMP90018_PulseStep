@@ -169,11 +169,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             seconds %= 60;
             timerTextView.setText(String.format("%02d:%02d", minutes, seconds));
             elapsedTime = millis;
-
-            // Update average pace in non-map mode
-            if (!isMapMode) {
-                updateAvgPaceNoMapMode();
-            }
             timerHandler.postDelayed(this, 1000);
         }
     };
@@ -947,7 +942,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             if (totalDistanceKm > realDistance && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
                 double elapsedTimeInMinutes = elapsedTime / 60000.0;
-                double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
+                double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, avgPace);
                 runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
                 // Check if the pace is within a reasonable range
                 if (avgPace >= 1.0 && avgPace <= 30.0) {
@@ -994,39 +989,36 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Update average pace in non-map mode based on steps and time
+     * Calculate MET value based on average pace.
+     *
+     * @param avgPace The average pace in minutes per kilometer.
+     * @return Adjusted MET value.
      */
-    @SuppressLint("DefaultLocale")
-    private void updateAvgPaceNoMapMode() {
-        // Assuming average step length is 0.75 meters
-        float averageStepLength = 0.75f;
-        float distance = currentStepCount * averageStepLength; // in meters
-        double distanceKm = distance / 1000.0;
-        double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
-        if (distanceKm > realDistance && totalTimeMinutes > 0) {
-            double avgPace = totalTimeMinutes / distanceKm;
-            double elapsedTimeInMinutes = elapsedTime / 60000.0;
-            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-            runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
-            // Update avgPaceTextView
-            runOnUiThread(() -> avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60))));
-        } else {
-            runOnUiThread(() -> avgPaceTextView.setText("--'--\""));
+    private double getDynamicMetValue(double avgPace) {
+        // Example: Adjust MET value based on avgPace (higher pace reduces metValue)
+        if (avgPace < 6) { // Fast pace (running)
+            return 10.0; // Higher MET for running
+        } else if (avgPace < 9) { // Medium pace (jogging)
+            return 8.0; // Medium MET for jogging
+        } else { // Slow pace (walking)
+            return 4.0; // Lower MET for walking
         }
     }
 
     /**
-     * Calculate the calories burned based on weight, duration, and MET value
+     * Calculate the calories burned based on weight, duration, and dynamic MET value
      *
      * @param weight            User weight in kilograms
      * @param durationInMinutes Duration of activity in minutes
-     * @param metValue          MET value of the activity
+     * @param avgPace           The average pace in minutes per kilometer.
      * @return Calories burned
      */
-    private double calculateCalories(double weight, double durationInMinutes, double metValue) {
+    private double calculateCalories(double weight, double durationInMinutes, double avgPace) {
+        double metValue = getDynamicMetValue(avgPace);
         double durationInHours = durationInMinutes / 60.0;
         return metValue * weight * durationInHours;
     }
+
 
     /**
      * Convert LatLng point to a readable address string
