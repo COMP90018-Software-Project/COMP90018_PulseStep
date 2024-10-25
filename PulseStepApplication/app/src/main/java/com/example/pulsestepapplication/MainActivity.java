@@ -19,7 +19,10 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.pulsestepapplication.databinding.ActivityMainBinding;
 import com.google.firebase.auth.FirebaseAuth;
+<<<<<<< Updated upstream
 import com.google.firebase.auth.FirebaseUser;
+=======
+>>>>>>> Stashed changes
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 

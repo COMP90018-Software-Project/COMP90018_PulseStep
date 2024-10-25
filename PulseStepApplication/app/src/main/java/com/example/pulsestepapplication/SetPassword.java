@@ -22,6 +22,11 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SetPassword extends AppCompatActivity {
 
@@ -31,6 +36,7 @@ public class SetPassword extends AppCompatActivity {
     private Button continueButton;
     private ImageButton backButton;
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     private ProgressDialog progressDialog;
 
     @Override
@@ -40,6 +46,7 @@ public class SetPassword extends AppCompatActivity {
 
         // 初始化 Firebase Auth
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // 初始化 UI 元素
         newPasswordEditText = findViewById(R.id.newPasswordEditText);
@@ -111,6 +118,21 @@ public class SetPassword extends AppCompatActivity {
                                 progressDialog.dismiss();
 
                                 if (task.isSuccessful()) {
+                                    FirebaseUser currentUser = mAuth.getCurrentUser();
+                                    String userUID = currentUser.getUid();
+                                    Map<String, Object> userDetails = new HashMap<>();
+                                    userDetails.put("fullName", fullName);
+                                    userDetails.put("email", email);
+                                    userDetails.put("birthday", "01/01/2000");
+                                    userDetails.put("height", "170");
+                                    userDetails.put("weight", "60");
+                                    userDetails.put("gender", "Other");
+                                    userDetails.put("appleHealthEnabled", "false");
+                                    userDetails.put("avatarUrl", "default_avatar.png");
+                                    // Default daily target for user
+                                    userDetails.put("target", 1);
+                                    db.collection("users").document(userUID).set(userDetails);
+
                                     Toast.makeText(SetPassword.this, "Account created.", Toast.LENGTH_SHORT).show();
                                     // 跳转到下一个页面或者主界面
                                     Intent intent = new Intent(SetPassword.this, PersonalDetails.class);
