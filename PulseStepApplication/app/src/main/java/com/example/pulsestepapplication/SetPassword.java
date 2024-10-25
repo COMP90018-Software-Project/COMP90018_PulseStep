@@ -57,6 +57,7 @@ public class SetPassword extends AppCompatActivity {
 
         // 初始化 Firebase Auth
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // 初始化 UI 元素
         newPasswordEditText = findViewById(R.id.newPasswordEditText);
@@ -137,7 +138,7 @@ public class SetPassword extends AppCompatActivity {
 
             // Check if user agree the term
             if (!termCheckbox.isChecked()) {
-                Toast.makeText(SetPassword.this, "You must agree to the Terms of Service & Privacy Policy to continue.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SetPassword.this, "You must agree to the Terms of Service and Privacy Policy to continue.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
