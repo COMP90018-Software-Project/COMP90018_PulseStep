@@ -134,7 +134,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
-    private static final Double realDistance = 0.05;
+    private static final Double realDistance = 0.02;
     private static final double metValue = 8.0;
     private static final int LOCATION_TIMEOUT = 10000; // Location timeout in milliseconds
 
