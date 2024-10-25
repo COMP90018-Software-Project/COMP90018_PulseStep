@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -19,7 +20,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 public class JumpTrackingService extends Service {
 
     private static final String TAG = "JumpTrackingService";
-    private static final int NOTIFICATION_ID = 1;
+    private static final int NOTIFICATION_ID = 2;
     public static final String CHANNEL_ID = "JumpTrackingChannel";
 
     private JumpCounter jumpCounter;
@@ -41,7 +42,7 @@ public class JumpTrackingService extends Service {
 
         // Acquire a WakeLock to keep the CPU running even when the screen is off
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "JumpTrackingService:WakeLock");
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "JumpTrackingService:WakeLock");
         wakeLock.acquire();
 
         Log.d(TAG, "Service onCreate");
@@ -72,7 +73,11 @@ public class JumpTrackingService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startForeground(NOTIFICATION_ID, getNotification());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, getNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH);
+        } else {
+            startForeground(NOTIFICATION_ID, getNotification());
+        }
         jumpCounter.startJumpTracking();
         return START_STICKY;
     }

@@ -28,8 +28,8 @@ public class JumpCounter {
 
     private final float minThreshold = 0.2f;
     private final float maxThreshold = 0.5f;
-    private final float finishThreshold = 3.2f;
-    private final float largeMovingRate = 1.15f;
+    private final float finishThreshold = 3.0f;
+    private final float largeMovingRate = 1.2f;
     private static final int JUMP_DETECTION_WINDOW_MS = 5; // Time window to detect a jump (ms)
     private long lastJumpTime = 0;
     private boolean is_initial = true;

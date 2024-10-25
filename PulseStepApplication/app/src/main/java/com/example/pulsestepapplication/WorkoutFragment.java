@@ -48,7 +48,9 @@ public class WorkoutFragment extends Fragment {
 
     // Permission request codes
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE_JUMP = 11;
     private static final int ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE = 2;
+    private static final int ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE_JUMP = 22;
     private static final float DISTANCE_THRESHOLD_METERS = 30000f; // 10 miles in meters
     private static final int BACKGROUND_PERMISSION_REQUEST_CODE = 3;
 
@@ -154,7 +156,7 @@ public class WorkoutFragment extends Fragment {
         Button jumpButton = rootView.findViewById(R.id.jump_button);
         jumpButton.setOnClickListener(v -> {
             // When the user clicks the Jump button, pass user info into intent, then start the jump activity
-            proceedToJumpActivity();
+            checkActivityRecognitionPermissionAndProceedToJump();
         });
 
         return rootView;
@@ -228,6 +230,16 @@ public class WorkoutFragment extends Fragment {
         }
     }
 
+    private void checkActivityRecognitionPermissionAndProceedToJump() {
+        if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+            // Request activity recognition permission
+            requestActivityRecognitionPermissionToJump();
+        } else {
+            // Activity recognition permission granted, continue to check location permissions
+            checkLocationPermissionAndProceedToJump();
+        }
+    }
+
     private void checkLocationPermissionAndProceed() {
         if (!hasLocationPermissions()) {
             // Request location permissions
@@ -238,6 +250,19 @@ public class WorkoutFragment extends Fragment {
         } else {
             // Location permissions granted, check if background location permission is needed
             checkLocationAndStartMapActivity();
+        }
+    }
+
+    private void checkLocationPermissionAndProceedToJump() {
+        if (!hasLocationPermissions()) {
+            // Request location permissions
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            }, LOCATION_PERMISSION_REQUEST_CODE_JUMP);
+        } else {
+            // Location permissions granted, check if background location permission is needed
+            checkLocationAndStartJumpActivity();
         }
     }
 
@@ -484,6 +509,10 @@ public class WorkoutFragment extends Fragment {
         requestPermissions(new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE);
     }
 
+    private void requestActivityRecognitionPermissionToJump() {
+        requestPermissions(new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE_JUMP);
+    }
+
     /**
      * Checks location permissions and retrieves the user's location to start the appropriate map activity.
      */
@@ -523,6 +552,43 @@ public class WorkoutFragment extends Fragment {
         }
     }
 
+
+    private void checkLocationAndStartJumpActivity() {
+        if (!hasLocationPermissions()) {
+            //showToast("Location permissions not granted 3");
+            proceedToJumpActivity(0.0,0.0);
+            return;
+        }
+
+        if (fusedLocationClient == null) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        }
+        Log.d(TAG, "Attempting to get last known location");
+
+        try {
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(location -> {
+                        if (location != null) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            Log.d(TAG, "Location obtained: " + latitude + ", " + longitude);
+                            proceedToJumpActivity(latitude, longitude);
+                        } else {
+                            Log.d(TAG, "Last known location is null; requesting new location");
+                            requestNewLocationForActivityToJump();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to get location", e);
+                        showToast("Unable to retrieve current location");
+                        proceedToJumpActivity(0.0,0.0);
+                    });
+        } catch (SecurityException e) {
+            Log.e(TAG, "Permission error", e);
+            proceedToJumpActivity(0.0,0.0);
+        }
+    }
+
     /**
      * Requests a new high-accuracy location from the location provider for starting map activity.
      */
@@ -548,6 +614,31 @@ public class WorkoutFragment extends Fragment {
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
             proceedToNoMapActivity();
+        }
+    }
+
+    private void requestNewLocationForActivityToJump() {
+        try {
+            fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
+                    .addOnSuccessListener(location -> {
+                        if (location != null) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            Log.d(TAG, "New location obtained: " + latitude + ", " + longitude);
+                            proceedToJumpActivity(latitude, longitude);
+                        } else {
+                            showToast("Unable to retrieve current location");
+                            proceedToJumpActivity(0.0,0.0);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to retrieve current location", e);
+                        showToast("Unable to retrieve current location");
+                        proceedToJumpActivity(0.0,0.0);
+                    });
+        } catch (SecurityException e) {
+            Log.e(TAG, "Permission error", e);
+            proceedToJumpActivity(0.0,0.0);
         }
     }
 
@@ -619,7 +710,7 @@ public class WorkoutFragment extends Fragment {
     /**
      * Starts the appropriate jump activity based on the user's info.
      */
-    private void proceedToJumpActivity() {
+    private void proceedToJumpActivity(Double latitude, Double longitude) {
         boolean locationGranted = hasLocationPermissions();
         boolean activityRecognitionGranted = hasActivityRecognitionPermission();
 
@@ -630,6 +721,9 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name", userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
+
+        intent.putExtra("LATITUDE", latitude);
+        intent.putExtra("LONGITUDE", longitude);
         startActivity(intent);
     }
 
@@ -683,6 +777,36 @@ public class WorkoutFragment extends Fragment {
                 // Show a message to the user
                 showToast("Activity recognition permission is required.");
 
+            }
+        }else if (requestCode == ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE_JUMP) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Activity recognition permission granted");
+                // Proceed to start the jump activity
+                checkLocationAndStartJumpActivity();
+            } else {
+                Log.d(TAG, "Activity recognition permission denied");
+                // Show a message to the user
+                showToast("Activity recognition permission is required.");
+
+            }
+        }else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE_JUMP) {
+            if (grantResults.length > 0 &&
+                    (grantResults[0] == PackageManager.PERMISSION_GRANTED ||
+                            grantResults[1] == PackageManager.PERMISSION_GRANTED)) {
+                Log.d(TAG, "Location permissions granted");
+                if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+                    requestActivityRecognitionPermissionToJump();
+                } else {
+
+                    checkLocationAndStartJumpActivity();
+                }
+                // Re-initialize the map now that permissions are granted
+                View view = getView();
+                if (view != null) {
+                    initializeMap(view, null);
+                }
+            } else {
+                proceedToJumpActivity(0.0,0.0);
             }
         }
     }
