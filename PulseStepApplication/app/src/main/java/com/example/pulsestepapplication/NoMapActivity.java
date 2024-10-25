@@ -448,7 +448,11 @@ public class NoMapActivity extends AppCompatActivity {
         timerHandler.removeCallbacks(timerRunnable);
         btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.start));
         btnShow.setVisibility(View.VISIBLE);
-
+        Glide.with(this)
+                .asBitmap()
+                .load(R.drawable.run)
+                .into(runImageView);
+        runImageView.setVisibility(View.VISIBLE);
         // Send broadcast to service to pause step counting
         Intent pauseIntent = new Intent(StepTrackingService.ACTION_PAUSE_STEP_COUNTING);
         LocalBroadcastManager.getInstance(this).sendBroadcast(pauseIntent);
