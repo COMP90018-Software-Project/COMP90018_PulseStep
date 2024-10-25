@@ -39,6 +39,7 @@ import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.maps.model.LatLng;
+import pl.droidsonroids.gif.GifDrawable;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -79,7 +80,7 @@ public class JumpActivity extends AppCompatActivity {
     private boolean isFirstStart = true;
     private float totalJumpCount = 0;
     private int currentJumpCount = 0;
-
+    private GifDrawable gifDrawable;
     private long startTime = 0L;
     private long pauseTime = 0L;
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
@@ -118,6 +119,7 @@ public class JumpActivity extends AppCompatActivity {
     };
 
     private TextView cTextView;
+    private double avgJump;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -213,7 +215,13 @@ public class JumpActivity extends AppCompatActivity {
         backButton = findViewById(R.id.back_button_jump_page);
         btnShow = findViewById(R.id.jump_btn_show);
         jumpImageView = findViewById(R.id.jump_default_image_view);
-
+        try {
+            gifDrawable = new GifDrawable(getResources(), R.drawable.jump);
+            jumpImageView.setImageDrawable(gifDrawable);
+            gifDrawable.stop(); // Start the GIF animation
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         backButton.setOnClickListener(v -> popUpConfirmDialog());
     }
     @SuppressLint("ClickableViewAccessibility")
@@ -297,13 +305,14 @@ public class JumpActivity extends AppCompatActivity {
             // dynamic adjust image size
             // updateImageViewForMedia(true);
             // Switch to jump gif
-            Glide.with(this)
+
+            /*Glide.with(this)
                     .asGif()  // Ensure Glide knows to handle this as a GIF
                     .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
                             "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
                             "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // Use direct GIF link
                     .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
-                    .into(jumpImageView);  // Load into your ImageView
+                    .into(jumpImageView);  // Load into your ImageView*/
             long currentTime = System.currentTimeMillis();
             formattedStartTime = dateFormat.format(new Date(currentTime));
             startTracking();
@@ -311,27 +320,63 @@ public class JumpActivity extends AppCompatActivity {
         } else if (isPaused) {
             // updateImageViewForMedia(true);
             // Switch to jump gif
-            Glide.with(this)
+            /*Glide.with(this)
                     .asGif()  // Ensure Glide knows to handle this as a GIF
                     .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
                             "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
                             "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // Use direct GIF link
                     .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
-                    .into(jumpImageView);  // Load into your ImageView
+                    .into(jumpImageView);  // Load into your ImageView*/
             resumeTracking();
         } else {
             // updateImageViewForMedia(false);
             // Switch to jump PNG
-            Glide.with(this)
+            /*Glide.with(this)
                     .asBitmap()  // Load the first frame of the GIF as a static image
                     .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
                             "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
                             "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // 加载 PNG
-                    .into(jumpImageView);
+                    .into(jumpImageView);*/
             pauseTracking();
         }
     }
+    /**
+     * Load a GIF from local resources, adjust its playback speed based on the average pace,
+     * and set it to the provided ImageView.
+     *
+     * @param avgPace The average pace to determine the speed factor.
+     */
+    private void setGifWithSpeed(double avgPace) {
+        if (gifDrawable != null) {
+            float speedFactor = getGifSpeedFactor(avgPace);
+            Log.d(TAG, "Setting GIF speed with avgPace: " + avgPace + ", speedFactor: " + speedFactor);
+            gifDrawable.setSpeed(speedFactor);
+            if (!gifDrawable.isRunning()) {
+                gifDrawable.start();
+            }
+        } else {
+            Log.e(TAG, "gifDrawable is null in setGifWithSpeed()");
+        }
+    }
 
+    /**
+     * Get speed factor for GIF animation based on average pace.
+     *
+     * @param avgPace The average pace in minutes per kilometer.
+     * @return Speed factor
+     */
+    private float getGifSpeedFactor(double avgPace) {
+        if (avgPace <= 0) {
+            return 1.0f; // Default speed
+        }
+        Log.d("factor", String.valueOf(avgPace));
+        if (avgPace < 18) { // Fast pace (running)
+            return 2.0f; // Increase speed for fast running
+        } else if (avgPace < 20 && avgPace > 18) { // Medium pace (jogging)
+            return 1.5f; // Normal speed for jogging
+        } else { // Slow pace (walking)
+            return 1.0f; // Slow down for walking
+        }}
     private void updateImageViewForMedia(boolean isGif) {
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) jumpImageView.getLayoutParams();
         if (isGif) {
@@ -370,6 +415,11 @@ public class JumpActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             jumpCounter.startJumpTracking();
         }
+        // Start the GIF at default speed
+        if (gifDrawable != null) {
+            gifDrawable.setSpeed(1.0f); // Default speed
+            gifDrawable.start();
+        }
 
         // Start foreground service to keep tracking even in background
         Intent serviceIntent = new Intent(this, JumpTrackingService.class);
@@ -390,6 +440,11 @@ public class JumpActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             jumpCounter.startJumpTracking();
         }
+        // Start the GIF at default speed
+        if (gifDrawable != null) {
+            gifDrawable.setSpeed(1.0f); // Default speed
+            gifDrawable.start();
+        }
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
@@ -401,6 +456,10 @@ public class JumpActivity extends AppCompatActivity {
         btnShow.setVisibility(View.VISIBLE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             jumpCounter.stopJumpTracking();
+        }
+        // Stop the GIF
+        if (gifDrawable != null) {
+            gifDrawable.stop();
         }
 
         // Stop the foreground service when paused
@@ -465,12 +524,12 @@ public class JumpActivity extends AppCompatActivity {
      */
     private void showDefaultBackground() {
         // Display default image
-        Glide.with(this)
+        /*Glide.with(this)
                 .asBitmap()  // Load the first frame of the GIF as a static image
                 .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
                         "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
                         "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // 加载 PNG
-                .into(jumpImageView);
+                .into(jumpImageView);*/
         // Ensure step count and timer views are visible
         jumpTextView.setVisibility(View.VISIBLE);
         timerTextView.setVisibility(View.VISIBLE);
@@ -519,12 +578,13 @@ public class JumpActivity extends AppCompatActivity {
     private void updateAvgJumpCount() {
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
         if (totalTimeMinutes > 0) {
-            double avgJump = currentJumpCount / totalTimeMinutes;
+            avgJump = currentJumpCount / totalTimeMinutes;
             double elapsedTimeInMinutes = elapsedTime / 60000.0;
 
             double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
             cTextView.setText(String.format("%d", Math.round(caloriesBurned)));
             runOnUiThread(() -> avgJumpTextView.setText(String.format("%.2f", avgJump)));
+            setGifWithSpeed(avgJump);
         } else {
             runOnUiThread(() -> avgJumpTextView.setText("0.00"));
         }
@@ -585,5 +645,17 @@ public class JumpActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         popUpConfirmDialog();
+    }
+    /**
+     * Stops the service when the activity is destroyed.
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //musicPlayer.release(); // Release resources when activity is destroyed
+        if (gifDrawable != null) {
+            gifDrawable.recycle();
+            gifDrawable = null;
+        }
     }
 }
