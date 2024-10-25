@@ -1,83 +1,3 @@
-//package com.example.pulsestepapplication;
-//
-//import android.app.Activity;
-//import android.content.Context;
-//import android.hardware.Sensor;
-//import android.hardware.SensorEventListener;
-//import android.hardware.SensorManager;
-//import android.util.Log;
-//
-//public class JumpCounter {
-//
-//    private static final String TAG = "JumpCounter";
-//    private static final int REQUEST_CODE = 10086; // Permission request code
-//
-//    private final SensorManager sensorManager;
-//    private final Sensor jumpDetectorSensor;
-//    private final Activity activity;
-//    private final Context context;
-//
-//    private SensorEventListener stepListener;
-//    private int jumpCount = 0; // Steps counted in the current tracking session
-//    private int savedJumpCount = 0; // Total saved steps across sessions
-//    private boolean isTrackingJumps = false;
-//
-//    private JumpCounterListener jumpCounterListener;
-//    /**
-//     * Constructor initializes the sensor manager and step detector sensor.
-//     *
-//     * @param activity The activity context.
-//     */
-//    public JumpCounter(Activity activity) {
-//        this.activity = activity;
-//        this.context = activity;
-//        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-//        jumpDetectorSensor = sensorManager.getDefaultSensor();
-//
-//        if (jumpDetectorSensor == null) {
-//            Log.e(TAG, "Jump detector sensor is not available!");
-//            return;
-//        }
-//
-//        initializeJumpListener();
-//    }
-//
-//    private void initializeJumpListener() {
-//    }
-//
-//    public void unregisterListener() {
-//    }
-//
-//    public void registerListener() {
-//    }
-//
-//    public void startJumpTracking() {
-//    }
-//
-//    public void stopJumpTracking() {
-//    }
-//
-//    /**
-//     * Sets the listener to receive step count updates.
-//     *
-//     * @param listener The StepCounterListener implementation.
-//     */
-//    public void setJumpCounterListener(JumpCounter.JumpCounterListener listener) {
-//        if (listener != null) {
-//            this.jumpCounterListener = listener;
-//        } else {
-//            Log.e(TAG, "Passed StepCounterListener is null");
-//        }
-//    }
-//
-//
-//    /**
-//     * Listener interface for step count updates.
-//     */
-//    public interface JumpCounterListener {
-//        void onJumpCountUpdated(int jumpCount);
-//    }
-//}
 package com.example.pulsestepapplication;
 
 import android.app.Activity;
@@ -95,7 +15,7 @@ public class JumpCounter {
 
     private final SensorManager sensorManager;
     private final Sensor accelerometerSensor;
-    private final Activity activity;
+//    private final Activity activity;
     private final Context context;
 
     private SensorEventListener jumpListener;
@@ -105,27 +25,23 @@ public class JumpCounter {
 
     private JumpCounterListener jumpCounterListener;
 
-    // Thresholds for detecting jumps (adjust as needed)
-    private final float minThreshold = 0.10f;
-    private final float maxThreshold = 0.4f;
-    private static final float JUMP_THRESHOLD_GRAVITY = 4f;  // Gravity threshold to consider it a jump
-    private static final int JUMP_DETECTION_WINDOW_MS = 10; // Time window to detect a jump (ms)
+
+    private final float minThreshold = 0.2f;
+    private final float maxThreshold = 0.5f;
+    private final float finishThreshold = 3.2f;
+    private final float largeMovingRate = 1.15f;
+    private static final int JUMP_DETECTION_WINDOW_MS = 5; // Time window to detect a jump (ms)
     private long lastJumpTime = 0;
     private boolean is_initial = true;
-    boolean is_this_jump_finished = true;
+    boolean isJumpFinished = true;
 
-    private float x_last = 0f;
-    private float y_last = 0f;
-    private float z_last = 0f;
+    private float xInit = 0f;
+    private float yInit = 0f;
+    private float zInit = 0f;
+    private float initAcc = 0f;
 
-    /**
-     * Constructor initializes the sensor manager and accelerometer sensor.
-     *
-     * @param activity The activity context.
-     */
-    public JumpCounter(Activity activity) {
-        this.activity = activity;
-        this.context = activity;
+    public JumpCounter(Context context) {
+        this.context = context;
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
@@ -137,57 +53,61 @@ public class JumpCounter {
         initializeJumpListener();
     }
 
+
     private void initializeJumpListener() {
 
         jumpListener = new SensorEventListener() {
             @Override
-            public void onSensorChanged(SensorEvent event) {
-                // Get acceleration values on x, y, and z axes
-                float x = event.values[0];
-                float y = event.values[1];
-                float z = event.values[2];
+            public void onSensorChanged(SensorEvent sensorEvent) {
+                if (!isTrackingJumps) return;
 
+                float x = sensorEvent.values[0];
+                float y = sensorEvent.values[1];
+                float z = sensorEvent.values[2];
 
                 if (is_initial) {
                     is_initial = false;
-                    x_last = x;
-                    y_last = y;
-                    z_last = z;
-                    is_this_jump_finished = true;
+                    xInit = x;
+                    yInit = y;
+                    zInit = z;
+                    isJumpFinished = true;
                 }
 
-                // Calculate the total acceleration value including gravity
 
                 float nowAcc = (float) Math.sqrt(x * x + y * y + z * z);
-                float pastAcc = (float) Math.sqrt(x_last * x_last + y_last * y_last + z_last * z_last);
+                // float pastAcc = (float) Math.sqrt(xLast * xLast + yLast * yLast + zLast * zLast);
 
-                //TODO： 需增加检测趋势，以及检测是否为跳跃的条件，在跳跃时加速度持续变化时现在每过一个threadhood都会计数
-                // 10.24更新：采用了全新的老算法：检测波峰波谷，然后除以2，这样可以减少误差
-                // 同时更新：检测到超过上限值时认为完成了此跳跃，然后再次检测到下限值时认为完成了此跳跃
-                float gForce_diff = (float) Math.abs(nowAcc - pastAcc);
+                if (nowAcc < largeMovingRate * 9.8f) {
+                    // Update the initial gravity vector components
+                    xInit = 0.9f * xInit + 0.1f * x;
+                    yInit = 0.9f * yInit + 0.1f * y;
+                    zInit = 0.9f * zInit + 0.1f * z;
+                }
 
-                if (gForce_diff < maxThreshold && gForce_diff > minThreshold && is_this_jump_finished) {
+                // Normalize xInit, yInit, zInit to ensure their magnitude equals 9.8
+                float magnitude = (float) Math.sqrt(xInit * xInit + yInit * yInit + zInit * zInit);
+                if (magnitude != 0) {
+                    float scale = 9.8f / magnitude;
+                    xInit *= scale;
+                    yInit *= scale;
+                    zInit *= scale;
+                }
+
+                float initDiffAcc = (float) Math.sqrt((xInit-x)*(xInit-x) + (yInit-y)*(yInit-y) + (zInit-z)*(zInit-z));
+                if (initDiffAcc > finishThreshold * 9.8f) {
+                    isJumpFinished = true;
+                }
+
+
+                // float gForceDiff = Math.abs(nowAcc - pastAcc);
+
+                if (initDiffAcc < maxThreshold*9.8f && initDiffAcc > minThreshold*9.8f && isJumpFinished) {
                     jumpCount++;
-                    is_this_jump_finished = false;
+                    isJumpFinished = false;
                     if (jumpCounterListener != null) {
                         jumpCounterListener.onJumpCountUpdated(jumpCount);
                     }
                     Log.d(TAG, "Jump detected! Total jumps (/2): " + jumpCount);
-                }
-                // Check if the gForce exceeds the jump threshold and ensure there's enough time between jumps
-
-                long now = System.currentTimeMillis();
-
-                if (now - lastJumpTime > JUMP_DETECTION_WINDOW_MS) {
-                    x_last = x;
-                    y_last = y;
-                    z_last = z;
-
-                    lastJumpTime = now;
-
-                    if (gForce_diff > maxThreshold) {
-                        is_this_jump_finished = true;
-                    }
                 }
             }
 
@@ -198,7 +118,7 @@ public class JumpCounter {
             }
         };
     }
-    
+
     public void unregisterListener() {
         if (isTrackingJumps && jumpListener != null) {
             sensorManager.unregisterListener(jumpListener, accelerometerSensor);
