@@ -466,7 +466,7 @@ public class NoMapActivity extends AppCompatActivity{
         if (totalDistanceKm > realDistance && totalTimeMinutes > 0) {
             double avgPace = totalTimeMinutes / totalDistanceKm;  // Calculate average pace, in minutes/kilometer
             double elapsedTimeInMinutes = elapsedTime / 60000.0;  // Convert to minutes
-            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);  // Calculate calories burned
+            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, avgPace);  // Calculate calories burned
 
             runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
 
@@ -494,7 +494,7 @@ public class NoMapActivity extends AppCompatActivity{
         if (distanceKm > realDistance && totalTimeMinutes > 0) {
             double avgPace = totalTimeMinutes / distanceKm;
             double elapsedTimeInMinutes = elapsedTime / 60000.0;
-            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
+            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, avgPace);
             runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
             // Update avgPaceTextView
             runOnUiThread(() -> avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60))));
@@ -502,19 +502,37 @@ public class NoMapActivity extends AppCompatActivity{
             runOnUiThread(() -> avgPaceTextView.setText("--'--\""));
         }
     }
+    /**
+     * Calculate MET value based on average pace.
+     *
+     * @param avgPace The average pace in minutes per kilometer.
+     * @return Adjusted MET value.
+     */
+    private double getDynamicMetValue(double avgPace) {
+        // Example: Adjust MET value based on avgPace (higher pace reduces metValue)
+        if (avgPace < 6) { // Fast pace (running)
+            return 10.0; // Higher MET for running
+        } else if (avgPace < 9) { // Medium pace (jogging)
+            return 8.0; // Medium MET for jogging
+        } else { // Slow pace (walking)
+            return 4.0; // Lower MET for walking
+        }
+    }
 
     /**
-     * Calculates calories burned based on weight, duration, and MET value.
+     * Calculate the calories burned based on weight, duration, and dynamic MET value
      *
-     * @param weight           User's weight in kilograms.
-     * @param durationInMinutes Duration of activity in minutes.
-     * @param metValue         MET value of the activity.
-     * @return Calories burned.
+     * @param weight            User weight in kilograms
+     * @param durationInMinutes Duration of activity in minutes
+     * @param avgPace           The average pace in minutes per kilometer.
+     * @return Calories burned
      */
-    private double calculateCalories(double weight, double durationInMinutes, double metValue) {
+    private double calculateCalories(double weight, double durationInMinutes, double avgPace) {
+        double metValue = getDynamicMetValue(avgPace);
         double durationInHours = durationInMinutes / 60.0;
         return metValue * weight * durationInHours;
     }
+
     /**
      * Converts a LatLng point to a human-readable address string.
      *
