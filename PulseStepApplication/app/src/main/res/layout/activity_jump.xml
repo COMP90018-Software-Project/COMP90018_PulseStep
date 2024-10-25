@@ -165,7 +165,7 @@
                             android:id="@+id/jump_avg_text_view"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="--"
+                            android:text="--'--''"
                             android:textColor="@android:color/black"
                             android:textSize="20sp"
                             android:textStyle="bold" />
@@ -193,7 +193,7 @@
                             android:id="@+id/jump_calories_text_view"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="--"
                             android:textColor="@android:color/black"
                             android:textSize="20sp"
                             android:textStyle="bold" />
