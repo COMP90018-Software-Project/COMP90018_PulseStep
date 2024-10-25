@@ -34,7 +34,7 @@ import java.util.Locale;
 public class JumpActivity extends AppCompatActivity {
     private static final String TAG = "JumpRopeActivity";
     // private static final int realCount = 0;
-    private static final double metValue = 8.0;
+    private static final double metValue = 9.0; // around 0.14 - 0.2 /min => 9.0 /Hour
 
 
     private String userName;
@@ -278,12 +278,12 @@ public class JumpActivity extends AppCompatActivity {
         jumpCounter = new JumpCounter(this);
         jumpCounter.setJumpCounterListener(jumpCount -> {
             runOnUiThread(() -> {
-                if (jumpCount < 1) {
+                currentJumpCount = Math.max(0, jumpCount-1);
+                if (currentJumpCount < 1) {
                     jumpTextView.setText("0");
                 } else {
-                    jumpTextView.setText(String.valueOf(jumpCount));
+                    jumpTextView.setText(String.valueOf(currentJumpCount));
                 }
-                currentJumpCount = jumpCount;
             });
         });
     }
@@ -296,6 +296,13 @@ public class JumpActivity extends AppCompatActivity {
         super.onStart();
         if (isTracking && !isPaused && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && jumpCounter != null) {
             jumpCounter.registerListener();
+        }
+        // Start the foreground service to keep the tracking in background
+        Intent serviceIntent = new Intent(this, JumpTrackingService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
         }
     }
     @Override
@@ -345,6 +352,10 @@ public class JumpActivity extends AppCompatActivity {
         if (isTracking) {
             pauseTracking();
         }
+
+//        // stopService(new Intent(this, JumpTrackingService.class));
+//        Intent serviceIntent = new Intent(this, JumpTrackingService.class);
+//        stopService(serviceIntent);
     }
 
     /**

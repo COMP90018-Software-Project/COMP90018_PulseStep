@@ -37,6 +37,8 @@
     <!-- Add new permission declarations -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
 
     <application
         android:allowBackup="true"
@@ -87,6 +89,7 @@
         <service
             android:name=".StepTrackingService"
             android:exported="false"
+<<<<<<< Updated upstream
             android:foregroundServiceType="health" />
 
         <!-- Activity Declarations -->
@@ -94,6 +97,33 @@
             android:exported="false"/>
         <activity android:name=".GoogleMapActivity"
             android:exported="false"/>
+=======
+            android:foregroundServiceType="health" /> <!-- Activity Declarations -->
+        <service
+            android:name=".JumpTrackingService"
+            android:exported="false"
+            android:foregroundServiceType="health"/>
+        <activity
+            android:name=".LikeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".RankRowDetail"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".EditPersonalInfo"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".NoMapActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".GoogleMapActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+>>>>>>> Stashed changes
         <activity
             android:name=".ResetPassword"
             android:exported="false"
