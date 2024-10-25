@@ -1,14 +1,23 @@
 package com.example.pulsestepapplication;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.graphics.Typeface;
+import android.graphics.Color;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
+import android.text.method.LinkMovementMethod;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +39,8 @@ public class SetPassword extends AppCompatActivity {
     private TextView userInfoText, signInText;
     private Button continueButton;
     private ImageButton backButton;
+    private CheckBox termCheckbox;
+    private TextView termLink;
     private FirebaseAuth mAuth;
     private ProgressDialog progressDialog;
 
@@ -50,6 +61,35 @@ public class SetPassword extends AppCompatActivity {
         signInText = findViewById(R.id.signInText);
         continueButton = findViewById(R.id.continueButton);
         backButton = findViewById(R.id.backButton);
+        termCheckbox = findViewById(R.id.term_checkbox);
+        termLink = findViewById(R.id.termOfUse);
+
+        // 设置TextView部分文字为可点击的链接
+        String termLinkText = getString(R.string.term_of_use);
+        SpannableString termSpannableString = new SpannableString(termLinkText);
+
+        // 设置 "Terms of Service" 的点击事件
+        ClickableSpan termsSpan = new ClickableSpan() {
+            @Override
+            public void onClick(@NonNull View widget) {
+                showTermDialog(SetPassword.this, "Terms of Service & Privacy Policy", String.valueOf(Html.fromHtml(getString(R.string.term_content))));
+            }
+        };
+
+        // 设置颜色为蓝色
+        ForegroundColorSpan blueColorSpan = new ForegroundColorSpan(Color.BLUE);
+
+        // 找到文字中的特定部分位置
+        int termsStart = termLinkText.indexOf("Terms of Service & Privacy Policy");
+        int termsEnd = termsStart + "Terms of Service & Privacy Policy".length();
+
+        // 为 "Terms of Service" 设置可点击和颜色
+        termSpannableString.setSpan(termsSpan, termsStart, termsEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        termSpannableString.setSpan(blueColorSpan, termsStart, termsEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        // 设置TextView的内容为SpannableString，并启用点击事件
+        termLink.setText(termSpannableString);
+        termLink.setMovementMethod(LinkMovementMethod.getInstance());
 
         // 初始化 ProgressDialog
         progressDialog = new ProgressDialog(this);
@@ -89,6 +129,12 @@ public class SetPassword extends AppCompatActivity {
             String newPassword = newPasswordEditText.getText().toString();
             String confirmPassword = confirmPasswordEditText.getText().toString();
 
+            // Check if user agree the term
+            if (!termCheckbox.isChecked()) {
+                Toast.makeText(SetPassword.this, "You must agree to the Terms of Service & Privacy Policy to continue.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             // 校验两个密码是否一致
             if (newPassword.isEmpty()) {
                 newPasswordInputLayout.setError("Password cannot be empty");
@@ -126,5 +172,20 @@ public class SetPassword extends AppCompatActivity {
                         });
             }
         });
+    }
+
+    // 显示滚动对话框的方法
+    private void showTermDialog(Context context, String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(title);
+
+        // 使用布局填充器创建可滚动对话框
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_scrollable, null);
+        TextView dialogText = dialogView.findViewById(R.id.dialog_text);
+        dialogText.setText(message);
+
+        builder.setView(dialogView);
+        builder.setPositiveButton("Close", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 }
