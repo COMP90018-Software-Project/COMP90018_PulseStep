@@ -1081,19 +1081,13 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         formattedFinishTime = dateFormat.format(new Date(currentTime));
         // Calculate distance
         float distanceInKm;
-        if (isMapMode) {
-            distanceInKm = totalDistance / 1000.0f;
-        } else {
-            // Non-map mode, calculate distance based on steps
-            float averageStepLength = 0.75f;
-            float distance = currentStepCount * averageStepLength; // in meters
-            distanceInKm = distance / 1000.0f;
-        }
+        distanceInKm = totalDistance / 1000.0f;
 
         String timeElapsed = timerTextView.getText().toString();
         int stepCount = currentStepCount;
+        double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
+        String avg = (distanceInKm <= 0.01) ? "--'--''" : String.valueOf(totalTimeMinutes / distanceInKm);
 
-        String avg = avgPaceTextView.getText().toString();
         // Get address of the last location
         String address = "Unknown location";
         if (isMapMode && initialLatitude != 0.0 && initialLongitude != 0.0) {
@@ -1109,10 +1103,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         intent.putExtra("address", address);
         intent.putExtra("stepCount", stepCount);
         intent.putExtra("calories", cTextView.getText().toString());
-        intent.putExtra("MODE", isMapMode ? "MAP" : "NO_MAP");
+        intent.putExtra("MODE", "MAP");
         intent.putExtra("startDateTime", formattedStartTime);
-        intent.putExtra("finishDateTime", formattedFinishTime);
+        intent.putExtra("finishDateTime", totalDistance);
 
+        Log.d("1111111111111111", String.valueOf(distanceInKm));
+        Log.d("2222222222222", String.valueOf(distanceInKm));
         if (isMapMode) {
             // Collect trajectory points
             ArrayList<LatLng> trajectoryList = new ArrayList<>(trajectory);

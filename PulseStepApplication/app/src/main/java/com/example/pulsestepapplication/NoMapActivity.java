@@ -67,7 +67,7 @@ import java.util.Locale;
 
 public class NoMapActivity extends AppCompatActivity {
     // Constants
-    private static final String TAG = "GoogleMapActivity";
+    private static final String TAG = "NoMapActivity";
     private static final int PERMISSION_REQUEST_CODE = 1001;
     private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1002;
     private static final float MOVE_ZOOM_LEVEL = 17f;
@@ -119,6 +119,12 @@ public class NoMapActivity extends AppCompatActivity {
     private long pauseTime = 0L;
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private long elapsedTime;
+    private boolean startRealTimeUpdate=false;
+    private volatile boolean isStepCountingActive = false;
+    private Handler stepCountHandler = new Handler(Looper.getMainLooper());
+    private Runnable stepCountTimeoutRunnable;
+    private static final long STEP_COUNT_TIMEOUT = 2000; // 2 seconds
+    private GifDrawable gifDrawable;
 
     // music player
     private MusicPlayer musicPlayer;
@@ -135,8 +141,7 @@ public class NoMapActivity extends AppCompatActivity {
             timerTextView.setText(String.format("%02d:%02d", minutes, seconds));
             elapsedTime = millis;
 
-            // Update average pace in No-map mode
-            if (!isMapMode) {
+            if (!isStepCountingActive) {
                 updateAvgPaceNoMapMode();
             }
             timerHandler.postDelayed(this, 1000);
@@ -204,7 +209,7 @@ public class NoMapActivity extends AppCompatActivity {
      */
     private void setupActivity() {
         // Initialize location services if in Map mode
-        showDefaultMap();
+        //showDefaultMap();
 
         // Set up button listeners
         setupButtonListeners();
@@ -245,6 +250,13 @@ public class NoMapActivity extends AppCompatActivity {
                 musicPlayer.mute();
             }
         });
+        try {
+            gifDrawable = new GifDrawable(getResources(), R.drawable.run);
+            runImageView.setImageDrawable(gifDrawable);
+            gifDrawable.stop(); // Start the GIF animation
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         // Hide the map initially
         // Set click listener for the back button
@@ -363,10 +375,8 @@ public class NoMapActivity extends AppCompatActivity {
      */
     private void handleStartStopButtonClick() {
         if (isTracking) {
-            setGifWithSpeed(avgPace);
             pauseTracking();
         } else {
-            setGifWithSpeed(avgPace);
             resumeTracking();
         }
     }
@@ -378,19 +388,15 @@ public class NoMapActivity extends AppCompatActivity {
      * @param avgPace The average pace to determine the speed factor.
      */
     private void setGifWithSpeed(double avgPace) {
-        try {
-            // Load GIF from local resources
-            GifDrawable gifDrawable = new GifDrawable(getResources(), R.drawable.run);
-
-            // Adjust GIF speed based on avgPace
+        if (gifDrawable != null) {
             float speedFactor = getGifSpeedFactor(avgPace);
+            Log.d(TAG, "Setting GIF speed with avgPace: " + avgPace + ", speedFactor: " + speedFactor);
             gifDrawable.setSpeed(speedFactor);
-
-            // Set the GIF to the ImageView
-            runImageView.setImageDrawable(gifDrawable);
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            if (!gifDrawable.isRunning()) {
+                gifDrawable.start();
+            }
+        } else {
+            Log.e(TAG, "gifDrawable is null in setGifWithSpeed()");
         }
     }
 
@@ -401,14 +407,17 @@ public class NoMapActivity extends AppCompatActivity {
      * @return Speed factor (e.g., 1.0 for normal, < 1.0 for faster, > 1.0 for slower).
      */
     private float getGifSpeedFactor(double avgPace) {
-        if (avgPace < 6 && avgPace > 0) { // Fast pace (running)
+        if (avgPace <= 0) {
+            return 1.0f; // Default speed
+        }
+        Log.d("factor", String.valueOf(avgPace));
+        if (avgPace < 18) { // Fast pace (running)
             return 2.0f; // Increase speed for fast running
-        } else if (avgPace < 9 && avgPace > 6) { // Medium pace (jogging)
+        } else if (avgPace < 20 && avgPace > 18) { // Medium pace (jogging)
             return 1.5f; // Normal speed for jogging
         } else { // Slow pace (walking)
             return 1.0f; // Slow down for walking
-        }
-    }
+        }}
 
 
     /**
@@ -433,10 +442,17 @@ public class NoMapActivity extends AppCompatActivity {
         btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.pause));
         btnShow.setVisibility(View.GONE);
 
+        // Start the GIF at default speed
+        if (gifDrawable != null) {
+            gifDrawable.setSpeed(1.0f); // Default speed
+            gifDrawable.start();
+        }
+
         // Send broadcast to service to resume step counting
         Intent resumeIntent = new Intent(StepTrackingService.ACTION_RESUME_STEP_COUNTING);
         LocalBroadcastManager.getInstance(this).sendBroadcast(resumeIntent);
     }
+
 
     /**
      * Pauses the tracking process.
@@ -448,7 +464,10 @@ public class NoMapActivity extends AppCompatActivity {
         timerHandler.removeCallbacks(timerRunnable);
         btnPauseResume.setImageDrawable(getResources().getDrawable(R.drawable.start));
         btnShow.setVisibility(View.VISIBLE);
-
+        // Stop the GIF
+        if (gifDrawable != null) {
+            gifDrawable.stop();
+        }
         // Send broadcast to service to pause step counting
         Intent pauseIntent = new Intent(StepTrackingService.ACTION_PAUSE_STEP_COUNTING);
         LocalBroadcastManager.getInstance(this).sendBroadcast(pauseIntent);
@@ -490,7 +509,12 @@ public class NoMapActivity extends AppCompatActivity {
         if (!isTracking || isPaused) {
             return;
         }
+        isStepCountingActive = true;
 
+        // Reset the timeout handler
+        stepCountHandler.removeCallbacks(stepCountTimeoutRunnable);
+        stepCountTimeoutRunnable = () -> isStepCountingActive = false;
+        stepCountHandler.postDelayed(stepCountTimeoutRunnable, STEP_COUNT_TIMEOUT);
         // Assume an average step length in meters
         float averageStepLength = 0.75f;  // Modify step length based on personal data, in meters
         float distanceInMeters = stepCount * averageStepLength;  // Calculate total walking distance, in meters
@@ -498,7 +522,7 @@ public class NoMapActivity extends AppCompatActivity {
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);  // Total time, in minutes
 
         // Ensure distance and time are valid before calculating pace
-        if (totalDistanceKm > realDistance && totalTimeMinutes > 0) {
+        if (totalDistanceKm >= realDistance && totalTimeMinutes > 0) {
             avgPace = totalTimeMinutes / totalDistanceKm;  // Calculate average pace, in minutes/kilometer
             double elapsedTimeInMinutes = elapsedTime / 60000.0;  // Convert to minutes
             double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, avgPace);  // Calculate calories burned
@@ -520,12 +544,16 @@ public class NoMapActivity extends AppCompatActivity {
      */
     @SuppressLint("DefaultLocale")
     private void updateAvgPaceNoMapMode() {
+        if (isStepCountingActive) {
+            // Skip updating since step count updates are active
+            return;
+        }
         // Assume average step length in meters
         float averageStepLength = 0.75f;
         float distance = currentStepCount * averageStepLength; // in meters
         double distanceKm = distance / 1000.0;
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
-        if (distanceKm > realDistance && totalTimeMinutes > 0) {
+        if (distanceKm >= realDistance && totalTimeMinutes > 0) {
             avgPace = totalTimeMinutes / distanceKm;  // Calculate average pace, in minutes/kilometer
             double elapsedTimeInMinutes = elapsedTime / 60000.0;  // Convert to minutes
             double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, avgPace);  // Calculate calories burned
@@ -627,16 +655,18 @@ public class NoMapActivity extends AppCompatActivity {
      */
     private void showLastTrack() {
         // Calculate distance
-        float distanceInKm;
+        float distanceInKm = 0.0f;
         // In No-map mode, calculate distance based on steps
         float averageStepLength = 0.75f;
         float distance = currentStepCount * averageStepLength; // in meters
-        distanceInKm = distance / 1000.0f;
 
+        distanceInKm = distance / 1000.0f;
         String timeElapsed = timerTextView.getText().toString();
         int stepCount = currentStepCount;
 
-        String avg = avgPaceTextView.getText().toString();
+        double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
+        String avg = (distanceInKm <= 0.01) ? "--'--''" : String.valueOf(totalTimeMinutes / distanceInKm);
+
         // Get the last location's address
         String address = "Unknown Location";
         if (isMapMode && initialLatitude != 0.0 && initialLongitude != 0.0) {
@@ -645,13 +675,14 @@ public class NoMapActivity extends AppCompatActivity {
         }
         // Create Intent to RunSummaryActivity
         Intent intent = new Intent(NoMapActivity.this, RunSummaryActivity.class);
-        intent.putExtra("distance", distanceInKm);
+        intent.putExtra("distanceInKm", distanceInKm);
+        intent.putExtra("totalDistance", distanceInKm);
         intent.putExtra("avgPace", avg);
         intent.putExtra("time", timeElapsed);
         intent.putExtra("address", address);
         intent.putExtra("stepCount", stepCount);
         intent.putExtra("calories", cTextView.getText().toString());
-        intent.putExtra("MODE", isMapMode ? "MAP" : "NO_MAP");
+        intent.putExtra("MODE", "NO_MAP");
 
 
         startActivity(intent);
@@ -693,7 +724,6 @@ public class NoMapActivity extends AppCompatActivity {
 
         // Register BroadcastReceiver
         IntentFilter filter = new IntentFilter();
-        filter.addAction("com.example.pulsestepapplication.LOCATION_UPDATE");
         filter.addAction("com.example.pulsestepapplication.STEP_UPDATE");
         LocalBroadcastManager.getInstance(this).registerReceiver(trackingReceiver, filter);
 
@@ -815,8 +845,10 @@ public class NoMapActivity extends AppCompatActivity {
             if ("com.example.pulsestepapplication.STEP_UPDATE".equals(intent.getAction())) {
                 int stepCount = intent.getIntExtra("stepCount", 0);
                 Log.d(TAG, "Received step count update: " + stepCount);
+
                 updatePath(stepCount);
                 updateStepCount(stepCount);
+                startRealTimeUpdate=false;
             }
         }
     };
@@ -854,6 +886,10 @@ public class NoMapActivity extends AppCompatActivity {
         super.onDestroy();
         musicPlayer.release(); // Release resources when activity is destroyed
         stopTrackingService();
+        if (gifDrawable != null) {
+            gifDrawable.recycle();
+            gifDrawable = null;
+        }
         if (fusedLocationClient != null && locationCallback != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
