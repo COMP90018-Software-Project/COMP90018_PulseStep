@@ -3,6 +3,8 @@ package com.example.pulsestepapplication;
 import static com.example.pulsestepapplication.R.layout.activity_jump;
 
 import android.Manifest;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -15,9 +17,17 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -27,11 +37,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import com.bumptech.glide.Glide;
 
 public class JumpActivity extends AppCompatActivity {
     private static final String TAG = "JumpRopeActivity";
@@ -68,6 +84,20 @@ public class JumpActivity extends AppCompatActivity {
     private long pauseTime = 0L;
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private long elapsedTime;
+
+    private String formattedStartTime;
+    private String formattedFinishTime;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+    //Button
+    private boolean isLongPress = false;
+    private Handler handler = new Handler();
+    private ProgressBar progressBar;
+    private int progressStatus = 0;
+    private boolean isRunning = false;
+    private boolean hasTriggeredSuccess = false;
+
+    private final String popUpMessage = "Are you sure you want to leave the jump rope session? Your progress will not be saved.";
+
 
     private final Runnable timerRunnable = new Runnable() {
         @SuppressLint("DefaultLocale")
@@ -186,21 +216,145 @@ public class JumpActivity extends AppCompatActivity {
 
         backButton.setOnClickListener(v -> popUpConfirmDialog());
     }
-
+    @SuppressLint("ClickableViewAccessibility")
     private void setupButtonListeners() {
+        progressBar = findViewById(R.id.progressBar);
         btnPauseResume.setOnClickListener(v -> handlePauseResumeButtonClick());
+
+        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
+        circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
+        progressBar.setProgressDrawable(circularProgressDrawable);
+        btnShow.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (isRunning || hasTriggeredSuccess) {
+                        return true;
+                    }
+                    isRunning = true;
+                    progressBar.setVisibility(View.VISIBLE);
+                    progressStatus = 0;
+                    circularProgressDrawable.setProgress(progressStatus);
+                    if (!hasTriggeredSuccess) {
+                        ObjectAnimator scaleXDown = ObjectAnimator.ofFloat(btnShow, "scaleX", 1f, 1.3f);
+                        ObjectAnimator scaleYDown = ObjectAnimator.ofFloat(btnShow, "scaleY", 1f, 1.3f);
+                        AnimatorSet animatorSetDown = new AnimatorSet();
+                        animatorSetDown.playTogether(scaleXDown, scaleYDown);
+                        animatorSetDown.setDuration(2000);
+                        animatorSetDown.start();
+                    }
+                    new Thread(new Runnable() {
+                        public void run() {
+                            while (progressStatus < 100 && isRunning) {
+                                progressStatus += 1;
+                                handler.post(new Runnable() {
+                                    public void run() {
+                                        circularProgressDrawable.setProgress(progressStatus);
+                                    }
+                                });
+                                try {
+                                    Thread.sleep(20);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            if (progressStatus >= 100 && isRunning) {
+                                isLongPress = true;
+                                handler.post(() -> {
+                                    showJumpResult();
+                                    isRunning = false;
+                                    hasTriggeredSuccess = true;
+                                });
+                            }
+                        }
+                    }).start();
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (!hasTriggeredSuccess) {
+                        ObjectAnimator scaleXUp = ObjectAnimator.ofFloat(btnShow, "scaleX", 1.3f, 1f);
+                        ObjectAnimator scaleYUp = ObjectAnimator.ofFloat(btnShow, "scaleY", 1.3f, 1f);
+                        AnimatorSet animatorSetUp = new AnimatorSet();
+                        animatorSetUp.playTogether(scaleXUp, scaleYUp);
+                        animatorSetUp.setDuration(300);
+                        animatorSetUp.start();
+                    }
+                    isRunning = false;
+                    if (progressStatus < 100) {
+                        progressBar.setVisibility(View.GONE);
+                        handler.removeCallbacksAndMessages(null);
+                        progressStatus = 0;
+                    }
+                    break;
+            }
+            return true;
+        });
+
         btnShow.setOnClickListener(v -> showJumpResult());
     }
 
     private void handlePauseResumeButtonClick() {
         if (isFirstStart) {
+            // dynamic adjust image size
+            // updateImageViewForMedia(true);
+            // Switch to jump gif
+            Glide.with(this)
+                    .asGif()  // Ensure Glide knows to handle this as a GIF
+                    .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
+                            "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
+                            "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // Use direct GIF link
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
+                    .into(jumpImageView);  // Load into your ImageView
+            long currentTime = System.currentTimeMillis();
+            formattedStartTime = dateFormat.format(new Date(currentTime));
             startTracking();
             isFirstStart = false;
         } else if (isPaused) {
+            // updateImageViewForMedia(true);
+            // Switch to jump gif
+            Glide.with(this)
+                    .asGif()  // Ensure Glide knows to handle this as a GIF
+                    .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
+                            "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
+                            "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // Use direct GIF link
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
+                    .into(jumpImageView);  // Load into your ImageView
             resumeTracking();
         } else {
+            // updateImageViewForMedia(false);
+            // Switch to jump PNG
+            Glide.with(this)
+                    .asBitmap()  // Load the first frame of the GIF as a static image
+                    .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
+                            "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
+                            "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // 加载 PNG
+                    .into(jumpImageView);
             pauseTracking();
         }
+    }
+
+    private void updateImageViewForMedia(boolean isGif) {
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) jumpImageView.getLayoutParams();
+        if (isGif) {
+            // 如果是 GIF，设置高度为 600dp，且边距为 0
+            params.height = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, 500, jumpImageView.getResources().getDisplayMetrics());
+            params.setMargins(0, -150, 0, 0);  // 移除所有边距
+            // 使用 Glide 加载 GIF
+            Glide.with(this)
+                    .asGif()
+                    .load(R.drawable.jump_gif)
+                    .into(jumpImageView);
+        } else {
+            // 如果是 PNG，设置高度为 270dp，且恢复原始边距
+            params.height = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, 270, jumpImageView.getResources().getDisplayMetrics());
+            params.setMargins(0, 40, 0, 0);  // 恢复原始边距
+            // 使用 Glide 加载 PNG
+            Glide.with(this)
+                    .load(R.drawable.bg_jump)
+                    .into(jumpImageView);
+        }
+        jumpImageView.setLayoutParams(params);  // 应用更改
     }
 
     @SuppressLint({"MissingPermission", "UseCompatLoadingForDrawables"})
@@ -255,17 +409,44 @@ public class JumpActivity extends AppCompatActivity {
     }
 
     private void popUpConfirmDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(JumpActivity.this);
-        builder.setTitle("Confirm Exit");
-        builder.setMessage("Are you sure you want to exit the jump activity?");
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_custom, null);
+        builder.setView(dialogView);
         builder.setCancelable(false);
-        builder.setPositiveButton("Yes", (dialog, which) -> {
-            Intent intent = new Intent(JumpActivity.this, JumpSummaryActivity.class);
-            startActivity(intent);
+        AlertDialog dialog = builder.create();
+
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = window.getAttributes();
+            layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.8);
+
+            int offsetInDp = 100;
+            float scale = getResources().getDisplayMetrics().density;
+            layoutParams.y = (int) (offsetInDp * scale + 0.5f);
+            layoutParams.dimAmount = 0.9f;
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
+            window.setAttributes(layoutParams);
+        }
+
+        // Find the TextView in the dialog and set the dynamic message
+        TextView dialogMessage = dialogView.findViewById(R.id.dialog_message);
+        dialogMessage.setText(popUpMessage);  // Set the custom message
+
+        Button positiveButton = dialogView.findViewById(R.id.positive_button);
+        Button negativeButton = dialogView.findViewById(R.id.negative_button);
+
+        positiveButton.setOnClickListener(v -> {
+            Intent intent = new Intent();
+            setResult(RESULT_OK, intent);  // Set the result to pass back to MainActivity
             finish();
+            dialog.dismiss();
         });
-        builder.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
-        builder.create().show();
+
+        negativeButton.setOnClickListener(v -> dialog.dismiss());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
@@ -279,33 +460,60 @@ public class JumpActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Displays a default map image when location permission is not granted or in No-map mode.
+     */
     private void showDefaultBackground() {
-        jumpImageView.setImageResource(R.drawable.bg_jump);
-        jumpImageView.setVisibility(View.VISIBLE);
+        // Display default image
+        Glide.with(this)
+                .asBitmap()  // Load the first frame of the GIF as a static image
+                .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
+                        "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
+                        "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // 加载 PNG
+                .into(jumpImageView);
+        // Ensure step count and timer views are visible
         jumpTextView.setVisibility(View.VISIBLE);
         timerTextView.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Shows the speed gif end markers.
+     */
     private void showJumpResult() {
+        long currentTime = System.currentTimeMillis();
+        if(formattedStartTime == null){
+            formattedStartTime = dateFormat.format(new Date(currentTime));
+        }
+
+        formattedFinishTime = dateFormat.format(new Date(currentTime));
+
+        // Display the end markers
         String timeElapsed = timerTextView.getText().toString();
+
         String avg = avgJumpTextView.getText().toString() + " jumps/min";
 
+        // Get the last location's address
         String address = "Unknown Location";
         if (initialLatitude != 0.0 && initialLongitude != 0.0) {
             LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
             address = getAddressFromLatLng(initialLatLng);
         }
 
+        // Create Intent to RunSummaryActivity
         Intent intent = new Intent(JumpActivity.this, JumpSummaryActivity.class);
         intent.putExtra("jumpCount", currentJumpCount);
         intent.putExtra("avgSpeed", avg);
         intent.putExtra("time", timeElapsed);
         intent.putExtra("address", address);
         intent.putExtra("calories", cTextView.getText().toString());
+        intent.putExtra("startDateTime", formattedStartTime);
+        intent.putExtra("finishDateTime", formattedFinishTime);
 
+        // Start the RunSummaryActivity
         startActivity(intent);
         finish();
     }
+
 
     @SuppressLint("DefaultLocale")
     private void updateAvgJumpCount() {
@@ -368,5 +576,14 @@ public class JumpActivity extends AppCompatActivity {
         }
 
         return address;
+    }
+
+    /**
+     * Called when the back button is pressed
+     */
+    @SuppressLint("MissingSuperCall")
+    @Override
+    public void onBackPressed() {
+        popUpConfirmDialog();
     }
 }
