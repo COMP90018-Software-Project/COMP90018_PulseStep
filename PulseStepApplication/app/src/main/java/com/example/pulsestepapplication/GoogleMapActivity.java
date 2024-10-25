@@ -1145,10 +1145,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         LocalBroadcastManager.getInstance(this).registerReceiver(trackingReceiver, filter);
 
         if (isTracking && !isPaused) {
-            timerHandler.postDelayed(timerRunnable, 0);
             btnShow.setVisibility(View.GONE);
+            timerHandler.postDelayed(timerRunnable, 0);
+            if (!isBackgroundLocationPermissionGranted()) {
+                musicPlayer.pause();
+            }
         } else {
             btnShow.setVisibility(View.VISIBLE);
+            musicPlayer.pause();
         }
 
         // Check if the user has granted background location permission from the settings page
@@ -1172,6 +1176,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         super.onPause();
         // Unregister BroadcastReceiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(trackingReceiver);
+        // Pause the music player when the activity goes to the background
+        if (!isBackgroundLocationPermissionGranted()) {
+            if (isTracking && !isPaused) {
+                musicPlayer.pause();
+            }
+        }
     }
 
     /**
@@ -1189,6 +1199,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (isTracking && isMapMode && !isBackgroundLocationPermissionGranted()) {
             pauseTracking();
             Toast.makeText(this, "Tracking paused due to lack of background location permission.", Toast.LENGTH_SHORT).show();
+        }
+        // Pause the music player when the activity is completely hidden
+        if (!isBackgroundLocationPermissionGranted()) {
+            if (isTracking && !isPaused) {
+                musicPlayer.pause();
+            }
         }
     }
 
