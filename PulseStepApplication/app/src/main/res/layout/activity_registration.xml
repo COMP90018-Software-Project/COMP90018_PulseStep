@@ -62,7 +62,9 @@
             android:fontFamily="@font/overpass_medium"
             android:padding="15dp"
             android:textColorHint="@color/gray"
-            android:backgroundTint="@android:color/transparent" />
+            android:backgroundTint="@android:color/transparent"
+            android:inputType="text"
+            android:imeOptions="actionDone"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 
