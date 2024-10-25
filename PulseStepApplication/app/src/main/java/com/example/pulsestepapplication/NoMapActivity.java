@@ -790,6 +790,7 @@ public class NoMapActivity extends AppCompatActivity{
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        musicPlayer.release(); // Release resources when activity is destroyed
         stopTrackingService();
         if (fusedLocationClient != null && locationCallback != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
