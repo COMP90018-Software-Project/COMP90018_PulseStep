@@ -85,9 +85,14 @@ public class Settings extends AppCompatActivity {
         resetPasswordButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
+                FirebaseAuth mAuth;
+                // Initialize Firebase Auth
+                mAuth = FirebaseAuth.getInstance();
+                // Check if user is already logged in
+                FirebaseUser currentUser = mAuth.getCurrentUser();
                 // Finish the current activity and return to the RunSummaryActivity page
                 Intent intent = new Intent(Settings.this, ResetPassword.class);
-                intent.putExtra("userId", userId);
+                intent.putExtra("EMAIL", currentUser.getEmail());
                 startActivity(intent);
             }
         });
