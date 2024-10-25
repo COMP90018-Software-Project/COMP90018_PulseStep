@@ -94,6 +94,10 @@
             android:name=".StepTrackingService"
             android:exported="false"
             android:foregroundServiceType="health" /> <!-- Activity Declarations -->
+        <service
+            android:name=".JumpTrackingService"
+            android:exported="false"
+            android:foregroundServiceType="health"/>
         <activity
             android:name=".LikeActivity"
             android:exported="false"
