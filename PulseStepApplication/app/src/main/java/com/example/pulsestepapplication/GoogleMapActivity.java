@@ -613,6 +613,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                         new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},
                         BACKGROUND_LOCATION_REQUEST_CODE);
                 dialog.dismiss();
+
             }
         });
 
@@ -622,7 +623,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 hasDeniedBackgroundPermission = true;
                 sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, true).apply();
                 Toast.makeText(GoogleMapActivity.this,
-                        "Background location permission denied. The app will stop tracking in the background.",
+                        "The app will stop tracking in the background.",
                         Toast.LENGTH_LONG).show();
                 dialog.dismiss();
             }
@@ -1151,6 +1152,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             if (!isBackgroundLocationPermissionGranted()) {
                 musicPlayer.pause();
             }
+            if (isTracking && !isPaused && !musicPlayer.isPlaying()) {
+                musicPlayer.play();
+            }
         } else {
             btnShow.setVisibility(View.VISIBLE);
             musicPlayer.pause();
@@ -1240,6 +1244,9 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 hasDeniedBackgroundPermission = false;
                 sharedPreferences.edit().putBoolean(KEY_HAS_DENIED_BACKGROUND_PERMISSION, false).apply();
                 //resumeTracking();
+                if (isTracking && !isPaused && !musicPlayer.isPlaying()) {
+                    musicPlayer.play();
+                }
             } else {
                 // Background location permission denied
                 hasDeniedBackgroundPermission = true;
