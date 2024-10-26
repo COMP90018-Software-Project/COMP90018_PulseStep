@@ -243,7 +243,7 @@ public class JumpActivity extends AppCompatActivity {
             jumpImageView.setImageDrawable(gifDrawable);
             gifDrawable.stop(); // Start the GIF animation
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         backButton.setOnClickListener(v -> popUpConfirmDialog());
     }
@@ -297,7 +297,7 @@ public class JumpActivity extends AppCompatActivity {
                                 try {
                                     Thread.sleep(20);
                                 } catch (InterruptedException e) {
-                                    e.printStackTrace();
+                                    //e.printStackTrace();
                                 }
                             }
                             if (progressStatus >= 100 && isRunning) {
@@ -666,10 +666,10 @@ public class JumpActivity extends AppCompatActivity {
             }
         } catch (IOException e) {
             Log.e(TAG, "Geocoder IOException: " + e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Invalid latitude or longitude values.");
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         return address;

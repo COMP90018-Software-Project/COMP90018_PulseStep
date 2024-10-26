@@ -255,7 +255,7 @@ public class NoMapActivity extends AppCompatActivity {
             runImageView.setImageDrawable(gifDrawable);
             gifDrawable.stop(); // Start the GIF animation
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         // Hide the map initially
@@ -331,7 +331,7 @@ public class NoMapActivity extends AppCompatActivity {
                                 try {
                                     Thread.sleep(20);
                                 } catch (InterruptedException e) {
-                                    e.printStackTrace();
+                                    //e.printStackTrace();
                                 }
                             }
 
@@ -641,10 +641,10 @@ public class NoMapActivity extends AppCompatActivity {
             }
         } catch (IOException e) {
             Log.e(TAG, "Geocoder IOException: " + e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Invalid latitude or longitude values.");
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         return address;

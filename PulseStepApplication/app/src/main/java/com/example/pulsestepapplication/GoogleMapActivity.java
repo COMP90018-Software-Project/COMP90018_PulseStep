@@ -498,7 +498,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                                 try {
                                     Thread.sleep(20);
                                 } catch (InterruptedException e) {
-                                    e.printStackTrace();
+                                    //e.printStackTrace();
                                 }
                             }
 
@@ -1060,10 +1060,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         } catch (IOException e) {
             Log.e(TAG, "Geocoder IOException: " + e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Invalid latitude or longitude value.");
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         return address;
