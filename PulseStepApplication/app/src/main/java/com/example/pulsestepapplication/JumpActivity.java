@@ -537,7 +537,7 @@ public class JumpActivity extends AppCompatActivity {
             Intent intent = new Intent();
             Log.e(TAG, "popUpConfirmDialog: " );
             setResult(RESULT_OK, intent);  // Set the result to pass back to MainActivity
-            musicPlayer.release();
+//            musicPlayer.release();
             finish();
             dialog.dismiss();
         });
@@ -690,6 +690,9 @@ public class JumpActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         musicPlayer.release(); // Release resources when activity is destroyed
+        // Stop the handler callbacks to prevent any further GIF manipulations
+        timerHandler.removeCallbacks(timerRunnable);
+        handler.removeCallbacksAndMessages(null);
         if (gifDrawable != null) {
             gifDrawable.recycle();
             gifDrawable = null;
