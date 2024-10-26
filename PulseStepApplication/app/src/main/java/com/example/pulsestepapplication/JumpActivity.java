@@ -99,6 +99,10 @@ public class JumpActivity extends AppCompatActivity {
 
     private final String popUpMessage = "Are you sure you want to leave the jump rope session? Your progress will not be saved.";
 
+    // music player
+    private MusicPlayer musicPlayer;
+    private boolean shouldLoop = true;
+    private ImageView muteMusicView;
 
     private final Runnable timerRunnable = new Runnable() {
         @SuppressLint("DefaultLocale")
@@ -215,6 +219,25 @@ public class JumpActivity extends AppCompatActivity {
         backButton = findViewById(R.id.back_button_jump_page);
         btnShow = findViewById(R.id.jump_btn_show);
         jumpImageView = findViewById(R.id.jump_default_image_view);
+        muteMusicView = findViewById(R.id.music_control);
+
+        // Initialize MusicPlayer with audio resource
+        musicPlayer = new MusicPlayer(this, R.raw.skipping_high);
+
+        // Enable or disable looping based on user input
+        musicPlayer.setLooping(shouldLoop);
+
+        // Set up mute button click listener
+        muteMusicView.setOnClickListener(v -> {
+            if (musicPlayer.isMuted()) {
+                muteMusicView.setImageResource(R.drawable.ic_music_launcher);
+                musicPlayer.unmute();
+            } else {
+                muteMusicView.setImageResource(R.drawable.ic_mute_music);
+                musicPlayer.mute();
+            }
+        });
+
         try {
             gifDrawable = new GifDrawable(getResources(), R.drawable.jump);
             jumpImageView.setImageDrawable(gifDrawable);
@@ -227,7 +250,19 @@ public class JumpActivity extends AppCompatActivity {
     @SuppressLint("ClickableViewAccessibility")
     private void setupButtonListeners() {
         progressBar = findViewById(R.id.progressBar);
-        btnPauseResume.setOnClickListener(v -> handlePauseResumeButtonClick());
+        btnPauseResume.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (musicPlayer.isPlaying()) {
+                            Log.d(TAG, "Pausing music...");
+                            musicPlayer.pause();
+                        } else {
+                            Log.d(TAG, "Playing music...");
+                            musicPlayer.play();
+                        }
+                        handlePauseResumeButtonClick();
+                    }
+                });
 
         CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
         circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));

@@ -41,6 +41,15 @@
             android:layout_gravity="center"
             android:paddingTop="8dp" />
 
+        <ImageView
+            android:id="@+id/music_control"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Back"
+            android:src="@drawable/ic_music_launcher"
+            android:paddingEnd="8dp"
+            android:layout_gravity="end"/>
+
     </androidx.appcompat.widget.Toolbar>
 
 
