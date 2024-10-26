@@ -158,7 +158,18 @@ public class JumpSummaryActivity extends AppCompatActivity {
             jumpCount = intent.getIntExtra("jumpCount", 0);
             address = intent.getStringExtra("address");
             avgPace = intent.getStringExtra("avgSpeed");
+            try {
+                Double.parseDouble(avgPace);
+            } catch (NumberFormatException e) {
+                avgPace = "0";
+            }
+
             calories = intent.getStringExtra("calories");
+            try {
+                Double.parseDouble(calories);
+            } catch (NumberFormatException e) {
+                calories = "0";
+            }
         }
     }
 
