@@ -665,7 +665,9 @@ public class NoMapActivity extends AppCompatActivity {
         int stepCount = currentStepCount;
 
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
-        String avg = (distanceInKm <= 0.01) ? "--'--''" : String.valueOf(totalTimeMinutes / distanceInKm);
+        double tempAvgPace;
+        tempAvgPace = totalTimeMinutes / distanceInKm;
+        String avg = (distanceInKm <= 0.01) ? "--'--''" : String.format("%d'%02d\"", (int) tempAvgPace, (int) ((tempAvgPace * 60) % 60));
 
         // Get the last location's address
         String address = "Unknown Location";

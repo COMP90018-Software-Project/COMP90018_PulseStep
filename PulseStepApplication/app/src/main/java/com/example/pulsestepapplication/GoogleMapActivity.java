@@ -1086,7 +1086,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         String timeElapsed = timerTextView.getText().toString();
         int stepCount = currentStepCount;
         double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
-        String avg = (distanceInKm <= 0.01) ? "--'--''" : String.valueOf(totalTimeMinutes / distanceInKm);
+        double tempAvgPace = totalTimeMinutes / distanceInKm;
+        String avg = (distanceInKm <= 0.01) ? "--'--''" : String.format("%d'%02d\"", (int) tempAvgPace, (int) ((tempAvgPace * 60) % 60));
 
         // Get address of the last location
         String address = "Unknown location";
