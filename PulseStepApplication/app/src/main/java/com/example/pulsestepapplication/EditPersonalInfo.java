@@ -1,5 +1,6 @@
 package com.example.pulsestepapplication;
 
+import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -313,6 +314,15 @@ public class EditPersonalInfo extends AppCompatActivity {
         });
 
         negativeButton.setOnClickListener(v -> dialog.dismiss());
+    }
+
+    /**
+     * Called when the back button is pressed
+     */
+    @SuppressLint("MissingSuperCall")
+    @Override
+    public void onBackPressed() {
+        popUpConfirmDialog();
     }
 
 }

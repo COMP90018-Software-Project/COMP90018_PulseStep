@@ -535,7 +535,9 @@ public class JumpActivity extends AppCompatActivity {
 
         positiveButton.setOnClickListener(v -> {
             Intent intent = new Intent();
+            Log.e(TAG, "popUpConfirmDialog: " );
             setResult(RESULT_OK, intent);  // Set the result to pass back to MainActivity
+            musicPlayer.release();
             finish();
             dialog.dismiss();
         });
@@ -687,7 +689,7 @@ public class JumpActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        //musicPlayer.release(); // Release resources when activity is destroyed
+        musicPlayer.release(); // Release resources when activity is destroyed
         if (gifDrawable != null) {
             gifDrawable.recycle();
             gifDrawable = null;
