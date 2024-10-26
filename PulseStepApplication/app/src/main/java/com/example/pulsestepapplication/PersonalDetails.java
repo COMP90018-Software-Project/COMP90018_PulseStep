@@ -137,6 +137,9 @@ public class PersonalDetails extends AppCompatActivity {
                     if (height <= 0) {
                         heightEditText.setError("Height must be a positive number.");
                         hasError = true;
+                    } else if (height < 50 || height > 350) {  // Set height range as needed
+                        heightEditText.setError("Height must be between 50 cm and 350 cm.");
+                        hasError = true;
                     } else {
                         heightEditText.setError(null); // Clear error
                     }
@@ -156,6 +159,9 @@ public class PersonalDetails extends AppCompatActivity {
                     if (weight <= 0) {
                         weightEditText.setError("Weight must be a positive number.");
                         hasError = true;
+                    } else if (weight < 20 || weight > 400) {  // Set weight range as needed
+                        weightEditText.setError("Weight must be between 20 kg and 400 kg.");
+                        hasError = true;
                     } else {
                         weightEditText.setError(null); // Clear error
                     }
@@ -164,6 +170,7 @@ public class PersonalDetails extends AppCompatActivity {
                     hasError = true;
                 }
             }
+
 
             // Validate gender
             if (!isMale && !isFemale && !isOther) {

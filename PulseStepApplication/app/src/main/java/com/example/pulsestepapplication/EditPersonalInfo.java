@@ -91,13 +91,16 @@ public class EditPersonalInfo extends AppCompatActivity {
 
             // Validate full name
             if (fullName.isEmpty()) {
-                fullNameEditText.setError("Full name cannot be empty.");
+                fullNameEditText.setError("Full name cannot be empty");
                 return;
-            } else if (!fullName.matches("[a-zA-Z ]+")) { // 只允许字母和空格
-                fullNameEditText.setError("Full name can only contain letters and spaces.");
+            } else if (!fullName.matches("[a-zA-Z ]+")) {
+                fullNameEditText.setError("Full name can only contain letters and spaces");
+                return;
+            } else if (fullName.length() > 15) {  // Adjust the maximum length as desired
+                fullNameEditText.setError("Full name cannot exceed 30 characters");
                 return;
             } else {
-                fullNameEditText.setError(null); // 清除错误
+                fullNameEditText.setError(null);
             }
 
             // Validate birthday
@@ -118,6 +121,9 @@ public class EditPersonalInfo extends AppCompatActivity {
                     if (height <= 0) {
                         heightEditText.setError("Height must be a positive number.");
                         hasError = true;
+                    } else if (height < 50 || height > 350) {  // Set height range as needed
+                        heightEditText.setError("Height must be between 50 cm and 350 cm.");
+                        hasError = true;
                     } else {
                         heightEditText.setError(null); // Clear error
                     }
@@ -136,6 +142,9 @@ public class EditPersonalInfo extends AppCompatActivity {
                     float weight = Float.parseFloat(weightStr);
                     if (weight <= 0) {
                         weightEditText.setError("Weight must be a positive number.");
+                        hasError = true;
+                    } else if (weight < 20 || weight > 400) {  // Set weight range as needed
+                        weightEditText.setError("Weight must be between 20 kg and 400 kg.");
                         hasError = true;
                     } else {
                         weightEditText.setError(null); // Clear error

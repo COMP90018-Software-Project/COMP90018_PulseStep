@@ -64,7 +64,8 @@
             android:textColorHint="@color/gray"
             android:backgroundTint="@android:color/transparent"
             android:inputType="text"
-            android:imeOptions="actionDone"/>
+            android:imeOptions="actionDone"
+            android:maxLength="15"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 

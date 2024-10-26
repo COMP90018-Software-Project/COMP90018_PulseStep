@@ -97,6 +97,9 @@ public class Registration extends AppCompatActivity {
         } else if (!fullName.matches("[a-zA-Z ]+")) {
             fullNameInputLayout.setError("Full name can only contain letters and spaces");
             return;
+        } else if (fullName.length() > 15) {  // Adjust the maximum length as desired
+            fullNameInputLayout.setError("Full name cannot exceed 30 characters");
+            return;
         } else {
             fullNameInputLayout.setError(null);
         }

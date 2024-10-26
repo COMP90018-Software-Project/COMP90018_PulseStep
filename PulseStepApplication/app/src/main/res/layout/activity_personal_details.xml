@@ -64,7 +64,8 @@
                 android:textColor="@color/orange"
                 android:textSize="16sp"
                 android:inputType="text"
-                android:imeOptions="actionDone"/>
+                android:imeOptions="actionDone"
+                android:maxLength="15"/>
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
     <!-- Horizontal line -->
@@ -153,7 +154,8 @@
                 android:fontFamily="@font/overpass_bold"
                 android:textColor="@color/orange"
                 android:textSize="16sp"
-                android:imeOptions="actionDone"/>
+                android:imeOptions="actionDone"
+                android:maxLength="5"/>
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
     <!-- Horizontal line -->
@@ -196,7 +198,8 @@
                 android:fontFamily="@font/overpass_bold"
                 android:textColor="@color/orange"
                 android:textSize="16sp"
-                android:imeOptions="actionDone"/>
+                android:imeOptions="actionDone"
+                android:maxLength="5"/>
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
     <!-- Horizontal line -->
