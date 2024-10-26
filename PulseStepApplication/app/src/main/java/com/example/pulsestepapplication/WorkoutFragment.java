@@ -27,6 +27,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.example.pulsestepapplication.bean.MessageBean;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -39,13 +40,14 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.Calendar;
 import java.util.Locale;
 
 
 public class WorkoutFragment extends Fragment {
-
+    private int count=0;
     // Permission request codes
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int LOCATION_PERMISSION_REQUEST_CODE_JUMP = 11;
@@ -103,6 +105,7 @@ public class WorkoutFragment extends Fragment {
             userWeight = args.getDouble("weight");
             // Get location permission status
             locationGranted = args.getBoolean("locationGranted", false);
+            setupNotificationListener();
             // Initialize map based on location permission status
             if (locationGranted) {
                 mapProgressBar.setVisibility(View.VISIBLE);
@@ -866,5 +869,37 @@ public class WorkoutFragment extends Fragment {
             }
         }
     }
+    private void setupNotificationListener() {
+        if (userId == null) {
+            Log.e(TAG, "User ID is null, cannot setup notifications listener.");
+            return;
+        }
 
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // 从 Firestore 中获取点赞信息
+        db.collection("message")
+                .whereEqualTo("updateUserId",userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            MessageBean messageBean = document.toObject(MessageBean.class);
+                            if ("0".equals(messageBean.getIsRead())) {
+                                count++;
+                            }
+                        }
+                        if (count>0){
+                            rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
+                        }else {
+                            rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+                        }
+                    } else {
+                        Log.w("Firestore", "Error getting notifications", task.getException());
+                    }
+                });
+
+
+
+    }
 }

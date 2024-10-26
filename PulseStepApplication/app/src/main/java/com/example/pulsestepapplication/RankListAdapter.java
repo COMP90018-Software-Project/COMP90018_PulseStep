@@ -31,6 +31,7 @@ import com.google.firebase.storage.StorageException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -191,6 +192,8 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
                 .addOnFailureListener(e -> {
                     Log.e("Firestore", "Error updating (increase like num) document", e);
                 });
+
+        addLike(db,userId,updateUserId);
     }
 
     /**
@@ -244,4 +247,27 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
         return monthFormat.format(date);
     }
 
+
+    private void addLike(FirebaseFirestore db,String userId,String updateUserId){
+        long timestamp = System.currentTimeMillis();
+        String documentId = timestamp + "_" + userId;
+        Map<String, Object> addLike = new HashMap<>();
+        addLike.put("id",documentId);
+        addLike.put("userId", userId);
+        addLike.put("updateUserId",updateUserId);
+        addLike.put("type", "1");
+        addLike.put("timestamp", timestamp);
+        addLike.put("isRead", "0");
+
+        DocumentReference notificationRef = db.collection("message").document(documentId);
+
+        notificationRef.set(addLike)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("Firestore", "Notification created or updated with ID: " + userId);
+                })
+                .addOnFailureListener(e -> {
+                    Log.w("Firestore", "Error creating or updating notification", e);
+                });
+
+    }
 }
