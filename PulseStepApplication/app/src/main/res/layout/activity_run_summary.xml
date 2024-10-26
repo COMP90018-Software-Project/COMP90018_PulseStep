@@ -74,6 +74,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/run_distance" />
     <LinearLayout
+        android:id="@+id/location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -115,7 +116,7 @@
         app:cardBackgroundColor="@android:color/white"
         app:cardPreventCornerOverlap="true"
         app:cardElevation="4dp"
-        app:layout_constraintTop_toBottomOf="@+id/run_unit"
+        app:layout_constraintTop_toBottomOf="@+id/location"
         app:layout_constraintBottom_toTopOf="@+id/run_summary_box"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -138,6 +139,7 @@
         android:layout_marginBottom="15dp"
         app:cardCornerRadius="12dp"
         app:layout_constraintBottom_toTopOf="@+id/bt_finish_run"
+        app:layout_constraintTop_toBottomOf="@id/map_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:backgroundTint="#FFFFFF"
