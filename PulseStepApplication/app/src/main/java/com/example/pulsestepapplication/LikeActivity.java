@@ -73,7 +73,8 @@ public class LikeActivity extends AppCompatActivity {
                                         Toast.makeText(LikeActivity.this, "Delete failed" + e.getMessage(), Toast.LENGTH_SHORT).show();
 
                                     });
-                        });
+                        }).setNegativeButton("Cancel",null)
+                        .show();
             }
         });
     }

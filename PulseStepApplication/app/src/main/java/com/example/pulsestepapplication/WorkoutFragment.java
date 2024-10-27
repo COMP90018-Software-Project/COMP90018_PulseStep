@@ -105,7 +105,7 @@ public class WorkoutFragment extends Fragment {
             userWeight = args.getDouble("weight");
             // Get location permission status
             locationGranted = args.getBoolean("locationGranted", false);
-            setupNotificationListener();
+            //setupNotificationListener();
             // Initialize map based on location permission status
             if (locationGranted) {
                 mapProgressBar.setVisibility(View.VISIBLE);
@@ -835,6 +835,7 @@ public class WorkoutFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        setupNotificationListener();
         boolean currentPermissionStatus = hasLocationPermissions();
         if (currentPermissionStatus != locationGranted) {
             locationGranted = currentPermissionStatus;
