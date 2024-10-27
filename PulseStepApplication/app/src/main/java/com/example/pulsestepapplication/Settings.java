@@ -46,6 +46,8 @@ public class Settings extends AppCompatActivity {
 
     private LinearLayout editPersonalInfoButton;
 
+    private LinearLayout userGuideLinesButton;
+
     private MaterialSwitch locationSwitch;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private boolean isUserInitiatedSwitchChange = false;
@@ -105,6 +107,16 @@ public class Settings extends AppCompatActivity {
                 // Finish the current activity and return to the RunSummaryActivity page
                 Intent intent = new Intent(Settings.this, EditPersonalInfo.class);
                 intent.putExtra("userId", userId);
+                startActivity(intent);
+            }
+        });
+
+        userGuideLinesButton = findViewById(R.id.user_guide_lines);
+        userGuideLinesButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                // Finish the current activity and return to the RunSummaryActivity page
+                Intent intent = new Intent(Settings.this, UserGuideLinesActivity.class);
                 startActivity(intent);
             }
         });

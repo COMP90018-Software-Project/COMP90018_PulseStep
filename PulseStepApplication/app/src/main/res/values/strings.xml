@@ -148,5 +148,8 @@
         <p><b>Effective Time:</b> 10/25/2024</p>
     ]]>
 </string>
-
+    <string name="running_mode_content">"The app automatically selects indoor or outdoor mode based on location permissions. If location permission is not granted, it defaults to indoor mode. To access outdoor mode, enable location permissions in your phone settings, then return to the app and tap "Run" again. The app provides a fixed pace range, and real-time speed won’t display if the pace exceeds this range."</string>
+    <string name="jump_mode_content">"For optimal measurement accuracy, hold the device or secure it to your arm. If measurements are inaccurate, stand still for a few seconds to recalibrate."</string>
+    <string name="rankings_content">"Only workouts exceeding five minutes will be included in the rankings."</string>
+    <string name="permissions_content">"Due to Android system limitations, enabling location permissions may require manual activation in the phone's settings."</string>
 </resources>
