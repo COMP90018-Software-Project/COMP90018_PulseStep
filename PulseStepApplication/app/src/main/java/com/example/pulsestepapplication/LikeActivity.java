@@ -1,5 +1,7 @@
 package com.example.pulsestepapplication;
 
+import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
@@ -11,8 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.pulsestepapplication.adapter.LikeAdapter;
 import com.example.pulsestepapplication.bean.MessageBean;
 import com.example.pulsestepapplication.databinding.ActivityLikeBinding;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Source;
 
@@ -26,6 +30,7 @@ public class LikeActivity extends AppCompatActivity {
 
 
     private List<MessageBean> messageBeanList;
+    private ListenerRegistration likeListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +46,8 @@ public class LikeActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         getData();
+
+        addListener();
 
         binding.likeList.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         binding.back.setOnClickListener(view -> finish());
@@ -73,7 +80,7 @@ public class LikeActivity extends AppCompatActivity {
                                         Toast.makeText(LikeActivity.this, "Delete failed" + e.getMessage(), Toast.LENGTH_SHORT).show();
 
                                     });
-                        }).setNegativeButton("Cancel",null)
+                        }).setNegativeButton("Cancel", null)
                         .show();
             }
         });
@@ -123,4 +130,30 @@ public class LikeActivity extends AppCompatActivity {
         }
     }
 
+    private void addListener() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        likeListener = db.collection("message")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.w("Firestore", "Listen failed.", e);
+                        return;
+                    }
+
+
+                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                        if (dc.getType() == ADDED) {
+                            getData();
+                        }
+                    }
+                });
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (likeListener != null) {
+            likeListener.remove();
+        }
+    }
 }

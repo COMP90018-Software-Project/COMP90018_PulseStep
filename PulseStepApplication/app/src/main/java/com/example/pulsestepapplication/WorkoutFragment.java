@@ -1,5 +1,7 @@
 package com.example.pulsestepapplication;
 
+import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -37,6 +39,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -74,6 +77,8 @@ public class WorkoutFragment extends Fragment {
     private TextView greetingTextView;
     private Bundle savedInstanceState; // Store savedInstanceState if needed
     private ListenerRegistration userListenerRegistration; // Store Firestore listener
+    private ListenerRegistration likeListener;
+
 
     public WorkoutFragment() {
         // Required empty public constructor
@@ -140,6 +145,7 @@ public class WorkoutFragment extends Fragment {
 
         startUserDataListener();
 
+        starLikeDataListener();
 
         // date text rendered on workout page
         TextView dateTextView = rootView.findViewById((R.id.date_text));
@@ -200,6 +206,26 @@ public class WorkoutFragment extends Fragment {
                 Log.e(TAG, "User document does not exist.");
             }
         });
+    }
+
+    private void starLikeDataListener() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        likeListener = db.collection("message")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.w("Firestore", "Listen failed.", e);
+                        return;
+                    }
+
+
+
+                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                        if (dc.getType() == ADDED) {
+                            rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
+                            break;
+                        }
+                    }
+                });
     }
 
     /**
@@ -899,8 +925,17 @@ public class WorkoutFragment extends Fragment {
                         Log.w("Firestore", "Error getting notifications", task.getException());
                     }
                 });
+    }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (userListenerRegistration != null) {
+            userListenerRegistration.remove();
+        }
 
-
+        if (likeListener != null) {
+            likeListener.remove();
+        }
     }
 }
