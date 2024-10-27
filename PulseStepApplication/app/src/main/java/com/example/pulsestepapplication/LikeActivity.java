@@ -47,7 +47,7 @@ public class LikeActivity extends AppCompatActivity {
 
         getData();
 
-        addListener();
+        //addListener();
 
         binding.likeList.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         binding.back.setOnClickListener(view -> finish());
@@ -87,6 +87,7 @@ public class LikeActivity extends AppCompatActivity {
     }
 
     private void getData() {
+        //messageBeanList.clear();
         // 获取当前用户的 UID
         String userId = getIntent().getStringExtra("USER_ID");
         // 从 Firestore 中获取点赞信息
