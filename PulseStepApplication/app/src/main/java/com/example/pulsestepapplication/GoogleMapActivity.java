@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -17,6 +18,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -100,7 +102,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1003; // Unique request code
     private static final float MOVE_ZOOM_LEVEL = 16f;
     private static final float DEFAULT_ZOOM_LEVEL = 15f;
-    private static final float MAX_ZOOM_LEVEL = 19f;
+    private static final float MAX_ZOOM_LEVEL = 17f;
     private static final float DISTANCE_THRESHOLD_METERS = 1.0f; // Distance threshold in meters
 
     // UI Components
@@ -112,6 +114,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private TextView cTextView;
     private ImageView waitView;
     private TextView waitTextView;
+    private ImageView muteMusicView;
 
     // Map and Location
     private GoogleMap googleMap;
@@ -131,7 +134,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private boolean isLocationReady = false;
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
-    private static final Double realDistance = 0.05;
+    private static final Double realDistance = 0.02;
     private static final double metValue = 8.0;
     private static final int LOCATION_TIMEOUT = 10000; // Location timeout in milliseconds
 
@@ -152,6 +155,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private String formattedFinishTime;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
+    // music player
+    private MusicPlayer musicPlayer;
+    private boolean shouldLoop = true;
+
     private final Runnable timerRunnable = new Runnable() {
         @SuppressLint("DefaultLocale")
         @Override
@@ -162,11 +169,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             seconds %= 60;
             timerTextView.setText(String.format("%02d:%02d", minutes, seconds));
             elapsedTime = millis;
-
-            // Update average pace in non-map mode
-            if (!isMapMode) {
-                updateAvgPaceNoMapMode();
-            }
             timerHandler.postDelayed(this, 1000);
         }
     };
@@ -247,6 +249,25 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         mapImageView = findViewById(R.id.default_image_view);
         waitView = findViewById(R.id.wait);
         waitTextView = findViewById(R.id.waitText);
+        muteMusicView = findViewById(R.id.music_control);
+
+        // Initialize MusicPlayer with audio resource
+        musicPlayer = new MusicPlayer(this, R.raw.pulsestep_fever);
+
+        // Enable or disable looping based on user input
+        musicPlayer.setLooping(shouldLoop);
+
+        // Set up mute button click listener
+        muteMusicView.setOnClickListener(v -> {
+            if (musicPlayer.isMuted()) {
+                muteMusicView.setImageResource(R.drawable.ic_music_launcher);
+                musicPlayer.unmute();
+            } else {
+                muteMusicView.setImageResource(R.drawable.ic_mute_music);
+                musicPlayer.mute();
+            }
+        });
+
         // Initially hide the map
         View mapFragment = findViewById(R.id.google_map);
         if (mapFragment != null) {
@@ -278,6 +299,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             btnPauseResume.setClickable(true);
         }
     }
+
 
     /**
      * Shows a confirmation dialog to exit the current running activity.
@@ -312,11 +334,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         Button negativeButton = dialogView.findViewById(R.id.negative_button);
 
         positiveButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            intent.putExtra("fragment", "WorkoutFragment");
-            startActivity(intent);
-            finish();
+            Intent intent = new Intent();
+            setResult(RESULT_OK, intent);  // Set the result to pass back to MainActivity
+            finish();  // Close GoogleMapActivity and return to the previous Activity (WorkoutFragment)
+            dialog.dismiss();
         });
 
         negativeButton.setOnClickListener(v -> dialog.dismiss());
@@ -423,7 +444,23 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     @SuppressLint("ClickableViewAccessibility")
     private void setupButtonListeners() {
         progressBar = findViewById(R.id.progressBar);
-        btnPauseResume.setOnClickListener(v -> handleStartStopButtonClick());
+
+        btnPauseResume.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isMapMode && isLocationReady) {
+                    if (musicPlayer.isPlaying()) {
+                        Log.d(TAG, "Pausing music...");
+                        musicPlayer.pause();
+                    } else {
+                        Log.d(TAG, "Playing music...");
+                        musicPlayer.play();
+                    }
+                }
+
+                handleStartStopButtonClick();
+            }
+        });
         CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
         circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
         progressBar.setProgressDrawable(circularProgressDrawable);
@@ -461,7 +498,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                                 try {
                                     Thread.sleep(20);
                                 } catch (InterruptedException e) {
-                                    e.printStackTrace();
+                                    //e.printStackTrace();
                                 }
                             }
 
@@ -798,20 +835,17 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void setupLocationCallback() {
         locationCallback = new LocationCallback() {
-            @SuppressLint("MissingPermission")
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                // Update location regardless of tracking state
                 for (Location location : locationResult.getLocations()) {
                     if (location.hasAccuracy() && location.getAccuracy() < 50.0) {
                         isLocationReady = true;
                         waitView.clearAnimation();
                         waitView.setVisibility(View.GONE);
                         waitTextView.setVisibility(View.GONE);
-                        // Once the location is ready, show the map
                         View mapFragment = findViewById(R.id.google_map);
                         if (mapFragment != null) {
-                            mapFragment.setVisibility(View.VISIBLE);  // Show map after location is ready
+                            mapFragment.setVisibility(View.VISIBLE);
                         }
                         btnPauseResume.setClickable(true);
                         if (ActivityCompat.checkSelfPermission(GoogleMapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(GoogleMapActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -820,31 +854,29 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                         googleMap.setMyLocationEnabled(true);
                         locationTimeoutHandler.removeCallbacks(locationTimeoutRunnable);
                         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                        if (isFirstStart) {
-                            // Initially move the camera to the current location
-                            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM_LEVEL));
+                        if (isTracking || isPaused) {
+                            CameraPosition cameraPosition = new CameraPosition.Builder()
+                                    .target(currentLatLng)
+                                    .zoom(MOVE_ZOOM_LEVEL)
+                                    .tilt(0)
+                                    .bearing(0)
+                                    .build();
+                            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 200, null);
+
+                        }
+                        if (isTracking && !isPaused) {
+                            updatePath(currentLatLng);
                         }
                     } else {
                         if (!isLocationReady) {
                             Log.d(TAG, "Location accuracy insufficient, trying again...");
                         }
                     }
-
-                    if (isTracking && !isPaused && isLocationReady) {
-                        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                        updatePath(currentLatLng);
-                        CameraPosition cameraPosition = new CameraPosition.Builder()
-                                .target(currentLatLng)
-                                .zoom(MOVE_ZOOM_LEVEL)
-                                .tilt(0)
-                                .bearing(0)
-                                .build();
-                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 200, null);
-                    }
                 }
             }
         };
     }
+
 
     /**
      * Start requesting location updates
@@ -867,10 +899,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      */
     @SuppressLint("MissingPermission")
     private void requestLocationUpdates() {
-        LocationRequest locationRequest = new LocationRequest.Builder(5000)
-                .setMinUpdateIntervalMillis(2000)
+        LocationRequest locationRequest = new LocationRequest.Builder(7000)
+                .setMinUpdateIntervalMillis(3000)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .setMinUpdateDistanceMeters(2)
+                .setMinUpdateDistanceMeters(5)
                 .build();
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
@@ -910,7 +942,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             if (totalDistanceKm > realDistance && totalTimeMinutes > 0) {
                 double avgPace = totalTimeMinutes / totalDistanceKm;
                 double elapsedTimeInMinutes = elapsedTime / 60000.0;
-                double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
+                double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, avgPace);
                 runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
                 // Check if the pace is within a reasonable range
                 if (avgPace >= 1.0 && avgPace <= 30.0) {
@@ -949,7 +981,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 PolylineOptions polylineOptions = new PolylineOptions()
                         .addAll(segment)
                         .color(getResources().getColor(R.color.like_orange))
-                        .width(20);
+                        .width(15);
                 Polyline polyline = googleMap.addPolyline(polylineOptions);
                 polyLines.add(polyline);
             }
@@ -957,39 +989,36 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Update average pace in non-map mode based on steps and time
+     * Calculate MET value based on average pace.
+     *
+     * @param avgPace The average pace in minutes per kilometer.
+     * @return Adjusted MET value.
      */
-    @SuppressLint("DefaultLocale")
-    private void updateAvgPaceNoMapMode() {
-        // Assuming average step length is 0.75 meters
-        float averageStepLength = 0.75f;
-        float distance = currentStepCount * averageStepLength; // in meters
-        double distanceKm = distance / 1000.0;
-        double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
-        if (distanceKm > realDistance && totalTimeMinutes > 0) {
-            double avgPace = totalTimeMinutes / distanceKm;
-            double elapsedTimeInMinutes = elapsedTime / 60000.0;
-            double caloriesBurned = calculateCalories(userWeight, elapsedTimeInMinutes, metValue);
-            runOnUiThread(() -> cTextView.setText(String.format("%d", Math.round(caloriesBurned))));
-            // Update avgPaceTextView
-            runOnUiThread(() -> avgPaceTextView.setText(String.format("%d'%02d\"", (int) avgPace, (int) ((avgPace * 60) % 60))));
-        } else {
-            runOnUiThread(() -> avgPaceTextView.setText("--'--\""));
+    private double getDynamicMetValue(double avgPace) {
+        // Example: Adjust MET value based on avgPace (higher pace reduces metValue)
+        if (avgPace < 6) { // Fast pace (running)
+            return 10.0; // Higher MET for running
+        } else if (avgPace < 9) { // Medium pace (jogging)
+            return 8.0; // Medium MET for jogging
+        } else { // Slow pace (walking)
+            return 4.0; // Lower MET for walking
         }
     }
 
     /**
-     * Calculate the calories burned based on weight, duration, and MET value
+     * Calculate the calories burned based on weight, duration, and dynamic MET value
      *
      * @param weight            User weight in kilograms
      * @param durationInMinutes Duration of activity in minutes
-     * @param metValue          MET value of the activity
+     * @param avgPace           The average pace in minutes per kilometer.
      * @return Calories burned
      */
-    private double calculateCalories(double weight, double durationInMinutes, double metValue) {
+    private double calculateCalories(double weight, double durationInMinutes, double avgPace) {
+        double metValue = getDynamicMetValue(avgPace);
         double durationInHours = durationInMinutes / 60.0;
         return metValue * weight * durationInHours;
     }
+
 
     /**
      * Convert LatLng point to a readable address string
@@ -1031,10 +1060,10 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
             }
         } catch (IOException e) {
             Log.e(TAG, "Geocoder IOException: " + e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Invalid latitude or longitude value.");
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         return address;
@@ -1052,19 +1081,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         formattedFinishTime = dateFormat.format(new Date(currentTime));
         // Calculate distance
         float distanceInKm;
-        if (isMapMode) {
-            distanceInKm = totalDistance / 1000.0f;
-        } else {
-            // Non-map mode, calculate distance based on steps
-            float averageStepLength = 0.75f;
-            float distance = currentStepCount * averageStepLength; // in meters
-            distanceInKm = distance / 1000.0f;
-        }
+        distanceInKm = totalDistance / 1000.0f;
 
         String timeElapsed = timerTextView.getText().toString();
         int stepCount = currentStepCount;
+        double totalTimeMinutes = elapsedTime / (1000.0 * 60.0);
+        double tempAvgPace = totalTimeMinutes / distanceInKm;
+        String avg = (distanceInKm <= 0.01) ? "--'--''" : String.format("%d'%02d\"", (int) tempAvgPace, (int) ((tempAvgPace * 60) % 60));
 
-        String avg = avgPaceTextView.getText().toString();
         // Get address of the last location
         String address = "Unknown location";
         if (isMapMode && initialLatitude != 0.0 && initialLongitude != 0.0) {
@@ -1080,10 +1104,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         intent.putExtra("address", address);
         intent.putExtra("stepCount", stepCount);
         intent.putExtra("calories", cTextView.getText().toString());
-        intent.putExtra("MODE", isMapMode ? "MAP" : "NO_MAP");
+        intent.putExtra("MODE", "MAP");
         intent.putExtra("startDateTime", formattedStartTime);
-        intent.putExtra("finishDateTime", formattedFinishTime);
+        intent.putExtra("finishDateTime", totalDistance);
 
+        Log.d("1111111111111111", String.valueOf(distanceInKm));
+        Log.d("2222222222222", String.valueOf(distanceInKm));
         if (isMapMode) {
             // Collect trajectory points
             ArrayList<LatLng> trajectoryList = new ArrayList<>(trajectory);
@@ -1098,8 +1124,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
      * Navigate back to MainActivity
      */
     private void navigateToWorkoutPage() {
-        Intent intent = new Intent(GoogleMapActivity.this, MainActivity.class);
-        startActivity(intent);
+        Intent returnIntent = new Intent();
+        setResult(Activity.RESULT_OK, returnIntent);
         finish();
     }
 
@@ -1120,10 +1146,14 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         LocalBroadcastManager.getInstance(this).registerReceiver(trackingReceiver, filter);
 
         if (isTracking && !isPaused) {
-            timerHandler.postDelayed(timerRunnable, 0);
             btnShow.setVisibility(View.GONE);
+            timerHandler.postDelayed(timerRunnable, 0);
+            if (!isBackgroundLocationPermissionGranted()) {
+                musicPlayer.pause();
+            }
         } else {
             btnShow.setVisibility(View.VISIBLE);
+            musicPlayer.pause();
         }
 
         // Check if the user has granted background location permission from the settings page
@@ -1147,6 +1177,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         super.onPause();
         // Unregister BroadcastReceiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(trackingReceiver);
+        // Pause the music player when the activity goes to the background
+        if (!isBackgroundLocationPermissionGranted()) {
+            if (isTracking && !isPaused) {
+                musicPlayer.pause();
+            }
+        }
     }
 
     /**
@@ -1164,6 +1200,12 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
         if (isTracking && isMapMode && !isBackgroundLocationPermissionGranted()) {
             pauseTracking();
             Toast.makeText(this, "Tracking paused due to lack of background location permission.", Toast.LENGTH_SHORT).show();
+        }
+        // Pause the music player when the activity is completely hidden
+        if (!isBackgroundLocationPermissionGranted()) {
+            if (isTracking && !isPaused) {
+                musicPlayer.pause();
+            }
         }
     }
 
@@ -1280,6 +1322,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onDestroy() {
         super.onDestroy();
         stopTrackingService();
+        musicPlayer.release(); // Release resources when activity is destroyed
         if (fusedLocationClient != null && locationCallback != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }

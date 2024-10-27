@@ -1,16 +1,23 @@
 package com.example.pulsestepapplication;
 
+import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -27,13 +34,16 @@ import java.util.Map;
 
 public class EditPersonalInfo extends AppCompatActivity {
     private TextView birthdayTextView;
-    private EditText heightEditText, weightEditText;
+    private EditText fullNameEditText, heightEditText, weightEditText;
     private RadioButton maleRadioButton, femaleRadioButton, otherRadioButton;
+    private ImageView backButton;
     private Button finishButton;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private ProgressDialog progressDialog; // ProgressDialog to show saving state
     private String userId;
+
+    private final String popUpMessage = "Are you sure you want to leave this page? Any unsaved changes will be lost.";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,12 +58,16 @@ public class EditPersonalInfo extends AppCompatActivity {
 
         // Initialize UI elements
         birthdayTextView = findViewById(R.id.birthdayTextView);
+        fullNameEditText = findViewById(R.id.fullNameEditText);
         heightEditText = findViewById(R.id.heightEditText);
         weightEditText = findViewById(R.id.weightEditText);
         maleRadioButton = findViewById(R.id.maleRadioButton);
         femaleRadioButton = findViewById(R.id.femaleRadioButton);
         otherRadioButton = findViewById(R.id.otherRadioButton);
         finishButton = findViewById(R.id.finishButton);
+        backButton = findViewById(R.id.back_button);
+
+        backButton.setOnClickListener(v -> popUpConfirmDialog());
 
         // Initialize ProgressDialog
         progressDialog = new ProgressDialog(this);
@@ -66,6 +80,7 @@ public class EditPersonalInfo extends AppCompatActivity {
         // Set Finish button click listener
         finishButton.setOnClickListener(view -> {
             // Get user input data
+            String fullName = fullNameEditText.getText().toString();
             String birthday = birthdayTextView.getText().toString();
             String heightStr = heightEditText.getText().toString();
             String weightStr = weightEditText.getText().toString();
@@ -74,6 +89,20 @@ public class EditPersonalInfo extends AppCompatActivity {
             boolean isOther = otherRadioButton.isChecked();
 
             boolean hasError = false;
+
+            // Validate full name
+            if (fullName.isEmpty()) {
+                fullNameEditText.setError("Full name cannot be empty");
+                return;
+            } else if (!fullName.matches("[a-zA-Z ]+")) {
+                fullNameEditText.setError("Full name can only contain letters and spaces");
+                return;
+            } else if (fullName.length() > 15) {  // Adjust the maximum length as desired
+                fullNameEditText.setError("Full name cannot exceed 30 characters");
+                return;
+            } else {
+                fullNameEditText.setError(null);
+            }
 
             // Validate birthday
             if (birthday.isEmpty()) {
@@ -93,6 +122,9 @@ public class EditPersonalInfo extends AppCompatActivity {
                     if (height <= 0) {
                         heightEditText.setError("Height must be a positive number.");
                         hasError = true;
+                    } else if (height < 50 || height > 350) {  // Set height range as needed
+                        heightEditText.setError("Height must be between 50 cm and 350 cm.");
+                        hasError = true;
                     } else {
                         heightEditText.setError(null); // Clear error
                     }
@@ -111,6 +143,9 @@ public class EditPersonalInfo extends AppCompatActivity {
                     float weight = Float.parseFloat(weightStr);
                     if (weight <= 0) {
                         weightEditText.setError("Weight must be a positive number.");
+                        hasError = true;
+                    } else if (weight < 20 || weight > 400) {  // Set weight range as needed
+                        weightEditText.setError("Weight must be between 20 kg and 400 kg.");
                         hasError = true;
                     } else {
                         weightEditText.setError(null); // Clear error
@@ -148,6 +183,7 @@ public class EditPersonalInfo extends AppCompatActivity {
 
             // Create user data map
             Map<String, Object> userDetails = new HashMap<>();
+            userDetails.put("fullName", fullName);
             userDetails.put("birthday", birthday);
             userDetails.put("height", heightStr);
             userDetails.put("weight", weightStr);
@@ -176,12 +212,14 @@ public class EditPersonalInfo extends AppCompatActivity {
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         // 获取用户的详细信息
+                        String fullName = documentSnapshot.getString("fullName");
                         String birthday = documentSnapshot.getString("birthday");
                         String height = documentSnapshot.getString("height");
                         String weight = documentSnapshot.getString("weight");
                         String gender = documentSnapshot.getString("gender");
 
                         // 设置 UI 元素的值
+                        fullNameEditText.setText(fullName);
                         birthdayTextView.setText(birthday);
                         heightEditText.setText(height);
                         weightEditText.setText(weight);
@@ -235,6 +273,56 @@ public class EditPersonalInfo extends AppCompatActivity {
                     Toast.makeText(EditPersonalInfo.this, "Error loading data", Toast.LENGTH_SHORT).show();
                     Log.e("EditPersonalInfo", "Error loading details: ", e);
                 });
+    }
+
+    private void popUpConfirmDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_custom, null);
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+        AlertDialog dialog = builder.create();
+
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = window.getAttributes();
+            layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.8);
+
+            int offsetInDp = 100;
+            float scale = getResources().getDisplayMetrics().density;
+            layoutParams.y = (int) (offsetInDp * scale + 0.5f);
+            layoutParams.dimAmount = 0.9f;
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
+            window.setAttributes(layoutParams);
+        }
+
+        // Find the TextView in the dialog and set the dynamic message
+        TextView dialogMessage = dialogView.findViewById(R.id.dialog_message);
+        dialogMessage.setText(popUpMessage);  // Set the custom message
+
+        Button positiveButton = dialogView.findViewById(R.id.positive_button);
+        Button negativeButton = dialogView.findViewById(R.id.negative_button);
+
+        positiveButton.setOnClickListener(v -> {
+            Intent intent = new Intent();
+            setResult(RESULT_OK, intent);
+            finish();
+            dialog.dismiss();
+        });
+
+        negativeButton.setOnClickListener(v -> dialog.dismiss());
+    }
+
+    /**
+     * Called when the back button is pressed
+     */
+    @SuppressLint("MissingSuperCall")
+    @Override
+    public void onBackPressed() {
+        popUpConfirmDialog();
     }
 
 }

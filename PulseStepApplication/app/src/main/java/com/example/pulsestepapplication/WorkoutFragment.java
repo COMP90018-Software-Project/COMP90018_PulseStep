@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,7 +25,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
+import com.example.pulsestepapplication.bean.MessageBean;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -34,17 +37,23 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.Calendar;
 import java.util.Locale;
 
 
 public class WorkoutFragment extends Fragment {
-
+    private int count=0;
     // Permission request codes
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE_JUMP = 11;
     private static final int ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE = 2;
-    private static final float DISTANCE_THRESHOLD_METERS = 16093.4f; // 10 miles in meters
+    private static final int ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE_JUMP = 22;
+    private static final float DISTANCE_THRESHOLD_METERS = 30000f; // 10 miles in meters
     private static final int BACKGROUND_PERMISSION_REQUEST_CODE = 3;
 
     private Double lastLatitude = null;
@@ -56,12 +65,15 @@ public class WorkoutFragment extends Fragment {
     private boolean isUsingAmap = false;
     private ProgressBar mapProgressBar;
     public boolean locationGranted = false;
+    private String userId;
     private String userName;
     private int userAge;
     private double userWeight;
 
     private View rootView; // Store the root view
+    private TextView greetingTextView;
     private Bundle savedInstanceState; // Store savedInstanceState if needed
+    private ListenerRegistration userListenerRegistration; // Store Firestore listener
 
     public WorkoutFragment() {
         // Required empty public constructor
@@ -87,41 +99,54 @@ public class WorkoutFragment extends Fragment {
         // Get the arguments passed from MainActivity
         Bundle args = getArguments();
         if (args != null) {
+            userId = args.getString("userId");
             userName = args.getString("fullName");
-            Log.e("WorkoutFragment", "userName = "+ userName);
 //            userAge = args.getInt("age");
             userWeight = args.getDouble("weight");
             // Get location permission status
             locationGranted = args.getBoolean("locationGranted", false);
+            //setupNotificationListener();
             // Initialize map based on location permission status
             if (locationGranted) {
                 mapProgressBar.setVisibility(View.VISIBLE);
-                // Initialize FusedLocationProviderClient for location services
+                View placeholder = rootView.findViewById(R.id.map_placeholder);
+                if (placeholder != null) {
+                    placeholder.setVisibility(View.GONE);
+                }
+                View mapContainer = rootView.findViewById(R.id.map_container);
+                if (mapContainer != null) {
+                    mapContainer.setVisibility(View.VISIBLE);
+                }
                 fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-
-                // Initialize the map
                 initializeMap(rootView, savedInstanceState);
             } else {
-                // Show placeholder or notify the user that location permission is not granted
+                mapProgressBar.setVisibility(View.GONE);
                 View placeholder = rootView.findViewById(R.id.map_placeholder);
                 if (placeholder != null) {
                     placeholder.setVisibility(View.VISIBLE);
                 }
-                showToast("Location permissions not granted");
-                //proceedToNoMapActivity();
+                View mapContainer = rootView.findViewById(R.id.map_container);
+                if (mapContainer != null) {
+                    mapContainer.setVisibility(View.GONE);
+                }
+                //showToast("Location permissions not granted");
             }
+
         }
 
-
         // greeting text rendered on workout page
-        TextView greetingTextView = rootView.findViewById(R.id.greeting_text);
+        greetingTextView = rootView.findViewById(R.id.greeting_text);
         greetingTextView.setText("Hi, " + userName);
 
+        startUserDataListener();
 
 
         // date text rendered on workout page
         TextView dateTextView = rootView.findViewById((R.id.date_text));
         dateTextView.setText(getFormattedDate());
+
+        ImageView myStar = rootView.findViewById(R.id.my_star);
+        myStar.setOnClickListener(view -> jumpToStarActivity());
 
         // Set up Run button to initiate permission and network checks
         Button runButton = rootView.findViewById(R.id.run_button);
@@ -130,17 +155,74 @@ public class WorkoutFragment extends Fragment {
             checkActivityRecognitionPermissionAndProceed();
         });
 
-
-
         //Set up Jump button to navigate to JumpActivity
         Button jumpButton = rootView.findViewById(R.id.jump_button);
         jumpButton.setOnClickListener(v -> {
             // When the user clicks the Jump button, pass user info into intent, then start the jump activity
-            proceedToJumpActivity();
+            checkActivityRecognitionPermissionAndProceedToJump();
         });
 
         return rootView;
     }
+
+    /**
+     * Starts a real-time listener to monitor changes to the user's full name and weight in Firestore.
+     */
+    private void startUserDataListener() {
+        if (userId == null) {
+            Log.e(TAG, "User ID is null. Cannot set up listener.");
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference userRef = db.collection("users").document(userId);
+
+        // Real-time listener for user data
+        userListenerRegistration = userRef.addSnapshotListener((documentSnapshot, e) -> {
+            if (e != null) {
+                Log.e(TAG, "Failed to listen for user data changes", e);
+                return;
+            }
+
+            if (documentSnapshot != null && documentSnapshot.exists()) {
+                // Get the updated fields from Firestore
+                String fullName = documentSnapshot.getString("fullName");
+                String weight = documentSnapshot.getString("weight");
+
+                if (fullName != null && weight != null) {
+                    Log.d(TAG, "Real-time update: Full Name = " + fullName + ", Weight = " + weight);
+                    // Update the UI with the new data
+                    updateUserData(fullName,  Double.parseDouble(weight));
+                } else {
+                    Log.e(TAG, "Missing fields in user document.");
+                }
+            } else {
+                Log.e(TAG, "User document does not exist.");
+            }
+        });
+    }
+
+    /**
+     * Updates the UI with the latest full name and weight.
+     *
+     * @param fullName The updated full name.
+     * @param weight   The updated weight.
+     */
+    private void updateUserData(String fullName, Double weight) {
+        this.userName = fullName;
+        this.userWeight = weight;
+
+        // Update the greeting text with the new full name
+        greetingTextView.setText("Hi, " + fullName);
+    }
+
+
+    private void jumpToStarActivity() {
+        Intent intent = new Intent(getActivity(), LikeActivity.class);
+        intent.putExtra("USER_ID", userId); // 传递 UID 到下一个页面)
+        startActivity(intent);
+    }
+
     private void checkActivityRecognitionPermissionAndProceed() {
         if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
             // Request activity recognition permission
@@ -148,6 +230,16 @@ public class WorkoutFragment extends Fragment {
         } else {
             // Activity recognition permission granted, continue to check location permissions
             checkLocationPermissionAndProceed();
+        }
+    }
+
+    private void checkActivityRecognitionPermissionAndProceedToJump() {
+        if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+            // Request activity recognition permission
+            requestActivityRecognitionPermissionToJump();
+        } else {
+            // Activity recognition permission granted, continue to check location permissions
+            checkLocationPermissionAndProceedToJump();
         }
     }
 
@@ -164,11 +256,27 @@ public class WorkoutFragment extends Fragment {
         }
     }
 
+    private void checkLocationPermissionAndProceedToJump() {
+        if (!hasLocationPermissions()) {
+            // Request location permissions
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            }, LOCATION_PERMISSION_REQUEST_CODE_JUMP);
+        } else {
+            // Location permissions granted, check if background location permission is needed
+            checkLocationAndStartJumpActivity();
+        }
+    }
+
     /**
      * Initializes the appropriate map based on user's location.
      */
     @SuppressLint("MissingPermission")
     private void initializeMap(View view, Bundle savedInstanceState) {
+        if (!hasLocationPermissions()) {
+            return;
+        }
         // Obtain user's location before initializing the map
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
@@ -220,7 +328,7 @@ public class WorkoutFragment extends Fragment {
         GoogleMapOptions options = new GoogleMapOptions();
         if (latitude != null && longitude != null) {
             LatLng lastLatLng = new LatLng(latitude, longitude);
-            options.camera(CameraPosition.fromLatLngZoom(lastLatLng, 18f));
+            options.camera(CameraPosition.fromLatLngZoom(lastLatLng, 15f));
         }
         SupportMapFragment mapFragment = SupportMapFragment.newInstance(options);
         // Replace the placeholder with the map fragment
@@ -271,13 +379,16 @@ public class WorkoutFragment extends Fragment {
      * Called when the map is ready (either AMap or Google Map).
      */
     private void onMapReady() {
-        // Hide the placeholder image
         if (mapProgressBar != null) {
             mapProgressBar.setVisibility(View.GONE);
         }
-        // Proceed with map setup
+        View placeholder = rootView.findViewById(R.id.map_placeholder);
+        if (placeholder != null) {
+            placeholder.setVisibility(View.GONE);
+        }
         getUserLocationAndZoom();
     }
+
 
     /**
      * Retrieves the user's current location and moves the map camera to that position with zoom.
@@ -290,7 +401,7 @@ public class WorkoutFragment extends Fragment {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                             LatLng currentLatLng = new LatLng(latitude, longitude);
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
 
                             // Store the new location
                             lastLatitude = latitude;
@@ -321,7 +432,7 @@ public class WorkoutFragment extends Fragment {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                              LatLng currentLatLng = new LatLng(latitude, longitude);
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 18f));
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
 
                             // Store the new location
                             lastLatitude = latitude;
@@ -401,12 +512,16 @@ public class WorkoutFragment extends Fragment {
         requestPermissions(new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE);
     }
 
+    private void requestActivityRecognitionPermissionToJump() {
+        requestPermissions(new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE_JUMP);
+    }
+
     /**
      * Checks location permissions and retrieves the user's location to start the appropriate map activity.
      */
     private void checkLocationAndStartMapActivity() {
         if (!hasLocationPermissions()) {
-            showToast("Location permissions not granted");
+            //showToast("Location permissions not granted 2");
             proceedToNoMapActivity();
             return;
         }
@@ -440,6 +555,43 @@ public class WorkoutFragment extends Fragment {
         }
     }
 
+
+    private void checkLocationAndStartJumpActivity() {
+        if (!hasLocationPermissions()) {
+            //showToast("Location permissions not granted 3");
+            proceedToJumpActivity(0.0,0.0);
+            return;
+        }
+
+        if (fusedLocationClient == null) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        }
+        Log.d(TAG, "Attempting to get last known location");
+
+        try {
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(location -> {
+                        if (location != null) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            Log.d(TAG, "Location obtained: " + latitude + ", " + longitude);
+                            proceedToJumpActivity(latitude, longitude);
+                        } else {
+                            Log.d(TAG, "Last known location is null; requesting new location");
+                            requestNewLocationForActivityToJump();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to get location", e);
+                        showToast("Unable to retrieve current location");
+                        proceedToJumpActivity(0.0,0.0);
+                    });
+        } catch (SecurityException e) {
+            Log.e(TAG, "Permission error", e);
+            proceedToJumpActivity(0.0,0.0);
+        }
+    }
+
     /**
      * Requests a new high-accuracy location from the location provider for starting map activity.
      */
@@ -465,6 +617,31 @@ public class WorkoutFragment extends Fragment {
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
             proceedToNoMapActivity();
+        }
+    }
+
+    private void requestNewLocationForActivityToJump() {
+        try {
+            fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
+                    .addOnSuccessListener(location -> {
+                        if (location != null) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            Log.d(TAG, "New location obtained: " + latitude + ", " + longitude);
+                            proceedToJumpActivity(latitude, longitude);
+                        } else {
+                            showToast("Unable to retrieve current location");
+                            proceedToJumpActivity(0.0,0.0);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to retrieve current location", e);
+                        showToast("Unable to retrieve current location");
+                        proceedToJumpActivity(0.0,0.0);
+                    });
+        } catch (SecurityException e) {
+            Log.e(TAG, "Permission error", e);
+            proceedToJumpActivity(0.0,0.0);
         }
     }
 
@@ -504,7 +681,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name",  userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
-        startActivity(intent);
+        startActivityForResult(intent, 123);
     }
     /**
      * Starts the appropriate map activity based on the user's location and permissions.
@@ -531,12 +708,12 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name", userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
-        startActivity(intent);
+        startActivityForResult(intent, 123);
     }
     /**
      * Starts the appropriate jump activity based on the user's info.
      */
-    private void proceedToJumpActivity() {
+    private void proceedToJumpActivity(Double latitude, Double longitude) {
         boolean locationGranted = hasLocationPermissions();
         boolean activityRecognitionGranted = hasActivityRecognitionPermission();
 
@@ -547,6 +724,9 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name", userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
+
+        intent.putExtra("LATITUDE", latitude);
+        intent.putExtra("LONGITUDE", longitude);
         startActivity(intent);
     }
 
@@ -601,6 +781,36 @@ public class WorkoutFragment extends Fragment {
                 showToast("Activity recognition permission is required.");
 
             }
+        }else if (requestCode == ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE_JUMP) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Activity recognition permission granted");
+                // Proceed to start the jump activity
+                checkLocationAndStartJumpActivity();
+            } else {
+                Log.d(TAG, "Activity recognition permission denied");
+                // Show a message to the user
+                showToast("Activity recognition permission is required.");
+
+            }
+        }else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE_JUMP) {
+            if (grantResults.length > 0 &&
+                    (grantResults[0] == PackageManager.PERMISSION_GRANTED ||
+                            grantResults[1] == PackageManager.PERMISSION_GRANTED)) {
+                Log.d(TAG, "Location permissions granted");
+                if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+                    requestActivityRecognitionPermissionToJump();
+                } else {
+
+                    checkLocationAndStartJumpActivity();
+                }
+                // Re-initialize the map now that permissions are granted
+                View view = getView();
+                if (view != null) {
+                    initializeMap(view, null);
+                }
+            } else {
+                proceedToJumpActivity(0.0,0.0);
+            }
         }
     }
 
@@ -613,9 +823,10 @@ public class WorkoutFragment extends Fragment {
     }
 
     // This method updates the fragment's data
-    public void updateData(String fullName, Double weight) {
+    public void updateData(String fullName, Double weight, Boolean locationGranted) {
         this.userName = fullName;
         this.userWeight = weight;
+        this.locationGranted=locationGranted;
 
         // Now update the UI or other components using this new data
         TextView greetingTextView = getView().findViewById(R.id.greeting_text);
@@ -624,26 +835,71 @@ public class WorkoutFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        setupNotificationListener();
         boolean currentPermissionStatus = hasLocationPermissions();
         if (currentPermissionStatus != locationGranted) {
             locationGranted = currentPermissionStatus;
-                if (locationGranted) {
-                    mapProgressBar.setVisibility(View.VISIBLE);
-                    // Initialize FusedLocationProviderClient for location services
-                    fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-
-                    // Initialize the map
-                    initializeMap(rootView, savedInstanceState);
-                } else {
-                    // Show placeholder or notify the user that location permission is not granted
-                    View placeholder = rootView.findViewById(R.id.map_placeholder);
-                    if (placeholder != null) {
-                        placeholder.setVisibility(View.VISIBLE);
-                    }
-                    showToast("Location permissions not granted");
-                    //proceedToNoMapActivity();
+            if (locationGranted) {
+                mapProgressBar.setVisibility(View.VISIBLE);
+                View placeholder = rootView.findViewById(R.id.map_placeholder);
+                if (placeholder != null) {
+                    placeholder.setVisibility(View.GONE);
                 }
+                View mapContainer = rootView.findViewById(R.id.map_container);
+                if (mapContainer != null) {
+                    mapContainer.setVisibility(View.VISIBLE);
+                }
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+                initializeMap(rootView, savedInstanceState);
+            } else {
+                FragmentManager fragmentManager = getChildFragmentManager();
+                Fragment mapFragment = fragmentManager.findFragmentById(R.id.map_container);
+                if (mapFragment != null) {
+                    fragmentManager.beginTransaction().remove(mapFragment).commit();
+                }
+                mapProgressBar.setVisibility(View.GONE);
+                View placeholder = rootView.findViewById(R.id.map_placeholder);
+                if (placeholder != null) {
+                    placeholder.setVisibility(View.VISIBLE);
+                }
+                View mapContainer = rootView.findViewById(R.id.map_container);
+                if (mapContainer != null) {
+                    mapContainer.setVisibility(View.GONE);
+                }
+                //showToast("Location permissions not granted");
+            }
         }
+    }
+    private void setupNotificationListener() {
+        if (userId == null) {
+            Log.e(TAG, "User ID is null, cannot setup notifications listener.");
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // 从 Firestore 中获取点赞信息
+        db.collection("message")
+                .whereEqualTo("updateUserId",userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            MessageBean messageBean = document.toObject(MessageBean.class);
+                            if ("0".equals(messageBean.getIsRead())) {
+                                count++;
+                            }
+                        }
+                        if (count>0){
+                            rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
+                        }else {
+                            rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+                        }
+                    } else {
+                        Log.w("Firestore", "Error getting notifications", task.getException());
+                    }
+                });
+
 
 
     }

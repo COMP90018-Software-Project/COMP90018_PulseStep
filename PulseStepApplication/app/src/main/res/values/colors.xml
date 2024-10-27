@@ -17,5 +17,6 @@
     <color name="progress_orange">#FFAE8C</color>
     <color name="bar_orange">#FFC6AE</color>
     <color name="user_rank_row_orange">#FAD8C8</color>
+    <color name="jump_orange">#FFD4C1</color>
 
 </resources>

@@ -4,12 +4,19 @@ import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -27,10 +34,13 @@ public class PersonalDetails extends AppCompatActivity {
     private TextView birthdayTextView;
     private EditText heightEditText, weightEditText;
     private RadioButton maleRadioButton, femaleRadioButton, otherRadioButton;
+    private View horizontalLine;
+    private ImageView backButton;
     private Button finishButton;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private ProgressDialog progressDialog; // ProgressDialog to show saving state
+    private LinearLayout fullNameLayoutView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +59,14 @@ public class PersonalDetails extends AppCompatActivity {
         femaleRadioButton = findViewById(R.id.femaleRadioButton);
         otherRadioButton = findViewById(R.id.otherRadioButton);
         finishButton = findViewById(R.id.finishButton);
+        backButton = findViewById(R.id.back_button);
+        fullNameLayoutView = findViewById(R.id.fullNameLayoutView);
+        horizontalLine = findViewById(R.id.horizontalLine);
+
+        // Hide the view
+        backButton.setVisibility(View.GONE);  // Use View.GONE or View.INVISIBLE as needed
+        fullNameLayoutView.setVisibility(View.GONE);
+        horizontalLine.setVisibility(View.GONE);
 
         // Initialize ProgressDialog
         progressDialog = new ProgressDialog(this);
@@ -119,6 +137,9 @@ public class PersonalDetails extends AppCompatActivity {
                     if (height <= 0) {
                         heightEditText.setError("Height must be a positive number.");
                         hasError = true;
+                    } else if (height < 50 || height > 350) {  // Set height range as needed
+                        heightEditText.setError("Height must be between 50 cm and 350 cm.");
+                        hasError = true;
                     } else {
                         heightEditText.setError(null); // Clear error
                     }
@@ -138,6 +159,9 @@ public class PersonalDetails extends AppCompatActivity {
                     if (weight <= 0) {
                         weightEditText.setError("Weight must be a positive number.");
                         hasError = true;
+                    } else if (weight < 20 || weight > 400) {  // Set weight range as needed
+                        weightEditText.setError("Weight must be between 20 kg and 400 kg.");
+                        hasError = true;
                     } else {
                         weightEditText.setError(null); // Clear error
                     }
@@ -146,6 +170,7 @@ public class PersonalDetails extends AppCompatActivity {
                     hasError = true;
                 }
             }
+
 
             // Validate gender
             if (!isMale && !isFemale && !isOther) {
@@ -196,13 +221,6 @@ public class PersonalDetails extends AppCompatActivity {
             // Default daily target for user
             userDetails.put("target", 1);
 
-//            userDetails.put("dailyActiveTime",0);
-//            userDetails.put("monthlyActiveTime",0);
-//
-//            List<String> dailyLikeList = new ArrayList<>();
-//            userDetails.put("dailyLike",dailyLikeList);
-//            List<String> monthlyLikeList = new ArrayList<>();
-//            userDetails.put("monthlyLike",monthlyLikeList);
 
             // Save data to Firestore
             db.collection("users").document(userUID)

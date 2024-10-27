@@ -23,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseUser;
 
 public class Registration extends AppCompatActivity {
 
@@ -32,6 +33,9 @@ public class Registration extends AppCompatActivity {
     private ImageButton backButton;
     private TextView signInText;
     private FirebaseAuth mAuth;
+
+    private boolean emailVerificationSent = false; // Track if email is sent
+    private final String passVerificationMessage = "Continue";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,68 +52,143 @@ public class Registration extends AppCompatActivity {
         fullNameInputLayout = findViewById(R.id.fullNameInputLayout);
         emailInputLayout = findViewById(R.id.emailInputLayout);
 
-        // 设置返回按钮的点击事件
+        // Back button logic
         backButton.setOnClickListener(view -> finish());
 
-        // 设置 "Sign In" 部分的文本样式
+        // Set "Sign In" text style
         String fullText = "Already have an account? Sign In";
         SpannableString spannableString = new SpannableString(fullText);
         int startIndex = fullText.indexOf("Sign In");
         int endIndex = startIndex + "Sign In".length();
-
-        // 设置加粗和黑色
-        spannableString.setSpan(new ForegroundColorSpan(getResources().getColor(android.R.color.black)), startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
+        spannableString.setSpan(new ForegroundColorSpan(getResources().getColor(android.R.color.black)),
+                startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         signInText.setText(spannableString);
 
-        // 设置 "Sign In" 的点击事件
+        // Sign In click event
         signInText.setOnClickListener(view -> {
             Intent intent = new Intent(Registration.this, Login.class);
             startActivity(intent);
         });
 
-        // 设置 "Continue" 按钮的点击事件
+        // Continue button click event
         continueButton.setOnClickListener(view -> {
-            String fullName = fullNameEditText.getText().toString();
-            String email = emailEditText.getText().toString();
-
-            // 检查全名是否为空或者不符合格式
-            if (fullName.isEmpty()) {
-                fullNameInputLayout.setError("Full name cannot be empty");
-                return;
-            } else if (!fullName.matches("[a-zA-Z ]+")) { // 只允许字母和空格
-                fullNameInputLayout.setError("Full name can only contain letters and spaces");
-                return;
+            if (emailVerificationSent) {
+                // If email verification has been sent, check if verified
+                String fullName = fullNameEditText.getText().toString();
+                String email = emailEditText.getText().toString();
+                proceedIfEmailVerified(fullName, email);
             } else {
-                fullNameInputLayout.setError(null); // 清除错误
+                // Otherwise, validate inputs and send verification email
+                validateAndRegisterUser();
+                continueButton.setText(passVerificationMessage);
             }
-
-            // 检查邮箱是否为空或格式不正确
-            if (email.isEmpty()) {
-                emailInputLayout.setError("Enter your email address");
-                return;
-            } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                emailInputLayout.setError("Invalid email format");
-                return;
-            } else {
-                emailInputLayout.setError(null); // 清除错误
-            }
-
-            // 检查邮箱是否已经在 Firebase 中注册
-            mAuth.fetchSignInMethodsForEmail(email)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            boolean isEmailRegistered = task.getResult().getSignInMethods().size() > 0;
-                            // 跳转到设置密码页面
-                            Intent intent = new Intent(Registration.this, SetPassword.class);
-                            intent.putExtra("FULL_NAME", fullName);
-                            intent.putExtra("EMAIL", email);
-                            startActivity(intent);
-                        } else {
-                            // 如果发生错误，显示错误信息
-                            Toast.makeText(Registration.this, "Error checking email: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
         });
+    }
+
+    // Method to validate inputs and register the user
+    private void validateAndRegisterUser() {
+        String fullName = fullNameEditText.getText().toString();
+        String email = emailEditText.getText().toString();
+
+        // Validate full name
+        if (fullName.isEmpty()) {
+            fullNameInputLayout.setError("Full name cannot be empty");
+            return;
+        } else if (!fullName.matches("[a-zA-Z ]+")) {
+            fullNameInputLayout.setError("Full name can only contain letters and spaces");
+            return;
+        } else if (fullName.length() > 15) {  // Adjust the maximum length as desired
+            fullNameInputLayout.setError("Full name cannot exceed 30 characters");
+            return;
+        } else {
+            fullNameInputLayout.setError(null);
+        }
+
+        // Validate email
+        if (email.isEmpty()) {
+            emailInputLayout.setError("Enter your email address");
+            return;
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailInputLayout.setError("Invalid email format");
+            return;
+        } else {
+            emailInputLayout.setError(null);
+        }
+
+        // Check if the email is already registered
+        mAuth.fetchSignInMethodsForEmail(email)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        boolean isEmailRegistered = task.getResult().getSignInMethods().size() > 0;
+                        if (isEmailRegistered) {
+                            Toast.makeText(Registration.this,
+                                    "Email already registered. Please sign in.",
+                                    Toast.LENGTH_SHORT).show();
+                        } else {
+                            // Register the user and send verification email
+                            registerUser(fullName, email);
+                        }
+                    } else {
+                        Toast.makeText(Registration.this,
+                                "Error checking email: " + task.getException().getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // Method to register the user and send a verification email
+    private void registerUser(String fullName, String email) {
+        mAuth.createUserWithEmailAndPassword(email, "defaultPassword123")
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            sendVerificationEmail(user);
+                        }
+                    } else {
+                        Toast.makeText(Registration.this,
+                                "Registration failed: " + task.getException().getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // Method to send verification email
+    private void sendVerificationEmail(FirebaseUser user) {
+        user.sendEmailVerification()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        emailVerificationSent = true; // Set flag to true
+                        Toast.makeText(Registration.this,
+                                "Verification email sent. Please verify before continuing.",
+                                Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(Registration.this,
+                                "Failed to send verification email.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // Method to check if the email is verified before proceeding
+    private void proceedIfEmailVerified(String fullName, String email) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            user.reload().addOnCompleteListener(task -> {
+                if (user.isEmailVerified()) {
+                    // Navigate to the SetPassword activity
+                    Intent intent = new Intent(Registration.this, SetPassword.class);
+                    intent.putExtra("FULL_NAME", fullName);
+                    intent.putExtra("EMAIL", email);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(Registration.this,
+                            "Please verify your email first. If you haven't received it, check your email address.",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+        } else {
+            Toast.makeText(Registration.this, "User not found. Please try again.", Toast.LENGTH_SHORT).show();
+        }
     }
 }

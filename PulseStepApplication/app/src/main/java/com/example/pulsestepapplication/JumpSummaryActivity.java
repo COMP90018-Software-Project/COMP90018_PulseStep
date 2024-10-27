@@ -122,7 +122,9 @@ public class JumpSummaryActivity extends AppCompatActivity {
 
                 // Finish the activity and return to the previous screen
                 Intent intent = new Intent(JumpSummaryActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 intent.putExtra("fragment", "WorkoutFragment");
+                intent.putExtra("USER_ID", userUID);
                 startActivity(intent);
                 finish();
             }
@@ -156,7 +158,18 @@ public class JumpSummaryActivity extends AppCompatActivity {
             jumpCount = intent.getIntExtra("jumpCount", 0);
             address = intent.getStringExtra("address");
             avgPace = intent.getStringExtra("avgSpeed");
+            try {
+                Double.parseDouble(avgPace);
+            } catch (NumberFormatException e) {
+                avgPace = "0";
+            }
+
             calories = intent.getStringExtra("calories");
+            try {
+                Double.parseDouble(calories);
+            } catch (NumberFormatException e) {
+                calories = "0";
+            }
         }
     }
 

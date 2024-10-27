@@ -25,9 +25,21 @@
 5. **UI交互**
    - 提供了暂停和恢复按钮，通过点击可控制路径追踪的暂停和恢复状态。
    - 提供了显示最后轨迹的功能按钮，点击后可以展示用户的最后一次运动轨迹。
+
+6. **卡路里计算**
+   - 基于公式近似计算： 卡路里消耗 =·= 用户体重（公斤）× 运动时间（分钟）× 燃烧系数 (跳绳约0.14-0.2）。
+   - 跳绳假设了用户在计时的全程中平均地进行运动。
+   - 跑步的卡路里消耗的权重基于配速
+  
+7. **跳绳计数**
+   - <del>基于每个时间片段内运动加速度的变化曲线简单计算得出，</del>计算精度可能会受设备影响（误计漏计等），在后台运行时精度会有一定程度的下降。
+   - <del>认为速度曲线近似正弦函数，因此加速度曲线类似余弦函数。计数器通过在每个近似0值时计数来为跳绳计次</del>
+   - 考虑到跳绳是对抗重力的运动，以及手机握持的方向以及在运动中未知的方向不一定一定，因此使用实时更新的重力方向上的加速度曲线来为跳绳计次。
+   - 建议手持或固定在手臂上以达到更好的测量效果。
   
 ### 参数设置
 When implementing GPS tracking, finding the right balance between update frequency and battery consumption is key. For **walking** or slower activities, a **5 to 10-second** interval is often recommended to ensure accurate tracking without excessive power drain. A distance threshold of **5 to 10 meters** can also trigger updates efficiently[^1][^2]. For **driving**, shorter intervals like **1 to 5 seconds** may be more appropriate, especially if high precision is needed. In background mode, **30 seconds to 1 minute** updates can be used to save battery while maintaining adequate performance[^1][^3]. Using the **Fused Location Provider** can help balance accuracy and power consumption by combining data from multiple sources[^4].
+
 
 [^1]: [Unlocking Android Background Location Updates](19)
 [^2]: [BrickHouse Security - GPS Tracking Intervals](22)

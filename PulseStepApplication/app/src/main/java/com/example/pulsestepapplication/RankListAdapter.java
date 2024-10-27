@@ -3,6 +3,8 @@ package com.example.pulsestepapplication;
 import android.content.Context;
 import android.content.Intent;
 import android.icu.text.SimpleDateFormat;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,23 +18,30 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageException;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+
 
 public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyViewHolder> {
 
     Context context;
     public static ArrayList<RankModel> rankModels;
     private boolean isMonthlyRank;
+    private ImageView profileImage;
 
     public RankListAdapter(Context context, ArrayList<RankModel> rankModels, boolean isMonthlyRank){
         this.context = context;
@@ -53,11 +62,48 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
     public void onBindViewHolder(@NonNull RankListAdapter.MyViewHolder holder, int position) {
         RankModel rankModel = rankModels.get(position);
         // assigning values to the views based on the position of the recycler view
-        holder.rankNo.setText(rankModels.get(position).getRankNo());
-        holder.rankUserName.setText(rankModels.get(position).getRankUserName());
-        holder.rankWorkoutTime.setText(rankModels.get(position).getRankWorkoutTime());
-        holder.rankUserImage.setImageResource(rankModels.get(position).getRankUserImage());
-        holder.rankLikeNum.setText(rankModels.get(position).getRankLikeNum());
+        holder.rankNo.setText(rankModel.getRankNo());
+        holder.rankUserName.setText(rankModel.getRankUserName());
+        holder.rankWorkoutTime.setText(rankModel.getRankWorkoutTime());
+//        holder.rankUserImage.setImageResource(rankModels.get(position).getRankUserImage());
+        holder.rankLikeNum.setText(rankModel.getRankLikeNum());
+
+        // set rank user Image
+        String gender = rankModel.getUserGender();
+        FirebaseStorage.getInstance().getReference()
+                .child("users")
+                .child(rankModel.getRowUserId())
+                .child("images/profile_image")
+                .getDownloadUrl()
+                .addOnSuccessListener(uri -> {
+                    // Get user image url
+                    Glide.with(context).load(uri).apply(RequestOptions.circleCropTransform()).into(holder.rankUserImage);
+                    Log.d("UserImage", "userImage = yyyyyyyyyyyyyyyyyy");
+                })
+                .addOnFailureListener(exception -> {
+                    Log.d("UserImage","userImage = nnnnnnnnnnnnnnnnnnnnnnn");
+                    // Set default user image when no user image file retrieve
+                    if (exception instanceof StorageException) {
+                        StorageException storageException = (StorageException) exception;
+                        if (storageException.getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
+                            // Set default user image
+                            if (gender != null) {
+                                if (gender.equalsIgnoreCase("male")) {
+                                    // male
+                                    holder.rankUserImage.setImageResource(R.drawable.male_default_avatar);
+                                } else if (gender.equalsIgnoreCase("female")) {
+                                    // female
+                                    holder.rankUserImage.setImageResource(R.drawable.female_default_avatar);
+                                }else if (gender.equalsIgnoreCase("other")) {
+                                    // other
+                                    holder.rankUserImage.setImageResource(R.drawable.default_avatar);
+                                }
+                            }
+                        } else {
+                            Log.e("ProfileFragment", "Error fetching profile image: " + exception.getMessage());
+                        }
+                    }
+                });
 
         // Get current user id
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -137,12 +183,17 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
         DocumentReference docRef = db.collection("users").document(updateUserId);
         docRef.update(likeField + "." + currentDateOrMonth, FieldValue.arrayUnion(userId))
                 .addOnSuccessListener(aVoid -> {
-                    // update like num display
-                    updateLikeCount(docRef, currentDateOrMonth, likeField, likeNumTextView);
+                    // delay update
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        // update like num display
+                        updateLikeCount(docRef, currentDateOrMonth, likeField, likeNumTextView);
+                    }, 500);  // delay 500ms
                 })
                 .addOnFailureListener(e -> {
                     Log.e("Firestore", "Error updating (increase like num) document", e);
                 });
+
+        addLike(db,userId,updateUserId);
     }
 
     /**
@@ -196,4 +247,27 @@ public class RankListAdapter extends RecyclerView.Adapter<RankListAdapter.MyView
         return monthFormat.format(date);
     }
 
+
+    private void addLike(FirebaseFirestore db,String userId,String updateUserId){
+        long timestamp = System.currentTimeMillis();
+        String documentId = timestamp + "_" + userId;
+        Map<String, Object> addLike = new HashMap<>();
+        addLike.put("id",documentId);
+        addLike.put("userId", userId);
+        addLike.put("updateUserId",updateUserId);
+        addLike.put("type", "1");
+        addLike.put("timestamp", timestamp);
+        addLike.put("isRead", "0");
+
+        DocumentReference notificationRef = db.collection("message").document(documentId);
+
+        notificationRef.set(addLike)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("Firestore", "Notification created or updated with ID: " + userId);
+                })
+                .addOnFailureListener(e -> {
+                    Log.w("Firestore", "Error creating or updating notification", e);
+                });
+
+    }
 }
