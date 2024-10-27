@@ -26,10 +26,10 @@ public class JumpCounter {
     private JumpCounterListener jumpCounterListener;
 
 
-    private final float minThreshold = 0.2f;
-    private final float maxThreshold = 0.5f;
-    private final float finishThreshold = 3.0f;
-    private final float largeMovingRate = 1.2f;
+    private final float upThreshold = 0.8f;
+    private final float maxThreshold = 0.8f;
+    private final float finishThreshold = 1.0f;
+    private final float largeMovingRate = 1.05f;
     private static final int JUMP_DETECTION_WINDOW_MS = 5; // Time window to detect a jump (ms)
     private long lastJumpTime = 0;
     private boolean is_initial = true;
@@ -70,6 +70,7 @@ public class JumpCounter {
                     xInit = x;
                     yInit = y;
                     zInit = z;
+                    initAcc = (float) Math.sqrt(x * x + y * y + z * z);
                     isJumpFinished = true;
                 }
 
@@ -77,11 +78,11 @@ public class JumpCounter {
                 float nowAcc = (float) Math.sqrt(x * x + y * y + z * z);
                 // float pastAcc = (float) Math.sqrt(xLast * xLast + yLast * yLast + zLast * zLast);
 
-                if (nowAcc < largeMovingRate * 9.8f) {
+                if (nowAcc < largeMovingRate * initAcc) {
                     // Update the initial gravity vector components
-                    xInit = 0.9f * xInit + 0.1f * x;
-                    yInit = 0.9f * yInit + 0.1f * y;
-                    zInit = 0.9f * zInit + 0.1f * z;
+                    xInit = 0.95f * xInit + 0.05f * x;
+                    yInit = 0.95f * yInit + 0.05f * y;
+                    zInit = 0.95f * zInit + 0.05f * z;
                 }
 
                 // Normalize xInit, yInit, zInit to ensure their magnitude equals 9.8
@@ -93,15 +94,15 @@ public class JumpCounter {
                     zInit *= scale;
                 }
 
-                float initDiffAcc = (float) Math.sqrt((xInit-x)*(xInit-x) + (yInit-y)*(yInit-y) + (zInit-z)*(zInit-z));
-                if (initDiffAcc > finishThreshold * 9.8f) {
+                float initDiffAcc = (xInit * (-x) + yInit * (-y) + zInit * (-z)) / 9.8f;
+                if (initDiffAcc > finishThreshold * initAcc) {
                     isJumpFinished = true;
                 }
 
 
                 // float gForceDiff = Math.abs(nowAcc - pastAcc);
 
-                if (initDiffAcc < maxThreshold*9.8f && initDiffAcc > minThreshold*9.8f && isJumpFinished) {
+                if (initDiffAcc < upThreshold*9.8f && isJumpFinished) {
                     jumpCount++;
                     isJumpFinished = false;
                     if (jumpCounterListener != null) {
