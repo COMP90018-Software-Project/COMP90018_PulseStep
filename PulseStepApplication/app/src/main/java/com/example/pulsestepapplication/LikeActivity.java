@@ -32,6 +32,8 @@ public class LikeActivity extends AppCompatActivity {
     private List<MessageBean> messageBeanList;
     private ListenerRegistration likeListener;
 
+    private String userId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,7 +49,7 @@ public class LikeActivity extends AppCompatActivity {
 
         getData();
 
-        //addListener();
+        addListener();
 
         binding.likeList.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         binding.back.setOnClickListener(view -> finish());
@@ -87,15 +89,16 @@ public class LikeActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        //messageBeanList.clear();
+
         // 获取当前用户的 UID
-        String userId = getIntent().getStringExtra("USER_ID");
+        userId = getIntent().getStringExtra("USER_ID");
         // 从 Firestore 中获取点赞信息
         db.collection("message")
                 .whereEqualTo("updateUserId", userId)
                 .get(Source.SERVER)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
+                        messageBeanList.clear();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             MessageBean messageBean = document.toObject(MessageBean.class);
                             messageBeanList.add(messageBean);
@@ -139,11 +142,13 @@ public class LikeActivity extends AppCompatActivity {
                         Log.w("Firestore", "Listen failed.", e);
                         return;
                     }
-
-
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         if (dc.getType() == ADDED) {
-                            getData();
+                            MessageBean messageBean = dc.getDocument().toObject(MessageBean.class);
+                            if (messageBean.getUpdateUserId().equals(userId)) {
+                                getData();
+                            }
+                            break;
                         }
                     }
                 });

@@ -2,6 +2,7 @@ package com.example.pulsestepapplication.adapter;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Typeface;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -55,8 +57,16 @@ public class LikeAdapter extends RecyclerView.Adapter<LikeAdapter.ViewHolder> {
         MessageBean bean = list.get(i);
         if ("1".equals(bean.getIsRead())) {
             viewHolder.unReadView.setVisibility(View.GONE);
+            viewHolder.userName.setTypeface(null, Typeface.NORMAL);
+            viewHolder.userName.setTextColor(ContextCompat.getColor(mActivity, R.color.gray));
+            viewHolder.project.setTypeface(null, Typeface.NORMAL);
+            viewHolder.project.setTextColor(ContextCompat.getColor(mActivity, R.color.gray));
         } else {
             viewHolder.unReadView.setVisibility(View.VISIBLE);
+            viewHolder.userName.setTypeface(null, Typeface.BOLD);
+            viewHolder.userName.setTextColor(ContextCompat.getColor(mActivity, R.color.black));
+            viewHolder.project.setTypeface(null, Typeface.BOLD);
+            viewHolder.project.setTextColor(ContextCompat.getColor(mActivity, R.color.black));
         }
         getUserInfo(viewHolder.profileImage, viewHolder.userName, bean.getUserId());
 
@@ -81,10 +91,16 @@ public class LikeAdapter extends RecyclerView.Adapter<LikeAdapter.ViewHolder> {
                 .addOnSuccessListener(uri -> {
                     // 成功获取到图片 URL，设置用户自定义头像
                     Log.e("ProfileFragment", uri + "");
-                    Glide.with(mActivity)
-                            .load(uri)
-                            .apply(RequestOptions.circleCropTransform())
-                            .into(imageView);
+                    if (mActivity instanceof Activity) {
+                        Activity activity = (Activity) mActivity;
+                        if (!activity.isDestroyed() && !activity.isFinishing()) {
+                            Glide.with(mActivity)
+                                    .load(uri)
+                                    .apply(RequestOptions.circleCropTransform())
+                                    .into(imageView);
+                        }
+                    }
+
                 })
                 .addOnFailureListener(exception -> {
                     Log.e("ProfileFragment", "文件不存在");

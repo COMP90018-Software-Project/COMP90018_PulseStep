@@ -1,10 +1,10 @@
 package com.example.pulsestepapplication;
 
 import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
+import static com.google.firebase.firestore.DocumentChange.Type.MODIFIED;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -17,7 +17,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -50,7 +49,7 @@ import java.util.Locale;
 
 
 public class WorkoutFragment extends Fragment {
-    private int count=0;
+    private int count = 0;
     // Permission request codes
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int LOCATION_PERMISSION_REQUEST_CODE_JUMP = 11;
@@ -198,7 +197,7 @@ public class WorkoutFragment extends Fragment {
                 if (fullName != null && weight != null) {
                     Log.d(TAG, "Real-time update: Full Name = " + fullName + ", Weight = " + weight);
                     // Update the UI with the new data
-                    updateUserData(fullName,  Double.parseDouble(weight));
+                    updateUserData(fullName, Double.parseDouble(weight));
                 } else {
                     Log.e(TAG, "Missing fields in user document.");
                 }
@@ -217,12 +216,17 @@ public class WorkoutFragment extends Fragment {
                         return;
                     }
 
-
-
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         if (dc.getType() == ADDED) {
-                            rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
-                            break;
+                            MessageBean messageBean = dc.getDocument().toObject(MessageBean.class);
+                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0")) {
+                                rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
+                            }
+                        } else if (dc.getType() == MODIFIED) {
+                            MessageBean messageBean = dc.getDocument().toObject(MessageBean.class);
+                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0")) {
+                                rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+                            }
                         }
                     }
                 });
@@ -310,7 +314,7 @@ public class WorkoutFragment extends Fragment {
                         lastLatitude = location.getLatitude();
                         lastLongitude = location.getLongitude();
 
-                            initializeGoogleMapWithLocation(lastLatitude, lastLongitude);
+                        initializeGoogleMapWithLocation(lastLatitude, lastLongitude);
 
                     } else {
                         // Request new location if last known location is null
@@ -334,9 +338,9 @@ public class WorkoutFragment extends Fragment {
                         lastLatitude = location.getLatitude();
                         lastLongitude = location.getLongitude();
 
-                            // Initialize Google Map with user's location
-                            isUsingAmap = false;
-                            initializeGoogleMapWithLocation(lastLatitude, lastLongitude);
+                        // Initialize Google Map with user's location
+                        isUsingAmap = false;
+                        initializeGoogleMapWithLocation(lastLatitude, lastLongitude);
 
                     } else {
                         // Keep the placeholder image visible
@@ -375,9 +379,9 @@ public class WorkoutFragment extends Fragment {
     private void configureMap() {
         // Apply custom map style
         applyCustomMapStyle();
-            if (hasLocationPermissions()) {
-                mMap.setMyLocationEnabled(false);
-            }
+        if (hasLocationPermissions()) {
+            mMap.setMyLocationEnabled(false);
+        }
 
     }
 
@@ -386,17 +390,17 @@ public class WorkoutFragment extends Fragment {
      */
     private void applyCustomMapStyle() {
 
-            // Apply custom style to Google Map
-            try {
-                boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.workout));
-                if (!success) {
-                    Log.e(TAG, "Map style parsing failed.");
-                } else {
-                    Log.d(TAG, "Custom map style applied successfully to Google Map.");
-                }
-            } catch (Resources.NotFoundException e) {
-                Log.e(TAG, "Map style resource not found", e);
+        // Apply custom style to Google Map
+        try {
+            boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.workout));
+            if (!success) {
+                Log.e(TAG, "Map style parsing failed.");
+            } else {
+                Log.d(TAG, "Custom map style applied successfully to Google Map.");
             }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Map style resource not found", e);
+        }
 
     }
 
@@ -427,7 +431,7 @@ public class WorkoutFragment extends Fragment {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                             LatLng currentLatLng = new LatLng(latitude, longitude);
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
 
                             // Store the new location
                             lastLatitude = latitude;
@@ -457,8 +461,8 @@ public class WorkoutFragment extends Fragment {
                         if (location != null) {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
-                             LatLng currentLatLng = new LatLng(latitude, longitude);
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
+                            LatLng currentLatLng = new LatLng(latitude, longitude);
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
 
                             // Store the new location
                             lastLatitude = latitude;
@@ -530,7 +534,6 @@ public class WorkoutFragment extends Fragment {
     }
 
 
-
     /**
      * Requests activity recognition permission.
      */
@@ -585,7 +588,7 @@ public class WorkoutFragment extends Fragment {
     private void checkLocationAndStartJumpActivity() {
         if (!hasLocationPermissions()) {
             //showToast("Location permissions not granted 3");
-            proceedToJumpActivity(0.0,0.0);
+            proceedToJumpActivity(0.0, 0.0);
             return;
         }
 
@@ -610,11 +613,11 @@ public class WorkoutFragment extends Fragment {
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to get location", e);
                         showToast("Unable to retrieve current location");
-                        proceedToJumpActivity(0.0,0.0);
+                        proceedToJumpActivity(0.0, 0.0);
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
-            proceedToJumpActivity(0.0,0.0);
+            proceedToJumpActivity(0.0, 0.0);
         }
     }
 
@@ -657,17 +660,17 @@ public class WorkoutFragment extends Fragment {
                             proceedToJumpActivity(latitude, longitude);
                         } else {
                             showToast("Unable to retrieve current location");
-                            proceedToJumpActivity(0.0,0.0);
+                            proceedToJumpActivity(0.0, 0.0);
                         }
                     })
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to retrieve current location", e);
                         showToast("Unable to retrieve current location");
-                        proceedToJumpActivity(0.0,0.0);
+                        proceedToJumpActivity(0.0, 0.0);
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
-            proceedToJumpActivity(0.0,0.0);
+            proceedToJumpActivity(0.0, 0.0);
         }
     }
 
@@ -696,19 +699,20 @@ public class WorkoutFragment extends Fragment {
 
         intent.putExtra("LOCATION_GRANTED", locationGranted);
         intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
-        if (locationGranted && activityRecognitionGranted){
+        if (locationGranted && activityRecognitionGranted) {
             intent.putExtra("MAP_MODE", true);
-        }else if (!locationGranted && activityRecognitionGranted){
+        } else if (!locationGranted && activityRecognitionGranted) {
             intent.putExtra("MAP_MODE", false);
         }
         intent.putExtra("LATITUDE", latitude);
         intent.putExtra("LONGITUDE", longitude);
 
-        intent.putExtra("name",  userName);
+        intent.putExtra("name", userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
         startActivityForResult(intent, 123);
     }
+
     /**
      * Starts the appropriate map activity based on the user's location and permissions.
      */
@@ -723,9 +727,9 @@ public class WorkoutFragment extends Fragment {
 
         intent.putExtra("LOCATION_GRANTED", locationGranted);
         intent.putExtra("ACTIVITY_RECOGNITION_GRANTED", activityRecognitionGranted);
-        if (locationGranted && activityRecognitionGranted){
+        if (locationGranted && activityRecognitionGranted) {
             intent.putExtra("MAP_MODE", true);
-        }else if (!locationGranted && activityRecognitionGranted){
+        } else if (!locationGranted && activityRecognitionGranted) {
             intent.putExtra("MAP_MODE", false);
         }
         intent.putExtra("LATITUDE", (Double) null);
@@ -736,6 +740,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("weight", userWeight);
         startActivityForResult(intent, 123);
     }
+
     /**
      * Starts the appropriate jump activity based on the user's info.
      */
@@ -807,7 +812,7 @@ public class WorkoutFragment extends Fragment {
                 showToast("Activity recognition permission is required.");
 
             }
-        }else if (requestCode == ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE_JUMP) {
+        } else if (requestCode == ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE_JUMP) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Activity recognition permission granted");
                 // Proceed to start the jump activity
@@ -818,7 +823,7 @@ public class WorkoutFragment extends Fragment {
                 showToast("Activity recognition permission is required.");
 
             }
-        }else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE_JUMP) {
+        } else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE_JUMP) {
             if (grantResults.length > 0 &&
                     (grantResults[0] == PackageManager.PERMISSION_GRANTED ||
                             grantResults[1] == PackageManager.PERMISSION_GRANTED)) {
@@ -835,11 +840,10 @@ public class WorkoutFragment extends Fragment {
                     initializeMap(view, null);
                 }
             } else {
-                proceedToJumpActivity(0.0,0.0);
+                proceedToJumpActivity(0.0, 0.0);
             }
         }
     }
-
 
 
     public String getFormattedDate() {
@@ -852,12 +856,13 @@ public class WorkoutFragment extends Fragment {
     public void updateData(String fullName, Double weight, Boolean locationGranted) {
         this.userName = fullName;
         this.userWeight = weight;
-        this.locationGranted=locationGranted;
+        this.locationGranted = locationGranted;
 
         // Now update the UI or other components using this new data
         TextView greetingTextView = getView().findViewById(R.id.greeting_text);
         greetingTextView.setText("Hi, " + fullName);
     }
+
     @Override
     public void onResume() {
         super.onResume();
@@ -896,6 +901,7 @@ public class WorkoutFragment extends Fragment {
             }
         }
     }
+
     private void setupNotificationListener() {
         if (userId == null) {
             Log.e(TAG, "User ID is null, cannot setup notifications listener.");
@@ -906,7 +912,7 @@ public class WorkoutFragment extends Fragment {
 
         // 从 Firestore 中获取点赞信息
         db.collection("message")
-                .whereEqualTo("updateUserId",userId)
+                .whereEqualTo("updateUserId", userId)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -916,9 +922,9 @@ public class WorkoutFragment extends Fragment {
                                 count++;
                             }
                         }
-                        if (count>0){
+                        if (count > 0) {
                             rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
-                        }else {
+                        } else {
                             rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
                         }
                     } else {
