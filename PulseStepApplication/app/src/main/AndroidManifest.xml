@@ -155,6 +155,7 @@
             android:exported="false"
             android:screenOrientation="portrait">
         </activity>
+        <activity android:name="com.example.pulsestepapplication.UserGuideLinesActivity" />
     </application>
 
 </manifest>

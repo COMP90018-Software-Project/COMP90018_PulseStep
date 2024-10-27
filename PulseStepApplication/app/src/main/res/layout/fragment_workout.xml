@@ -106,14 +106,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/run_button" />
 
-    <ImageView
-        android:id="@+id/my_star"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_marginTop="50dp"
-        android:src="@drawable/ic_message"
+    <FrameLayout
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:layout_margin="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.96"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+
+        >
+
+        <ImageView
+            android:id="@+id/my_star"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_message" />
+
+        <View
+            android:id="@+id/notification_badge"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_gravity="top|end"
+            android:background="@drawable/circular_button"
+            android:visibility="gone" />
+
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
