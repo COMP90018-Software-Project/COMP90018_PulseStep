@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="@color/white"
+    android:layout_height="wrap_content">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/profile_image"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginVertical="20dp"
+        android:layout_marginStart="20dp"
+        android:src="@drawable/default_avatar" />
+
+    <TextView
+        android:id="@+id/userName"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="20dp"
+        android:letterSpacing="0.05"
+        android:layout_toEndOf="@+id/profile_image"
+        android:text="******"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/project"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:layout_below="@+id/userName"
+        android:layout_marginStart="30dp"
+        android:letterSpacing="0.05"
+        android:layout_toEndOf="@+id/profile_image"
+        android:text="liked your record"
+        android:textColor="@color/black"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+</RelativeLayout>

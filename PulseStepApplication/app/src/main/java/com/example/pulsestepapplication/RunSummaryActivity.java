@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * RunSummaryActivity displays the summary of a run, including distance, time, address, step count,
@@ -178,7 +179,8 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
             totalDistance = intent.getFloatExtra("totalDistance", 0.0f);
             time = intent.getStringExtra("time");
             stepCount = intent.getIntExtra("stepCount", 0);
-            if(distanceInKm > 0.01){
+            String mode = intent.getStringExtra("MODE");
+            if(distanceInKm > 0.01 && Objects.equals(mode, "MAP")){
                 trajectory = intent.getParcelableArrayListExtra("trajectory");
             }else{
                 trajectory = null;

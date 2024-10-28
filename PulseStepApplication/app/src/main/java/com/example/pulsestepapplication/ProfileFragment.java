@@ -34,6 +34,7 @@ import com.example.pulsestepapplication.calendar.CalendarAdapter;
 import com.github.dhaval2404.imagepicker.ImagePicker;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageException;
 import com.google.firebase.storage.StorageReference;
@@ -53,6 +54,7 @@ import kotlin.jvm.functions.Function1;
 
 public class ProfileFragment extends Fragment {
     private ImageView profileImage;
+    private TextView nameTextView;
     private StorageReference storageReference;
 
     private ActivityResultLauncher<Intent> imagePickLauncher;
@@ -66,6 +68,8 @@ public class ProfileFragment extends Fragment {
     private RecyclerView recyclerView;
     private LinearLayoutManager layoutManager;
     private LinearSnapHelper snapHelper;
+
+    private ListenerRegistration profileListener;  // Listener registration for Firestore updates
 
     public ProfileFragment() {
 
@@ -141,8 +145,11 @@ public class ProfileFragment extends Fragment {
                 });
 
 
-        TextView nameTextView = view.findViewById(R.id.name);
+        nameTextView = view.findViewById(R.id.name);
         nameTextView.setText(userName);
+
+        // Initialize Firestore listener for user profile updates
+        initializeProfileListener();
 
         ImageView settingButton = view.findViewById(R.id.setting_button_profile_page);
         settingButton.setOnClickListener(v -> {
@@ -402,5 +409,84 @@ public class ProfileFragment extends Fragment {
                     }
                 });
     }
+
+
+    private void initializeProfileListener() {
+        if (userId == null) {
+            Log.e("ProfileFragment", "User ID is null. Cannot set up listener.");
+            return;
+        }
+
+        // Set up real-time listener for the user's profile document
+        DocumentReference userRef = FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId);
+
+        profileListener = userRef.addSnapshotListener((documentSnapshot, e) -> {
+            if (e != null) {
+                Log.e("ProfileFragment", "Failed to listen for profile updates", e);
+                return;
+            }
+
+            if (documentSnapshot != null && documentSnapshot.exists()) {
+                // Update full name and gender if available
+                userName = documentSnapshot.getString("fullName");
+                gender = documentSnapshot.getString("gender");
+
+                // Update the UI with the new data
+                updateUIWithProfileData();
+            } else {
+                Log.w("ProfileFragment", "Profile document does not exist.");
+            }
+        });
+    }
+
+    // Method to update the UI based on the latest profile data
+    private void updateUIWithProfileData() {
+        if (userName != null) {
+            nameTextView.setText(userName);
+        }
+
+        if (gender != null) {
+            setDefaultProfileImageBasedOnGender();
+        }
+    }
+
+    // Set default profile image based on gender
+    private void setDefaultProfileImageBasedOnGender() {
+        FirebaseStorage.getInstance().getReference()
+                .child("users")
+                .child(userId)
+                .child("images/profile_image")
+                .getDownloadUrl()
+                .addOnSuccessListener(uri -> {
+                    // 成功获取到图片 URL，设置用户自定义头像
+                    setProfilePic(getContext(), uri, profileImage);
+                })
+                .addOnFailureListener(exception -> {
+                    // 文件不存在，处理 StorageException，并根据性别设置默认头像
+                    if (exception instanceof StorageException) {
+                        StorageException storageException = (StorageException) exception;
+                        if (storageException.getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
+                            // 根据性别设置默认头像
+                            if (gender != null) {
+                                if (gender.equalsIgnoreCase("male")) {
+                                    // 设置男性默认头像
+                                    profileImage.setImageResource(R.drawable.male_default_avatar);
+                                } else if (gender.equalsIgnoreCase("female")) {
+                                    // 设置女性默认头像
+                                    profileImage.setImageResource(R.drawable.female_default_avatar);
+                                }else if (gender.equalsIgnoreCase("other")) {
+                                    // 如果性别为other，设置通用默认头像
+                                    profileImage.setImageResource(R.drawable.default_avatar);
+                                }
+                            }
+                        } else {
+                            Log.e("ProfileFragment", "Error fetching profile image: " + exception.getMessage());
+                        }
+                    }
+                });
+    }
+
 
 }

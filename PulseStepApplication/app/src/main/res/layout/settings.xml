@@ -121,40 +121,40 @@
         </LinearLayout>
 
         <!-- Light setting -->
-<!--        <LinearLayout-->
-<!--            android:id="@+id/light"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:orientation="horizontal"-->
-<!--            android:paddingLeft ="25dp"-->
-<!--            android:paddingRight="25dp"-->
-<!--            android:paddingTop="15dp"-->
-<!--            android:paddingBottom="15dp"-->
-<!--            android:gravity="center_vertical"-->
-<!--            app:layout_constraintTop_toBottomOf="@+id/notification">-->
+        <!--        <LinearLayout-->
+        <!--            android:id="@+id/light"-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:orientation="horizontal"-->
+        <!--            android:paddingLeft ="25dp"-->
+        <!--            android:paddingRight="25dp"-->
+        <!--            android:paddingTop="15dp"-->
+        <!--            android:paddingBottom="15dp"-->
+        <!--            android:gravity="center_vertical"-->
+        <!--            app:layout_constraintTop_toBottomOf="@+id/notification">-->
 
-<!--            <ImageView-->
-<!--                android:layout_width="55dp"-->
-<!--                android:layout_height="55dp"-->
-<!--                android:src="@drawable/ic_light" />-->
+        <!--            <ImageView-->
+        <!--                android:layout_width="55dp"-->
+        <!--                android:layout_height="55dp"-->
+        <!--                android:src="@drawable/ic_light" />-->
 
-<!--            <TextView-->
-<!--                android:id="@+id/light_label"-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_weight="5"-->
-<!--                android:paddingLeft="19dp"-->
-<!--                android:text="Light"-->
-<!--                android:fontFamily="@font/overpass_medium"-->
-<!--                android:textSize="19sp" />-->
+        <!--            <TextView-->
+        <!--                android:id="@+id/light_label"-->
+        <!--                android:layout_width="0dp"-->
+        <!--                android:layout_height="wrap_content"-->
+        <!--                android:layout_weight="5"-->
+        <!--                android:paddingLeft="19dp"-->
+        <!--                android:text="Light"-->
+        <!--                android:fontFamily="@font/overpass_medium"-->
+        <!--                android:textSize="19sp" />-->
 
-<!--            <com.google.android.material.materialswitch.MaterialSwitch-->
-<!--                android:id="@+id/light_switch"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="match_parent"-->
-<!--                app:trackTint="@color/dark_pink"-->
-<!--                android:checked="true" />-->
-<!--        </LinearLayout>-->
+        <!--            <com.google.android.material.materialswitch.MaterialSwitch-->
+        <!--                android:id="@+id/light_switch"-->
+        <!--                android:layout_width="wrap_content"-->
+        <!--                android:layout_height="match_parent"-->
+        <!--                app:trackTint="@color/dark_pink"-->
+        <!--                android:checked="true" />-->
+        <!--        </LinearLayout>-->
 
         <!-- Reset Password setting -->
         <LinearLayout
@@ -223,6 +223,40 @@
                 android:layout_height="40dp"
                 android:src="@drawable/ic_setting_arrow" />
         </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/user_guide_lines"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingLeft ="25dp"
+            android:paddingRight="25dp"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toBottomOf="@+id/light">
+
+            <ImageView
+                android:layout_width="55dp"
+                android:layout_height="55dp"
+                android:src="@drawable/userbook" />
+
+            <TextView
+                android:id="@+id/user_guide_lines_label"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:paddingLeft="19dp"
+                android:text="User Guidelines"
+                android:layout_weight="5"
+                android:fontFamily="@font/overpass_medium"
+                android:textSize="19sp" />
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_setting_arrow" />
+        </LinearLayout>
     </LinearLayout>
 
 
@@ -241,4 +275,22 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/bt_deactivate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Deactivate account :("
+        android:textSize="12sp"
+        android:textColor="@color/gray"
+        android:layout_gravity="center"
+        android:fontFamily="@font/overpass_regular"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/bt_logout_settings"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

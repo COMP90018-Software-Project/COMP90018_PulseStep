@@ -15,7 +15,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.LayoutInflater;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -28,14 +30,23 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class Settings extends AppCompatActivity {
 
     private ImageView backButton;
     private Button logOutButton;
+    private TextView deactivateButton;
     private LinearLayout resetPasswordButton;
 
     private LinearLayout editPersonalInfoButton;
+
+    private LinearLayout userGuideLinesButton;
 
     private MaterialSwitch locationSwitch;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
@@ -76,9 +87,14 @@ public class Settings extends AppCompatActivity {
         resetPasswordButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
+                FirebaseAuth mAuth;
+                // Initialize Firebase Auth
+                mAuth = FirebaseAuth.getInstance();
+                // Check if user is already logged in
+                FirebaseUser currentUser = mAuth.getCurrentUser();
                 // Finish the current activity and return to the RunSummaryActivity page
                 Intent intent = new Intent(Settings.this, ResetPassword.class);
-                intent.putExtra("userId", userId);
+                intent.putExtra("EMAIL", currentUser.getEmail());
                 startActivity(intent);
             }
         });
@@ -95,6 +111,16 @@ public class Settings extends AppCompatActivity {
             }
         });
 
+        userGuideLinesButton = findViewById(R.id.user_guide_lines);
+        userGuideLinesButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                // Finish the current activity and return to the RunSummaryActivity page
+                Intent intent = new Intent(Settings.this, UserGuideLinesActivity.class);
+                startActivity(intent);
+            }
+        });
+
 
         // Reference to the logout button
         logOutButton = findViewById(R.id.bt_logout_settings);
@@ -103,27 +129,113 @@ public class Settings extends AppCompatActivity {
         logOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Show the Material AlertDialog for logout confirmation
-                new MaterialAlertDialogBuilder(Settings.this)
-                        .setTitle("Log out")
-                        .setMessage("Are you sure you want to log out?")
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // Handle the logout action here
-                                performLogout();
-                            }
-                        })
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // Dismiss the dialog if "Cancel" is clicked
-                                dialog.dismiss();
-                            }
-                        })
-                        .show();
+                // Inflate the custom logout dialog layout
+                LayoutInflater inflater = LayoutInflater.from(Settings.this);
+                View dialogView = inflater.inflate(R.layout.dialog_logout, null);
+
+                // Find buttons in the custom dialog layout
+                Button positiveButton = dialogView.findViewById(R.id.positive_button);
+                Button negativeButton = dialogView.findViewById(R.id.negative_button);
+
+                // Create the AlertDialog with the custom view
+                AlertDialog dialog = new AlertDialog.Builder(Settings.this)
+                        .setView(dialogView)
+                        .setCancelable(false)  // Prevent dismissing by clicking outside
+                        .create();
+
+                dialog.show();
+
+                // Handle Confirm button click
+                positiveButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // Perform logout actions
+                        performLogout();
+                        FirebaseAuth.getInstance().signOut();
+
+                        // Clear activity history and navigate to Login screen
+                        Intent intent = new Intent(Settings.this, Login.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();  // Close current activity
+
+                        // Dismiss the dialog
+                        dialog.dismiss();
+                    }
+                });
+
+                // Handle Cancel button click
+                negativeButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // Dismiss the dialog when Cancel is clicked
+                        dialog.dismiss();
+                    }
+                });
+
+                // Optional: Customize dialog window properties if needed
+                Window window = dialog.getWindow();
+                if (window != null) {
+                    WindowManager.LayoutParams layoutParams = window.getAttributes();
+                    layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.8);  // Set dialog width
+                    layoutParams.dimAmount = 0.9f;  // Background dimming effect
+                    window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+                    window.setAttributes(layoutParams);
+                }
             }
         });
+
+
+        // Deactivate logic
+        deactivateButton = findViewById(R.id.bt_deactivate);
+        // Handle logout button click
+        deactivateButton.setOnClickListener(v -> {
+            // Inflate the custom deactivate dialog layout
+            LayoutInflater inflater = LayoutInflater.from(Settings.this);
+            View dialogView = inflater.inflate(R.layout.dialog_deactivate, null);
+
+            // Find buttons in the custom dialog layout
+            Button positiveButton = dialogView.findViewById(R.id.positive_button);
+            Button negativeButton = dialogView.findViewById(R.id.negative_button);
+
+            // Create and show the AlertDialog with the custom view
+            AlertDialog dialog = new AlertDialog.Builder(Settings.this)
+                    .setView(dialogView)
+                    .setCancelable(false)  // Prevent dismissing by clicking outside
+                    .create();
+
+            dialog.show();
+
+            // Handle Confirm button click
+            positiveButton.setOnClickListener(v1 -> {
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+                if (user != null) {
+                    // Show password input dialog for re-authentication
+                    showPasswordInputDialog(user);
+                }
+
+                // Dismiss the dialog
+                dialog.dismiss();
+            });
+
+            // Handle Cancel button click
+            negativeButton.setOnClickListener(v12 -> dialog.dismiss());
+
+            // Optional: Customize dialog window properties if needed
+            Window window = dialog.getWindow();
+            if (window != null) {
+                WindowManager.LayoutParams layoutParams = window.getAttributes();
+                layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.8);  // Set dialog width
+                layoutParams.dimAmount = 0.9f;  // Background dimming effect
+                window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+                window.setAttributes(layoutParams);
+            }
+        });
+
+
+
+
         locationSwitch = findViewById(R.id.location_switch);
         updateLocationSwitchState();
 
@@ -146,6 +258,116 @@ public class Settings extends AppCompatActivity {
         });
     }
 
+    // ReEnter password to confirm deactivate
+    private void showPasswordInputDialog(FirebaseUser user) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+
+        // Inflate the custom password input dialog layout
+        View dialogView = inflater.inflate(R.layout.dialog_password_input, null);
+        builder.setView(dialogView);
+        builder.setCancelable(false);  // Disable dismissing the dialog by clicking outside
+
+        // Create and show the dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Customize the dialog window properties
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = window.getAttributes();
+            layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.8);
+
+            int offsetInDp = 100;
+            float scale = getResources().getDisplayMetrics().density;
+            layoutParams.y = (int) (offsetInDp * scale + 0.5f);  // Apply Y-offset
+
+            layoutParams.dimAmount = 0.9f;  // Dim the background
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            window.setAttributes(layoutParams);
+        }
+
+        // Find and initialize UI elements in the custom dialog view
+        TextInputEditText passwordEditText = dialogView.findViewById(R.id.passwordEditText);
+        Button positiveButton = dialogView.findViewById(R.id.positive_button);
+        Button negativeButton = dialogView.findViewById(R.id.negative_button);
+
+        // Handle Confirm button click
+        positiveButton.setOnClickListener(v -> {
+            String password = passwordEditText.getText().toString().trim();
+            if (!password.isEmpty()) {
+                // Perform re-authentication and deletion logic
+                reauthenticateAndDelete(user, password);
+                dialog.dismiss();  // Dismiss the dialog
+            } else {
+                // Show a toast if the password field is empty
+                Toast.makeText(this, "Password cannot be empty", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Handle Cancel button click
+        negativeButton.setOnClickListener(v -> dialog.dismiss());  // Dismiss the dialog
+    }
+
+    // Recheck user authentication
+    private void reauthenticateAndDelete(FirebaseUser user, String password) {
+        // Get the user's email and create credentials with the provided password
+        String email = user.getEmail();
+        if (email == null) {
+            Toast.makeText(this, "Email not found. Cannot authenticate.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AuthCredential credential = EmailAuthProvider.getCredential(email, password);
+
+        // Reauthenticate the user
+        user.reauthenticate(credential)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("Reauthentication", "User reauthenticated.");
+                        // If reauthentication is successful, proceed to delete the user
+                        deleteUserAuth(user);
+                        deleteUser(user);
+                    } else {
+                        Log.e("Reauthentication", "Failed: " + task.getException().getMessage());
+                        Toast.makeText(this, "Reauthentication failed. Please try again.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // Delete user from auth
+    private void deleteUserAuth(FirebaseUser user) {
+        // delete user auth
+        user.delete().addOnCompleteListener(deleteTask -> {
+            if (deleteTask.isSuccessful()) {
+                Log.d("DeleteUser", "User account deleted.");
+                Toast.makeText(this, "Account deleted, hope to see you again!", Toast.LENGTH_SHORT).show();
+                // navigate to login page
+                Intent intent = new Intent(this, Login.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+        });
+    }
+
+    // Delete user firestore
+    private void deleteUser(FirebaseUser user) {
+        String userId = user.getUid();  // Get the user's UID
+
+        // Delete the user from Firestore's 'users' collection
+        FirebaseFirestore.getInstance().collection("users").document(userId)
+                .delete()
+                .addOnCompleteListener(deleteTask -> {
+                    if (deleteTask.isSuccessful()) {
+                        Log.d("Firestore", "User document deleted from Firestore.");
+                        // Now delete the Firebase Authentication user
+                        deleteUserAuth(user);
+                    } else {
+                        Log.e("Firestore", "Failed to delete user document: " + deleteTask.getException().getMessage());
+                        Toast.makeText(this, "Failed to delete user data.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
 
     // Function to perform the logout action
     private void performLogout() {

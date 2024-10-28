@@ -12,19 +12,12 @@ import androidx.core.app.ActivityCompat;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.example.pulsestepapplication.databinding.ActivityMainBinding;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
@@ -34,10 +27,11 @@ public class MainActivity extends AppCompatActivity {
     private Fragment workoutFragment;
     private Fragment rankingFragment;
     private Fragment profileFragment;
-    private Fragment activeFragment; // The currently displayed Fragment
+    private Fragment activeFragment;  // The currently displayed Fragment
     private String userId;
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private ListenerRegistration userListenerRegistration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,17 +39,34 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        userId = getIntent().getStringExtra("USER_ID");
         if (!hasLocationPermissions()) {
             requestPermissions(new String[]{
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION
             }, LOCATION_PERMISSION_REQUEST_CODE);
-        } else {
-            // 获取从上一个页面传递的uid
-            userId = getIntent().getStringExtra("USER_ID");
-
-            // If location permissions are already granted, initialize the 3 Fragment
+        }
+        if (savedInstanceState == null) {
             fetchUserData();
+        } else {
+            String activeFragmentTag = savedInstanceState.getString("activeFragmentTag");
+            activeFragment = getSupportFragmentManager().findFragmentByTag(activeFragmentTag);
+            int selectedItemId = savedInstanceState.getInt("selectedItemId");
+            binding.bottomNavigationView.setSelectedItemId(selectedItemId);
+
+            workoutFragment = getSupportFragmentManager().findFragmentByTag("workout");
+            rankingFragment = getSupportFragmentManager().findFragmentByTag("ranking");
+            profileFragment = getSupportFragmentManager().findFragmentByTag("profile");
+
+            if (workoutFragment == null) {
+                initWorkoutFragment(hasLocationPermissions(), new Bundle());
+            }
+            if (rankingFragment == null) {
+                initRankingFragment(new Bundle());
+            }
+            if (profileFragment == null) {
+                initProfileFragment(new Bundle());
+            }
         }
 
         // Initialize bottom navigation view
@@ -82,25 +93,27 @@ public class MainActivity extends AppCompatActivity {
      * Displays the specified Fragment using show() and hide() to avoid refreshing.
      */
     private void showFragment(Fragment fragment) {
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-
-        // Check if the fragment is already added
-        if (!fragment.isAdded()) {
-            // If the fragment is not added, add it and hide the current fragment
-            transaction.hide(activeFragment).add(R.id.frameLayout, fragment);
-        } else {
-//            // 强制重新加载数据
-//            if (fragment instanceof RankingFragment) {
-//                ((RankingFragment) fragment).fetchTargetData();
-//            }
-            // If the fragment is already added, directly show it and hide the current fragment
-            transaction.hide(activeFragment).show(fragment);
+        if (isFinishing() || isDestroyed()) {
+            Log.e("FragmentTransaction", "Activity is not in a valid state to perform a transaction.");
+            return;
         }
 
-        // Commit the transaction and update the currently active fragment
-        transaction.commit();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        if (activeFragment != null) {
+            transaction.hide(activeFragment);
+        }
+
+        // Check if state is saved
+        if (!getSupportFragmentManager().isStateSaved()) {
+            transaction.show(fragment).commitAllowingStateLoss();
+        } else {
+            Log.e("FragmentTransaction", "State already saved, skipping fragment transaction.");
+        }
+
         activeFragment = fragment;
     }
+
 
     /**
      * Checks if location permissions are granted.
@@ -112,42 +125,41 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
-
     private void fetchUserData() {
         if (userId != null) {
-            DocumentReference userRef = db.collection("users").document(userId);
+            DocumentReference userRef = FirebaseFirestore.getInstance().collection("users").document(userId);
 
-            // Adding a snapshot listener to get real-time updates
-            userRef.addSnapshotListener((documentSnapshot, error) -> {
-                if (error != null) {
-                    Log.e("UserInfo", "Listen failed.", error);
-                    return;
-                }
+            // Fetch data once using get()
+            userRef.get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    // Successfully retrieved document
+                    DocumentSnapshot documentSnapshot = task.getResult();
+                    if (documentSnapshot != null && documentSnapshot.exists()) {
+                        String fullName = documentSnapshot.getString("fullName");
+                        String weight = documentSnapshot.getString("weight");
+                        String gender = documentSnapshot.getString("gender");
 
-                if (documentSnapshot != null && documentSnapshot.exists()) {
-                    // Get user information
-                    String fullName = documentSnapshot.getString("fullName");
-                    String weight = documentSnapshot.getString("weight");
-                    String gender = documentSnapshot.getString("gender");
+                        if (fullName != null && weight != null) {
+                            Log.e("UserInfo", "Full Name: " + fullName + ", Weight: " + weight);
 
-                    // Ensure the fields are not null
-                    if (fullName != null && weight != null) {
-                        Log.e("UserInfo", "Full Name: " + fullName + ", Weight: " + weight);
-
-                        // Pass the data to the Fragment
-                        passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
+                            // Only update fragments if activity is in a valid state
+                            if (!isFinishing() && !isDestroyed()) {
+                                passDataToFragments(userId, fullName, Double.parseDouble(weight), gender);
+                            }
+                        } else {
+                            Log.e("UserInfo", "Some fields are missing.");
+                        }
                     } else {
-                        Log.e("UserInfo", "Some fields are missing.");
+                        Log.e("UserInfo", "Document does not exist.");
                     }
                 } else {
-                    Log.e("UserInfo", "Document does not exist.");
+                    Log.e("UserInfo", "Fetch failed: ", task.getException());
                 }
             });
         } else {
             Log.e("UserInfo", "User is not logged in or userId is null.");
         }
     }
-
 
     private void passDataToFragments(String userId, String fullName, Double weight, String gender) {
         // 创建 Bundle 存储数据
@@ -156,68 +168,78 @@ public class MainActivity extends AppCompatActivity {
         args.putString("fullName", fullName);
         args.putDouble("weight", weight);
         args.putString("gender", gender);
+        args.putBoolean("locationGranted", hasLocationPermissions());
+
         Log.e("PassedData", "userId: " + userId + ", Full Name: " + fullName + ", Weight: " + weight + ", Gender: " + gender);
 
-        // Check if the fragments already exist, update them instead of reinitializing
-        if (workoutFragment != null && workoutFragment.isAdded()) {
-            // Update the existing WorkoutFragment
-            ((WorkoutFragment) workoutFragment).updateData(fullName, weight);
-        } else {
-            initWorkoutFragment(true, args); // Initialize for the first time
+        if (workoutFragment == null) {
+            initWorkoutFragment(hasLocationPermissions(), args);
         }
 
-        if (rankingFragment != null) {
-        } else {
-            initRankingFragment(args); // Initialize for the first time
+        if (rankingFragment == null) {
+            initRankingFragment(args);
         }
 
-        if (profileFragment != null) {
-            // Update the existing ProfileFragment
-            ((ProfileFragment) profileFragment).updateData(userId, fullName, gender);
-        } else {
-            initProfileFragment(args); // Initialize for the first time
+        if (profileFragment == null) {
+            initProfileFragment(args);
         }
+
+        if (activeFragment == null) {
+            activeFragment = workoutFragment;
+        }
+
+        showFragment(activeFragment);
     }
-
 
     private void initWorkoutFragment(boolean locationGranted, Bundle args) {
-        workoutFragment = new WorkoutFragment();
-        activeFragment = workoutFragment;
-
-        // 添加 locationGranted 信息到 Bundle
-        args.putBoolean("locationGranted", locationGranted);
-        workoutFragment.setArguments(args);
-
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.frameLayout, workoutFragment, "workout")
-                .commit();
-
-        Log.d("DEBUG", "home page: workout fragment");
-    }
-
-    private void initProfileFragment(Bundle args) {
-        profileFragment = new ProfileFragment();
-        profileFragment.setArguments(args);
-
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.frameLayout, profileFragment, "profile")
-                .hide(profileFragment)  // Initially hide it, since workoutFragment is shown first
-                .commit();
-
-        Log.d("DEBUG", "ProfileFragment initialized and cached");
+        if (getSupportFragmentManager().findFragmentByTag("workout") == null) {
+            workoutFragment = new WorkoutFragment();
+            workoutFragment.setArguments(args);
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.frameLayout, workoutFragment, "workout")
+                    .commit();
+        }
     }
 
     private void initRankingFragment(Bundle args) {
-        rankingFragment = new RankingFragment();
-        rankingFragment.setArguments(args);
-
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.frameLayout, rankingFragment, "ranking")
-                .hide(rankingFragment)  // Initially hide it, since workoutFragment is shown first
-                .commit();
-
-        Log.d("DEBUG", "RankingFragment initialized and cached");
+        if (getSupportFragmentManager().findFragmentByTag("ranking") == null) {
+            rankingFragment = new RankingFragment();
+//            rankingFragment.setArguments(args);
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.frameLayout, rankingFragment, "ranking")
+                    .hide(rankingFragment)
+                    .commit();
+        }
     }
+
+    private void initProfileFragment(Bundle args) {
+        if (getSupportFragmentManager().findFragmentByTag("profile") == null) {
+            profileFragment = new ProfileFragment();
+            profileFragment.setArguments(args);
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.frameLayout, profileFragment, "profile")
+                    .hide(profileFragment)
+                    .commit();
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (activeFragment != null) {
+            outState.putString("activeFragmentTag", activeFragment.getTag());
+        }
+        outState.putInt("selectedItemId", binding.bottomNavigationView.getSelectedItemId());
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (userListenerRegistration != null) {
+            userListenerRegistration.remove();
+            userListenerRegistration = null;
+        }
+    }
+
 
 
 }

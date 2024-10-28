@@ -41,6 +41,15 @@
             android:layout_gravity="center"
             android:paddingTop="8dp" />
 
+        <ImageView
+            android:id="@+id/music_control"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Back"
+            android:src="@drawable/ic_music_launcher"
+            android:paddingEnd="8dp"
+            android:layout_gravity="end"/>
+
     </androidx.appcompat.widget.Toolbar>
 
 
@@ -73,11 +82,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="270dp"
                 android:layout_marginTop="40dp"
-                android:src="@drawable/bg_jump"
                 app:layout_constraintBottom_toTopOf="@id/jump_button_layout"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+<!--            android:src="@drawable/bg_jump"-->
 
             <LinearLayout
                 android:id="@+id/jump_card_layout"
@@ -165,8 +174,7 @@
                             android:id="@+id/jump_avg_text_view"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="--"
-                            android:textColor="@android:color/black"
+                            android:text="--'--''"                            android:textColor="@android:color/black"
                             android:textSize="20sp"
                             android:textStyle="bold" />
 
@@ -193,7 +201,7 @@
                             android:id="@+id/jump_calories_text_view"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="--"
                             android:textColor="@android:color/black"
                             android:textSize="20sp"
                             android:textStyle="bold" />

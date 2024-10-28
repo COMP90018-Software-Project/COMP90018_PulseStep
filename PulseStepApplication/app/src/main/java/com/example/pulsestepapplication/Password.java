@@ -149,6 +149,7 @@ public class Password extends AppCompatActivity {
                                         Intent intent = new Intent(Password.this, MainActivity.class);
                                         intent.putExtra("FULL_NAME", fullName); // 传递全名到下一个页面
                                         intent.putExtra("USER_ID", userId); // 传递 UID 到下一个页面
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                         startActivity(intent);
                                         finish();
                                     }

@@ -1,5 +1,6 @@
 package com.example.pulsestepapplication;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -43,7 +44,10 @@ public class RankRowDetail extends AppCompatActivity {
             backArrow.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Finish the current activity and return to the RunSummaryActivity page
+                    // Finish the current activity and return to the RankingFragment page
+                    Intent intent = new Intent(RankRowDetail.this, MainActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent);
                     finish();
                 }
             });
@@ -79,9 +83,12 @@ public class RankRowDetail extends AppCompatActivity {
                 });
     }
 
-    // Set profile picture in the ImageView
     private void setProfilePic(Uri imageUri, ImageView imageView) {
-        Glide.with(this).load(imageUri).apply(RequestOptions.circleCropTransform()).into(imageView);
+        if (!isDestroyed() && !isFinishing()) {
+            Glide.with(this).load(imageUri).apply(RequestOptions.circleCropTransform()).into(imageView);
+        } else {
+            Log.e("RankRowDetail", "Activity is destroyed. Cannot load image.");
+        }
     }
 
     // Set default avatar based on gender
