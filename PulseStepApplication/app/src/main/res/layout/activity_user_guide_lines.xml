@@ -119,7 +119,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
                 android:layout_marginTop="10dp"
-                android:text="@string/rankings_content"
+                android:text="@string/permissions_content"
                 android:textSize="14sp" />
         </LinearLayout>
 
