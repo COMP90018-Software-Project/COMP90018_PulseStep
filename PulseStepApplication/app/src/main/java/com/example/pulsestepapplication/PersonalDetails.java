@@ -47,6 +47,11 @@ public class PersonalDetails extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_personal_details);
 
+        // 禁用手势滑动返回
+        Window window = getWindow();
+        window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+
         // Initialize Firebase Auth and Firestore
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -238,5 +243,11 @@ public class PersonalDetails extends AppCompatActivity {
                         }
                     });
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        // 禁用系统的返回按钮
+        Toast.makeText(this, "You cannot go back from this page.", Toast.LENGTH_SHORT).show();
     }
 }

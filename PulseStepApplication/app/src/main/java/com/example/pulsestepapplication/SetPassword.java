@@ -36,6 +36,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
+import android.os.Handler;
+import android.os.Looper;
 
 public class SetPassword extends AppCompatActivity {
 
@@ -50,6 +52,10 @@ public class SetPassword extends AppCompatActivity {
     private FirebaseFirestore db;
     private ProgressDialog progressDialog;
     private String fullName, email;
+    private boolean emailVerificationSent = false; // Track if email is sent
+    private final String passVerificationMessage = "Continue";
+    private Handler handler = new Handler(Looper.getMainLooper()); // 用于定时检查
+    private final int CHECK_INTERVAL = 1000; // 每隔5秒检查一次
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +96,8 @@ public class SetPassword extends AppCompatActivity {
         // Back button logic
         backButton.setOnClickListener(view -> finish());
 
+
+
         // 设置 "Sign In" 部分的文本样式
         String fullText = "Already have an account? Sign In";
         SpannableString spannableString = new SpannableString(fullText);
@@ -108,72 +116,128 @@ public class SetPassword extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Continue button logic
-        continueButton.setOnClickListener(view -> updatePassword());
 
-//        // 设置 "Continue" 按钮的点击事件
-//        continueButton.setOnClickListener(view -> {
-//            String newPassword = newPasswordEditText.getText().toString();
-//            String confirmPassword = confirmPasswordEditText.getText().toString();
-//
-//            // Check if user agree the term
-//            if (!termCheckbox.isChecked()) {
-//                Toast.makeText(SetPassword.this, "You must agree to the Terms of Service and Privacy Policy to continue.", Toast.LENGTH_SHORT).show();
-//                return;
-//            }
-//
-//            // 校验两个密码是否一致
-//            if (newPassword.isEmpty()) {
-//                newPasswordInputLayout.setError("Password cannot be empty");
-//            } else if (!newPassword.equals(confirmPassword)) {
-//                confirmPasswordInputLayout.setError("Passwords do not match");
-//            } else {
-//                newPasswordInputLayout.setError(null); // 清除错误
-//                confirmPasswordInputLayout.setError(null); // 清除错误
-//
-//                // 显示 ProgressDialog
-//                progressDialog.show();
-//
-//                // 密码校验通过，执行 Firebase 注册操作
-//                assert email != null;
-//                mAuth.createUserWithEmailAndPassword(email, newPassword)
-//                        .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-//                            @Override
-//                            public void onComplete(@NonNull Task<AuthResult> task) {
-//                                // 隐藏 ProgressDialog
-//                                progressDialog.dismiss();
-//
-//                                if (task.isSuccessful()) {
-//                                    FirebaseUser currentUser = mAuth.getCurrentUser();
-//                                    String userUID = currentUser.getUid();
-//                                    Map<String, Object> userDetails = new HashMap<>();
-//                                    userDetails.put("fullName", fullName);
-//                                    userDetails.put("email", email);
-//                                    userDetails.put("birthday", "01/01/2000");
-//                                    userDetails.put("height", "170");
-//                                    userDetails.put("weight", "60");
-//                                    userDetails.put("gender", "Other");
-//                                    userDetails.put("appleHealthEnabled", "false");
-//                                    userDetails.put("avatarUrl", "default_avatar.png");
-//                                    // Default daily target for user
-//                                    userDetails.put("target", 1);
-//                                    db.collection("users").document(userUID).set(userDetails);
-//                                    Toast.makeText(SetPassword.this, "Account created.", Toast.LENGTH_SHORT).show();
-//                                    // 跳转到下一个页面或者主界面
-//                                    Intent intent = new Intent(SetPassword.this, PersonalDetails.class);
-//                                    intent.putExtra("FULL_NAME", fullName);
-//                                    intent.putExtra("EMAIL", email);
-//                                    startActivity(intent);
-//                                } else {
-//                                    // 如果注册失败，显示详细错误信息
-//                                    String errorMessage = task.getException() != null ? task.getException().getMessage() : "Authentication failed.";
-//                                    Toast.makeText(SetPassword.this, errorMessage, Toast.LENGTH_SHORT).show();
-//                                }
-//                            }
-//                        });
-//            }
-//        });
+
+        continueButton.setOnClickListener(view -> {
+            String newPassword = newPasswordEditText.getText().toString();
+            String confirmPassword = confirmPasswordEditText.getText().toString();
+
+            if (!termCheckbox.isChecked()) {
+                // 如果用户未勾选复选框，弹出Toast提示
+                Toast.makeText(this, "You must agree to the Terms of Service and Privacy Policy to continue.",
+                        Toast.LENGTH_SHORT).show();
+                return; // 直接返回，不继续执行
+            }
+
+            if (emailVerificationSent) {
+                FirebaseUser user = mAuth.getCurrentUser();
+                if (user != null) {
+                    user.reload().addOnCompleteListener(task -> {
+                        if (user.isEmailVerified()) {
+                            navigateToPersonalDetails(); // 如果已验证，则直接跳转到下一个页面
+                        } else {
+                            Toast.makeText(this, "Please verify your email before continuing.",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            } else if (newPassword.isEmpty() || !newPassword.equals(confirmPassword)){
+                if (newPassword.isEmpty()) {
+                    newPasswordInputLayout.setError("Password cannot be empty");
+                } else if (!newPassword.equals(confirmPassword)) {
+                    confirmPasswordInputLayout.setError("Passwords do not match");
+                } else {
+                    newPasswordInputLayout.setError(null);
+                    confirmPasswordInputLayout.setError(null);
+                }
+
+                emailVerificationSent = false;
+            } else{
+                createUserAndSendVerification();
+                emailVerificationSent = true;
+                continueButton.setText(passVerificationMessage);
+            }
+        });
+
     }
+
+    private void createUserAndSendVerification() {
+        progressDialog.show();
+
+        mAuth.createUserWithEmailAndPassword(email, "temporaryPassword123")
+                .addOnCompleteListener(task -> {
+                    progressDialog.dismiss();
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            sendVerificationEmail(user);
+                            emailVerificationSent = true;
+                            continueButton.setText(passVerificationMessage);
+                            startVerificationCheck(); // 启动验证状态的定时检查
+                        }
+                    } else {
+                        String errorMessage = task.getException() != null ?
+                                task.getException().getMessage() :
+                                "Failed to create user.";
+                        Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void sendVerificationEmail(FirebaseUser user) {
+        user.sendEmailVerification()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this,
+                                "Verification email sent. Please verify before continuing.",
+                                Toast.LENGTH_LONG).show();
+                    } else {
+                        String errorMessage = task.getException() != null ?
+                                task.getException().getMessage() :
+                                "Failed to send verification email.";
+                        Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void startVerificationCheck() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                FirebaseUser user = mAuth.getCurrentUser();
+                if (user != null) {
+                    user.reload().addOnCompleteListener(task -> {
+                        if (user.isEmailVerified()) {
+                            // 验证成功后，显示 Toast 提示
+                            Toast.makeText(SetPassword.this,
+                                    "Email verified! Updating your password...",
+                                    Toast.LENGTH_SHORT).show();
+
+                            updatePassword(); // 验证成功后自动更新密码
+                        } else {
+                            // 如果未验证，则继续检查
+                            handler.postDelayed(this, CHECK_INTERVAL);
+                        }
+                    });
+                }
+            }
+        }, CHECK_INTERVAL);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 如果用户未完成验证且退出流程，删除用户
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null && !user.isEmailVerified()) {
+            user.delete().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    db.collection("users").document(user.getUid()).delete();
+                }
+            });
+        }
+    }
+
 
     private void setTermsClickable() {
         String termLinkText = getString(R.string.term_of_use);
@@ -216,29 +280,7 @@ public class SetPassword extends AppCompatActivity {
 
     private void updatePassword() {
         String newPassword = newPasswordEditText.getText().toString();
-        String confirmPassword = confirmPasswordEditText.getText().toString();
 
-        if (!termCheckbox.isChecked()) {
-            Toast.makeText(this,
-                    "You must agree to the Terms of Service and Privacy Policy to continue.",
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (newPassword.isEmpty()) {
-            newPasswordInputLayout.setError("Password cannot be empty");
-            return;
-        } else if (!newPassword.equals(confirmPassword)) {
-            confirmPasswordInputLayout.setError("Passwords do not match");
-            return;
-        } else {
-            newPasswordInputLayout.setError(null);
-            confirmPasswordInputLayout.setError(null);
-        }
-
-        progressDialog.show();
-
-        // Get the current user and update the password
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
             currentUser.updatePassword(newPassword)
@@ -247,9 +289,7 @@ public class SetPassword extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             saveUserDetails(currentUser);
                         } else {
-                            Toast.makeText(SetPassword.this,
-                                    "Failed to update password: " + task.getException().getMessage(),
-                                    Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "Failed to update password: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
         } else {
@@ -259,7 +299,6 @@ public class SetPassword extends AppCompatActivity {
     }
 
     private void saveUserDetails(FirebaseUser user) {
-        String userUID = user.getUid();
         Map<String, Object> userDetails = new HashMap<>();
         userDetails.put("fullName", fullName);
         userDetails.put("email", email);
@@ -269,28 +308,21 @@ public class SetPassword extends AppCompatActivity {
         userDetails.put("gender", "Other");
         userDetails.put("appleHealthEnabled", "false");
         userDetails.put("avatarUrl", "default_avatar.png");
-        userDetails.put("target", 1); // Default daily target
+        userDetails.put("target", 1);
 
-        db.collection("users").document(userUID).set(userDetails)
+        db.collection("users").document(user.getUid()).set(userDetails)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Toast.makeText(SetPassword.this,
-                                "Account created successfully.",
-                                Toast.LENGTH_SHORT).show();
-                        navigateToPersonalDetails();
                     } else {
-                        Toast.makeText(SetPassword.this,
-                                "Failed to save user details.",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Failed to save user details.", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
     private void navigateToPersonalDetails() {
-        Intent intent = new Intent(SetPassword.this, PersonalDetails.class);
+        Intent intent = new Intent(this, PersonalDetails.class);
         intent.putExtra("FULL_NAME", fullName);
         intent.putExtra("EMAIL", email);
         startActivity(intent);
     }
-
 }

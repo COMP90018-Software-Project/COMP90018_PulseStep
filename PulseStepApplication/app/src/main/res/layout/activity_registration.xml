@@ -109,7 +109,7 @@
         android:id="@+id/continueButton"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:text="Send Verification Email"
+        android:text="Continue"
         android:textSize="16dp"
         android:background="@drawable/sign_in_bt_bacground"
         android:textAllCaps="false"
