@@ -771,7 +771,7 @@ public class NoMapActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == BACKGROUND_LOCATION_REQUEST_CODE) {
+        /*if (requestCode == BACKGROUND_LOCATION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Background location permission granted
                 startTrackingService();
@@ -780,7 +780,9 @@ public class NoMapActivity extends AppCompatActivity {
                 Toast.makeText(this, "Background location permission is required", Toast.LENGTH_SHORT).show();
                 navigateToWorkoutPage();
             }
-        } else if (requestCode == PERMISSION_REQUEST_CODE) {
+        } else */
+
+            if (requestCode == PERMISSION_REQUEST_CODE) {
             boolean allGranted = true;
             for (int result : grantResults) {
                 allGranted &= (result == PackageManager.PERMISSION_GRANTED);
