@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -51,7 +52,7 @@ public class Settings extends AppCompatActivity {
     private MaterialSwitch locationSwitch;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private boolean isUserInitiatedSwitchChange = false;
-
+    private MaterialSwitch notificationSwitch;
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -81,7 +82,18 @@ public class Settings extends AppCompatActivity {
                 finish(); // End the Settings activity and return to MainActivity
             }
         });
+        notificationSwitch = findViewById(R.id.notification_switch);
 
+        SharedPreferences sharedPref = getSharedPreferences("my_prefs", MODE_PRIVATE);
+        boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
+        notificationSwitch.setChecked(isNotificationEnabled);
+        long currentTimestamp = System.currentTimeMillis();
+        notificationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("notification_switch", isChecked);
+            editor.putLong("notification_time", currentTimestamp);
+            editor.apply();
+        });
         // Reference to the reset_password redirecting button
         resetPasswordButton = findViewById(R.id.reset_password);
         resetPasswordButton.setOnClickListener(new View.OnClickListener(){

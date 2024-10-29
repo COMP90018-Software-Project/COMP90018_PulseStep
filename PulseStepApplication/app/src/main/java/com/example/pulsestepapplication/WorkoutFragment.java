@@ -5,7 +5,9 @@ import static com.google.firebase.firestore.DocumentChange.Type.MODIFIED;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.icu.text.SimpleDateFormat;
@@ -46,6 +48,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Objects;
 
 
 public class WorkoutFragment extends Fragment {
@@ -77,6 +80,7 @@ public class WorkoutFragment extends Fragment {
     private Bundle savedInstanceState; // Store savedInstanceState if needed
     private ListenerRegistration userListenerRegistration; // Store Firestore listener
     private ListenerRegistration likeListener;
+    private ImageView  myStar;
 
 
     public WorkoutFragment() {
@@ -150,8 +154,10 @@ public class WorkoutFragment extends Fragment {
         TextView dateTextView = rootView.findViewById((R.id.date_text));
         dateTextView.setText(getFormattedDate());
 
-        ImageView myStar = rootView.findViewById(R.id.my_star);
-        myStar.setOnClickListener(view -> jumpToStarActivity());
+        myStar = rootView.findViewById(R.id.my_star);
+        if (myStar != null) {
+            myStar.setOnClickListener(view -> jumpToStarActivity());
+        }
 
         // Set up Run button to initiate permission and network checks
         Button runButton = rootView.findViewById(R.id.run_button);
@@ -208,6 +214,12 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void starLikeDataListener() {
+        SharedPreferences sharedPref = getActivity().getSharedPreferences("my_prefs", Context.MODE_PRIVATE);
+        boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
+        long savedTimestamp = sharedPref.getLong("notification_time", 0);
+        if(!isNotificationEnabled){
+            return;
+        }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         likeListener = db.collection("message")
                 .addSnapshotListener((snapshots, e) -> {
@@ -219,12 +231,12 @@ public class WorkoutFragment extends Fragment {
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         if (dc.getType() == ADDED) {
                             MessageBean messageBean = dc.getDocument().toObject(MessageBean.class);
-                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0")) {
+                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0") &&  messageBean.getTimestamp() > savedTimestamp) {
                                 rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
                             }
                         } else if (dc.getType() == MODIFIED) {
                             MessageBean messageBean = dc.getDocument().toObject(MessageBean.class);
-                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0")) {
+                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0") && messageBean.getTimestamp() > savedTimestamp) {
                                 rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
                             }
                         }
@@ -866,7 +878,16 @@ public class WorkoutFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        setupNotificationListener();
+        SharedPreferences sharedPref = requireActivity().getSharedPreferences("my_prefs", Context.MODE_PRIVATE);
+        boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
+        if (isNotificationEnabled) {
+            setupNotificationListener();
+            myStar.setVisibility(View.VISIBLE);
+        } else {
+            myStar.setVisibility(View.GONE);
+            rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+        }
+
         boolean currentPermissionStatus = hasLocationPermissions();
         if (currentPermissionStatus != locationGranted) {
             locationGranted = currentPermissionStatus;
@@ -907,30 +928,41 @@ public class WorkoutFragment extends Fragment {
             Log.e(TAG, "User ID is null, cannot setup notifications listener.");
             return;
         }
-
+        SharedPreferences sharedPref = requireActivity().getSharedPreferences("my_prefs", Context.MODE_PRIVATE);
+        boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
+        long savedTimestamp = sharedPref.getLong("notification_time", 0);
+        if(!isNotificationEnabled){
+            return;
+        }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // 从 Firestore 中获取点赞信息
         db.collection("message")
                 .whereEqualTo("updateUserId", userId)
                 .get()
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        int count = 0;
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             MessageBean messageBean = document.toObject(MessageBean.class);
-                            if ("0".equals(messageBean.getIsRead())) {
+                            if ("0".equals(messageBean.getIsRead()) && messageBean.getTimestamp() > savedTimestamp) {
                                 count++;
                             }
                         }
-                        if (count > 0) {
-                            rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
-                        } else {
-                            rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
-                        }
+                        int finalCount = count;
+                        requireActivity().runOnUiThread(() -> {
+                            if (finalCount > 0) {
+                                rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
+                            } else {
+                                rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+                            }
+                        });
+
                     } else {
                         Log.w("Firestore", "Error getting notifications", task.getException());
                     }
-                });
+                })
+                .addOnFailureListener(e -> Log.e("Firestore", "Failed to fetch data", e));
+
     }
 
     @Override

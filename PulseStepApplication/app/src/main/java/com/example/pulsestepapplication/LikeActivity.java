@@ -2,6 +2,8 @@ package com.example.pulsestepapplication;
 
 import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
 
+import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
@@ -88,8 +90,10 @@ public class LikeActivity extends AppCompatActivity {
         });
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void getData() {
-
+        SharedPreferences sharedPref = getSharedPreferences("my_prefs", MODE_PRIVATE);
+        long savedTimestamp = sharedPref.getLong("notification_time", 0);
         // 获取当前用户的 UID
         userId = getIntent().getStringExtra("USER_ID");
         // 从 Firestore 中获取点赞信息
@@ -101,7 +105,12 @@ public class LikeActivity extends AppCompatActivity {
                         messageBeanList.clear();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             MessageBean messageBean = document.toObject(MessageBean.class);
-                            messageBeanList.add(messageBean);
+                            if (messageBean.getTimestamp() > savedTimestamp) {
+                                messageBeanList.add(messageBean);
+                            } else {
+                                //document.getReference().delete();
+
+                            }
                         }
                         messageBeanList.sort((msg1, msg2) -> Long.compare(msg2.getTimestamp(),
                                 msg1.getTimestamp()));
