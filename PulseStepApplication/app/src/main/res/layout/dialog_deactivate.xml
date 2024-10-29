@@ -51,7 +51,7 @@
             android:textColor="@color/black"
             android:background="@drawable/bt_no"
             android:layout_weight="1"
-            android:layout_width="0dp"
+            android:layout_width="10dp"
             android:layout_marginStart="10dp"
             android:fontFamily="@font/overpass_bold"
             android:layout_height="wrap_content"/>
