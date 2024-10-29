@@ -82,6 +82,7 @@ public class WorkoutFragment extends Fragment {
     private ListenerRegistration userListenerRegistration; // Store Firestore listener
     private ListenerRegistration likeListener;
     private ImageView  myStar;
+    private View notification_badge;
 
 
     public WorkoutFragment() {
@@ -149,13 +150,14 @@ public class WorkoutFragment extends Fragment {
 
         startUserDataListener();
 
-        //starLikeDataListener();
+        starLikeDataListener();
 
         // date text rendered on workout page
         TextView dateTextView = rootView.findViewById((R.id.date_text));
         dateTextView.setText(getFormattedDate());
 
         myStar = rootView.findViewById(R.id.my_star);
+        notification_badge = rootView.findViewById(R.id.notification_badge);
         if (myStar != null) {
             myStar.setOnClickListener(view -> jumpToStarActivity());
         }
@@ -228,17 +230,16 @@ public class WorkoutFragment extends Fragment {
                         Log.w("Firestore", "Listen failed.", e);
                         return;
                     }
-
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         if (dc.getType() == ADDED) {
                             MessageBean messageBean = dc.getDocument().toObject(MessageBean.class);
-                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0") &&  messageBean.getTimestamp() > savedTimestamp) {
-                                rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
+                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0")) {
+                                notification_badge.setVisibility(View.VISIBLE);
                             }
                         } else if (dc.getType() == MODIFIED) {
                             MessageBean messageBean = dc.getDocument().toObject(MessageBean.class);
-                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0") && messageBean.getTimestamp() > savedTimestamp) {
-                                rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+                            if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0")) {
+                                notification_badge.setVisibility(View.GONE);
                             }
                         }
                     }
@@ -879,16 +880,7 @@ public class WorkoutFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        SharedPreferences sharedPref = requireActivity().getSharedPreferences("my_prefs", Context.MODE_PRIVATE);
-        boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
-        if (isNotificationEnabled) {
-            setupNotificationListener();
-            myStar.setVisibility(View.VISIBLE);
-        } else {
-            myStar.setVisibility(View.GONE);
-            rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
-        }
-
+        setupNotificationListener();
         boolean currentPermissionStatus = hasLocationPermissions();
         if (currentPermissionStatus != locationGranted) {
             locationGranted = currentPermissionStatus;
@@ -926,36 +918,35 @@ public class WorkoutFragment extends Fragment {
 
     private void setupNotificationListener() {
         if (userId == null) {
-            Log.e(TAG, "User ID is null, cannot setup notifications listener.");
             return;
         }
-
+        // Remove existing listener if any
+        if (likeListener != null) {
+            likeListener.remove();
+            likeListener = null;
+        }
         SharedPreferences sharedPref = requireActivity().getSharedPreferences("my_prefs", Context.MODE_PRIVATE);
         boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
 
         if (!isNotificationEnabled) {
-            rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
-            // Remove existing listener if any
-            if (likeListener != null) {
-                likeListener.remove();
-                likeListener = null;
-                Log.d(TAG, "Notification disabled. Listener removed and badge hidden.");
-            }
+            myStar.setVisibility(View.GONE);
+            notification_badge.setVisibility(View.GONE);
             return;
+        } else {
+            myStar.setVisibility(View.VISIBLE);
+            Log.d(TAG, "Notification is enabled. Showing myStar.");
         }
 
         long notificationOnTime = sharedPref.getLong("notification_on_time", 0);
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Create a query with composite conditions
+        // Create a query with composite conditions and order
         Query query = db.collection("message")
                 .whereEqualTo("updateUserId", userId)
                 .whereEqualTo("isRead", "0")
-                .whereGreaterThan("timestamp", notificationOnTime);
-
-        Log.d(TAG, "Setting up Firestore listener with query: updateUserId=" + userId +
-                ", isRead=0, timestamp>" + notificationOnTime);
+                .whereGreaterThan("timestamp", notificationOnTime)
+                .orderBy("timestamp", Query.Direction.DESCENDING);
 
         // Add a snapshot listener to the query
         likeListener = query.addSnapshotListener((snapshots, e) -> {
@@ -966,25 +957,39 @@ public class WorkoutFragment extends Fragment {
 
             if (snapshots == null) {
                 Log.w(TAG, "No snapshots found.");
-                rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+                requireActivity().runOnUiThread(() -> {
+                    notification_badge.setVisibility(View.GONE);
+                });
                 return;
             }
 
             // Count the number of unread messages
             int unreadCount = snapshots.size();
-            Log.d(TAG, "Unread messages count: " + unreadCount);
 
             // Update the notification badge on the main thread
             requireActivity().runOnUiThread(() -> {
-                if (unreadCount > 0) {
-                    rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
-                    Log.d(TAG, "Badge shown.");
+                if (unreadCount > 0 ) {
+                    notification_badge.setVisibility(View.VISIBLE);
                 } else {
-                    rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
-                    Log.d(TAG, "Badge hidden.");
+                    notification_badge.setVisibility(View.GONE);
                 }
             });
         });
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        setupNotificationListener();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (likeListener != null) {
+            likeListener.remove();
+            likeListener = null;
+        }
     }
 
 
@@ -997,6 +1002,7 @@ public class WorkoutFragment extends Fragment {
 
         if (likeListener != null) {
             likeListener.remove();
+            likeListener = null;
         }
     }
 }

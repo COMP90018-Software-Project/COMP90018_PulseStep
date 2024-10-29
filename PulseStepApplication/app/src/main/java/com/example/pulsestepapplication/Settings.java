@@ -67,7 +67,7 @@ public class Settings extends AppCompatActivity {
 
         // 获取从 ProfileFragment 传递的 userId
         Intent intent = getIntent();
-        String userId = intent.getStringExtra("userId");
+        userId = intent.getStringExtra("userId");
 
         if (userId != null) {
             Log.d("SettingsActivity", "Received userId: " + userId);
@@ -88,7 +88,7 @@ public class Settings extends AppCompatActivity {
         });
         notificationSwitch = findViewById(R.id.notification_switch);
 
-        SharedPreferences sharedPref = getSharedPreferences("my_prefs", MODE_PRIVATE);
+        sharedPref = getSharedPreferences("my_prefs", MODE_PRIVATE);
         boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
         notificationSwitch.setChecked(isNotificationEnabled);
         // Set listener
@@ -97,13 +97,12 @@ public class Settings extends AppCompatActivity {
             editor.putBoolean("notification_switch", isChecked);
             long currentTimestamp = System.currentTimeMillis();
             if (isChecked) {
-                // Notification enabled
+                // Notification enabledonStop
                 editor.putLong("notification_on_time", currentTimestamp);
-
                 // Delete messages during notification off period
                 deleteMessagesDuringNotificationOffPeriod(currentTimestamp);
             } else {
-                // Notification disabled
+
                 editor.putLong("notification_off_time", currentTimestamp);
             }
 

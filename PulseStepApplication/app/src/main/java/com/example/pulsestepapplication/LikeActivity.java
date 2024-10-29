@@ -97,7 +97,8 @@ public class LikeActivity extends AppCompatActivity {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         Query query = db.collection("message")
-                .whereEqualTo("updateUserId", userId);
+                .whereEqualTo("updateUserId", userId)
+                .orderBy("timestamp", Query.Direction.ASCENDING);
 
         query.get(Source.SERVER)
                 .addOnCompleteListener(task -> {
@@ -105,9 +106,9 @@ public class LikeActivity extends AppCompatActivity {
                         messageBeanList.clear();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             MessageBean messageBean = document.toObject(MessageBean.class);
-                            messageBeanList.add(messageBean);
+                            messageBeanList.add(0, messageBean);
+                            Log.d("LikeActivity", "Fetched message: " + messageBean.toString());
                         }
-                        messageBeanList.sort((msg1, msg2) -> Long.compare(msg2.getTimestamp(), msg1.getTimestamp()));
                         likeAdapter.notifyDataSetChanged();
                         readMessage(messageBeanList);
                     } else {
