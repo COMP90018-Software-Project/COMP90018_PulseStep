@@ -19,6 +19,7 @@ import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Source;
 
@@ -92,35 +93,27 @@ public class LikeActivity extends AppCompatActivity {
 
     @SuppressLint("NotifyDataSetChanged")
     private void getData() {
-        SharedPreferences sharedPref = getSharedPreferences("my_prefs", MODE_PRIVATE);
-        long savedTimestamp = sharedPref.getLong("notification_time", 0);
-        // 获取当前用户的 UID
         userId = getIntent().getStringExtra("USER_ID");
-        // 从 Firestore 中获取点赞信息
-        db.collection("message")
-                .whereEqualTo("updateUserId", userId)
-                .get(Source.SERVER)
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        Query query = db.collection("message")
+                .whereEqualTo("updateUserId", userId);
+
+        query.get(Source.SERVER)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         messageBeanList.clear();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             MessageBean messageBean = document.toObject(MessageBean.class);
-                            if (messageBean.getTimestamp() > savedTimestamp) {
-                                messageBeanList.add(messageBean);
-                            } else {
-                                //document.getReference().delete();
-
-                            }
+                            messageBeanList.add(messageBean);
                         }
-                        messageBeanList.sort((msg1, msg2) -> Long.compare(msg2.getTimestamp(),
-                                msg1.getTimestamp()));
+                        messageBeanList.sort((msg1, msg2) -> Long.compare(msg2.getTimestamp(), msg1.getTimestamp()));
                         likeAdapter.notifyDataSetChanged();
                         readMessage(messageBeanList);
                     } else {
                         Log.w("Firestore", "Error getting notifications", task.getException());
                     }
                 });
-
     }
 
     private void readMessage(List<MessageBean> messageBeanList) {

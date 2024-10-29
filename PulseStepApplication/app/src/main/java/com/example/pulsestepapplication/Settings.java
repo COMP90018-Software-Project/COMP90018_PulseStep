@@ -37,6 +37,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 public class Settings extends AppCompatActivity {
 
@@ -53,7 +56,8 @@ public class Settings extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private boolean isUserInitiatedSwitchChange = false;
     private MaterialSwitch notificationSwitch;
-
+    private SharedPreferences sharedPref;
+    private String userId;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -87,11 +91,22 @@ public class Settings extends AppCompatActivity {
         SharedPreferences sharedPref = getSharedPreferences("my_prefs", MODE_PRIVATE);
         boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
         notificationSwitch.setChecked(isNotificationEnabled);
-        long currentTimestamp = System.currentTimeMillis();
+        // Set listener
         notificationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putBoolean("notification_switch", isChecked);
-            editor.putLong("notification_time", currentTimestamp);
+            long currentTimestamp = System.currentTimeMillis();
+            if (isChecked) {
+                // Notification enabled
+                editor.putLong("notification_on_time", currentTimestamp);
+
+                // Delete messages during notification off period
+                deleteMessagesDuringNotificationOffPeriod(currentTimestamp);
+            } else {
+                // Notification disabled
+                editor.putLong("notification_off_time", currentTimestamp);
+            }
+
             editor.apply();
         });
         // Reference to the reset_password redirecting button
@@ -269,7 +284,48 @@ public class Settings extends AppCompatActivity {
             }
         });
     }
+    private void deleteMessagesDuringNotificationOffPeriod(long notificationOnTime) {
+        // Get the last notification off time
+        long notificationOffTime = sharedPref.getLong("notification_off_time", 0);
 
+        if (notificationOffTime == 0) {
+            // No previous off time, nothing to delete
+            return;
+        }
+
+        if (userId == null) {
+            Log.e("Settings", "userId is null. Cannot delete messages.");
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Create a query to find messages during the off period
+        Query query = db.collection("message")
+                .whereEqualTo("updateUserId", userId)
+                .whereGreaterThanOrEqualTo("timestamp", notificationOffTime)
+                .whereLessThan("timestamp", notificationOnTime);
+
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                WriteBatch batch = db.batch();
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    batch.delete(document.getReference());
+                }
+
+                // Commit the batch
+                batch.commit()
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("Settings", "Messages during notification off period deleted successfully.");
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("Settings", "Failed to delete messages: ", e);
+                        });
+            } else {
+                Log.e("Settings", "Error getting messages to delete: ", task.getException());
+            }
+        });
+    }
     // ReEnter password to confirm deactivate
     private void showPasswordInputDialog(FirebaseUser user) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);

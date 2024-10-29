@@ -44,6 +44,7 @@ import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.Calendar;
@@ -148,7 +149,7 @@ public class WorkoutFragment extends Fragment {
 
         startUserDataListener();
 
-        starLikeDataListener();
+        //starLikeDataListener();
 
         // date text rendered on workout page
         TextView dateTextView = rootView.findViewById((R.id.date_text));
@@ -928,42 +929,64 @@ public class WorkoutFragment extends Fragment {
             Log.e(TAG, "User ID is null, cannot setup notifications listener.");
             return;
         }
+
         SharedPreferences sharedPref = requireActivity().getSharedPreferences("my_prefs", Context.MODE_PRIVATE);
         boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
-        long savedTimestamp = sharedPref.getLong("notification_time", 0);
-        if(!isNotificationEnabled){
+
+        if (!isNotificationEnabled) {
+            rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+            // Remove existing listener if any
+            if (likeListener != null) {
+                likeListener.remove();
+                likeListener = null;
+                Log.d(TAG, "Notification disabled. Listener removed and badge hidden.");
+            }
             return;
         }
+
+        long notificationOnTime = sharedPref.getLong("notification_on_time", 0);
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        db.collection("message")
+        // Create a query with composite conditions
+        Query query = db.collection("message")
                 .whereEqualTo("updateUserId", userId)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        int count = 0;
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            MessageBean messageBean = document.toObject(MessageBean.class);
-                            if ("0".equals(messageBean.getIsRead()) && messageBean.getTimestamp() > savedTimestamp) {
-                                count++;
-                            }
-                        }
-                        int finalCount = count;
-                        requireActivity().runOnUiThread(() -> {
-                            if (finalCount > 0) {
-                                rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
-                            } else {
-                                rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
-                            }
-                        });
+                .whereEqualTo("isRead", "0")
+                .whereGreaterThan("timestamp", notificationOnTime);
 
-                    } else {
-                        Log.w("Firestore", "Error getting notifications", task.getException());
-                    }
-                })
-                .addOnFailureListener(e -> Log.e("Firestore", "Failed to fetch data", e));
+        Log.d(TAG, "Setting up Firestore listener with query: updateUserId=" + userId +
+                ", isRead=0, timestamp>" + notificationOnTime);
 
+        // Add a snapshot listener to the query
+        likeListener = query.addSnapshotListener((snapshots, e) -> {
+            if (e != null) {
+                Log.w(TAG, "Listen failed.", e);
+                return;
+            }
+
+            if (snapshots == null) {
+                Log.w(TAG, "No snapshots found.");
+                rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+                return;
+            }
+
+            // Count the number of unread messages
+            int unreadCount = snapshots.size();
+            Log.d(TAG, "Unread messages count: " + unreadCount);
+
+            // Update the notification badge on the main thread
+            requireActivity().runOnUiThread(() -> {
+                if (unreadCount > 0) {
+                    rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
+                    Log.d(TAG, "Badge shown.");
+                } else {
+                    rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+                    Log.d(TAG, "Badge hidden.");
+                }
+            });
+        });
     }
+
 
     @Override
     public void onDestroyView() {
