@@ -57,15 +57,15 @@ public class LikeAdapter extends RecyclerView.Adapter<LikeAdapter.ViewHolder> {
         MessageBean bean = list.get(i);
         if ("1".equals(bean.getIsRead())) {
             viewHolder.unReadView.setVisibility(View.GONE);
-            viewHolder.userName.setTypeface(null, Typeface.NORMAL);
+            viewHolder.userName.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
             viewHolder.userName.setTextColor(ContextCompat.getColor(mActivity, R.color.gray));
-            viewHolder.project.setTypeface(null, Typeface.NORMAL);
+            viewHolder.project.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
             viewHolder.project.setTextColor(ContextCompat.getColor(mActivity, R.color.gray));
         } else {
             viewHolder.unReadView.setVisibility(View.VISIBLE);
-            viewHolder.userName.setTypeface(null, Typeface.BOLD);
+            viewHolder.userName.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
             viewHolder.userName.setTextColor(ContextCompat.getColor(mActivity, R.color.black));
-            viewHolder.project.setTypeface(null, Typeface.BOLD);
+            viewHolder.project.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
             viewHolder.project.setTextColor(ContextCompat.getColor(mActivity, R.color.black));
         }
         getUserInfo(viewHolder.profileImage, viewHolder.userName, bean.getUserId());
