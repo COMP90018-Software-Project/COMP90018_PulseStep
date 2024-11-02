@@ -12,6 +12,13 @@
   ```properties
   MAPS_API_KEY=your_api_key_here
   ```
+### Build Configuration
+- **Namespace**: `com.example.pulsestepapplication`
+- **SDK Versions**:
+  - **Compile SDK**: 34
+  - **Min SDK**: 28
+  - **Target SDK**: 34
+- **Application ID**: `com.example.pulsestepapplication`
 
 ### Installation Steps
 1. Clone this repository.
