@@ -60,13 +60,12 @@ public class Settings extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings);
 
-        // 获取从 ProfileFragment 传递的 userId
+        // Get user Id
         Intent intent = getIntent();
         String userId = intent.getStringExtra("userId");
 
         if (userId != null) {
             Log.d("SettingsActivity", "Received userId: " + userId);
-            // 使用 userId 做进一步操作
         } else {
             Log.e("SettingsActivity", "No userId received.");
         }

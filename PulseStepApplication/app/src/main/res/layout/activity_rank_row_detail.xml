@@ -56,8 +56,6 @@
         app:layout_constraintTop_toBottomOf="@id/profile_image" />
 
     <!-- CardView for Workout (Jump) -->
-
-    <!-- CardView for Workout (Running) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/card_jump"
         android:layout_width="match_parent"
@@ -155,6 +153,7 @@
 
     </androidx.cardview.widget.CardView>
 
+    <!-- CardView for Workout (Running) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/card_running"
         android:layout_width="match_parent"

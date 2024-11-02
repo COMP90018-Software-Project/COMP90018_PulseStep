@@ -13,7 +13,9 @@
         android:layout_height="wrap_content"
         android:textSize="20sp"
         android:fontFamily="@font/overpass_bold"
-        android:text="Deactivate Account"/>
+        android:text="Deactivate Account"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dialog_message"/>
 
     <TextView
         android:id="@+id/dialog_message"

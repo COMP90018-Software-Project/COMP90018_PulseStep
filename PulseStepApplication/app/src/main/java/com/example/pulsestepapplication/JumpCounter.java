@@ -15,7 +15,6 @@ public class JumpCounter {
 
     private final SensorManager sensorManager;
     private final Sensor accelerometerSensor;
-//    private final Activity activity;
     private final Context context;
 
     private SensorEventListener jumpListener;
@@ -24,7 +23,6 @@ public class JumpCounter {
     private boolean isTrackingJumps = false;
 
     private JumpCounterListener jumpCounterListener;
-
 
     private final float upThreshold = 0.7f;
     private final float maxThreshold = 0.9f;

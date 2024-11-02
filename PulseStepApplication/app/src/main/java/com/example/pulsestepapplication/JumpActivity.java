@@ -58,6 +58,7 @@ public class JumpActivity extends AppCompatActivity {
     private String userName;
     private int userAge;
     private double userWeight;
+
     // UI Components
     private ImageButton btnPauseResume;
     private TextView timerTextView, jumpTextView, avgJumpTextView;
@@ -89,6 +90,7 @@ public class JumpActivity extends AppCompatActivity {
     private String formattedStartTime;
     private String formattedFinishTime;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+
     //Button
     private boolean isLongPress = false;
     private Handler handler = new Handler();
@@ -337,41 +339,13 @@ public class JumpActivity extends AppCompatActivity {
 
     private void handlePauseResumeButtonClick() {
         if (isFirstStart) {
-            // dynamic adjust image size
-            // updateImageViewForMedia(true);
-            // Switch to jump gif
-
-            /*Glide.with(this)
-                    .asGif()  // Ensure Glide knows to handle this as a GIF
-                    .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
-                            "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
-                            "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // Use direct GIF link
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
-                    .into(jumpImageView);  // Load into your ImageView*/
             long currentTime = System.currentTimeMillis();
             formattedStartTime = dateFormat.format(new Date(currentTime));
             startTracking();
             isFirstStart = false;
         } else if (isPaused) {
-            // updateImageViewForMedia(true);
-            // Switch to jump gif
-            /*Glide.with(this)
-                    .asGif()  // Ensure Glide knows to handle this as a GIF
-                    .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
-                            "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
-                            "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // Use direct GIF link
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)  // Cache for better performance
-                    .into(jumpImageView);  // Load into your ImageView*/
             resumeTracking();
         } else {
-            // updateImageViewForMedia(false);
-            // Switch to jump PNG
-            /*Glide.with(this)
-                    .asBitmap()  // Load the first frame of the GIF as a static image
-                    .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
-                            "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
-                            "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // 加载 PNG
-                    .into(jumpImageView);*/
             pauseTracking();
         }
     }
@@ -412,30 +386,6 @@ public class JumpActivity extends AppCompatActivity {
         } else { // Slow pace (walking)
             return 1.0f; // Slow down for walking
         }}
-    private void updateImageViewForMedia(boolean isGif) {
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) jumpImageView.getLayoutParams();
-        if (isGif) {
-            // 如果是 GIF，设置高度为 600dp，且边距为 0
-            params.height = (int) TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP, 500, jumpImageView.getResources().getDisplayMetrics());
-            params.setMargins(0, -150, 0, 0);  // 移除所有边距
-            // 使用 Glide 加载 GIF
-            Glide.with(this)
-                    .asGif()
-                    .load(R.drawable.jump_gif)
-                    .into(jumpImageView);
-        } else {
-            // 如果是 PNG，设置高度为 270dp，且恢复原始边距
-            params.height = (int) TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP, 270, jumpImageView.getResources().getDisplayMetrics());
-            params.setMargins(0, 40, 0, 0);  // 恢复原始边距
-            // 使用 Glide 加载 PNG
-            Glide.with(this)
-                    .load(R.drawable.bg_jump)
-                    .into(jumpImageView);
-        }
-        jumpImageView.setLayoutParams(params);  // 应用更改
-    }
 
     @SuppressLint({"MissingPermission", "UseCompatLoadingForDrawables"})
     private void startTracking() {
@@ -560,13 +510,6 @@ public class JumpActivity extends AppCompatActivity {
      * Displays a default map image when location permission is not granted or in No-map mode.
      */
     private void showDefaultBackground() {
-        // Display default image
-        /*Glide.with(this)
-                .asBitmap()  // Load the first frame of the GIF as a static image
-                .load("https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWIxMm1" +
-                        "xcDl4dGVldGkybnlkN3F0ZG15OWdkZWJ1d2FlMzZyamdqbyZlcD12MV9pbnR" +
-                        "lcm5hbF9naWZfYnlfaWQmY3Q9cw/Exf7ID0UMEYp3Gx0Zf/giphy.gif")  // 加载 PNG
-                .into(jumpImageView);*/
         // Ensure step count and timer views are visible
         jumpTextView.setVisibility(View.VISIBLE);
         timerTextView.setVisibility(View.VISIBLE);

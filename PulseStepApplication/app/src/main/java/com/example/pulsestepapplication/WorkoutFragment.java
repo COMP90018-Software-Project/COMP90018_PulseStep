@@ -675,15 +675,6 @@ public class WorkoutFragment extends Fragment {
     }
 
     /**
-     * Determines if the given latitude and longitude are within China's boundaries.
-     *
-     * @param latitude  The latitude to check.
-     * @param longitude The longitude to check.
-     * @return True if within China, false otherwise.
-     */
-
-
-    /**
      * Starts the appropriate map activity based on the user's location and permissions.
      *
      * @param latitude  The latitude of the user's location, or null if unavailable.

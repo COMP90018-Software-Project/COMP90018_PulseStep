@@ -219,8 +219,6 @@
                     android:textStyle="bold" />
 
             </LinearLayout>
-
-
         </LinearLayout>
 
     </LinearLayout>
@@ -271,10 +269,4 @@
             android:layout_centerInParent="true"
             android:scaleType="centerInside" />
     </RelativeLayout>
-
-
-
-
-
-
 </RelativeLayout>

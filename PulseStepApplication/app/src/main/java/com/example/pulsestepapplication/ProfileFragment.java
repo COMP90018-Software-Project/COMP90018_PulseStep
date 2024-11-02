@@ -97,7 +97,7 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        // 获取从 MainActivity 传来的参数
+        // Receive param from MainActivity
         Bundle args = getArguments();
         if (args != null) {
             userId = args.getString("userId");
@@ -106,7 +106,7 @@ public class ProfileFragment extends Fragment {
             Log.e("ProfileFragment", "userId: " + userId + ", Full Name: " + userName + ", Gender: " + gender);
         }
 
-        // 默认加载当天的数据
+        // Set today as default day
         selectedDate = getCurrentDate();
         fetchUserDailyInfo(selectedDate);
 
@@ -117,24 +117,24 @@ public class ProfileFragment extends Fragment {
                 .child("images/profile_image")
                 .getDownloadUrl()
                 .addOnSuccessListener(uri -> {
-                    // 成功获取到图片 URL，设置用户自定义头像
+                    // User customized profile pic
                     setProfilePic(getContext(), uri, profileImage);
                 })
                 .addOnFailureListener(exception -> {
-                    // 文件不存在，处理 StorageException，并根据性别设置默认头像
+                    // If user not set, set default profile pic based on gender
                     if (exception instanceof StorageException) {
                         StorageException storageException = (StorageException) exception;
                         if (storageException.getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
-                            // 根据性别设置默认头像
+                            // Set pic based on gender
                             if (gender != null) {
                                 if (gender.equalsIgnoreCase("male")) {
-                                    // 设置男性默认头像
+                                    // Male pic
                                     profileImage.setImageResource(R.drawable.male_default_avatar);
                                 } else if (gender.equalsIgnoreCase("female")) {
-                                    // 设置女性默认头像
+                                    // Female pic
                                     profileImage.setImageResource(R.drawable.female_default_avatar);
                                 }else if (gender.equalsIgnoreCase("other")) {
-                                    // 如果性别为other，设置通用默认头像
+                                    // Other pic
                                     profileImage.setImageResource(R.drawable.default_avatar);
                                 }
                             }
@@ -154,7 +154,6 @@ public class ProfileFragment extends Fragment {
         ImageView settingButton = view.findViewById(R.id.setting_button_profile_page);
         settingButton.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), Settings.class);
-            // 通过 Intent 传递 userId 到 Settings Activity
             intent.putExtra("userId", userId);
             startActivity(intent);
         });
@@ -169,7 +168,7 @@ public class ProfileFragment extends Fragment {
             CalendarAdapter adapter = new CalendarAdapter(dates, selectedPosition, recyclerView, layoutManager, date -> {
                 selectedDate = date;
                 Log.d("ProfileFragment", "Date clicked: " + date);
-                fetchUserDailyInfo(selectedDate);  // 点击日期时获取该日期的数据
+                fetchUserDailyInfo(selectedDate);
             });
             recyclerView.setAdapter(adapter);
 
@@ -196,11 +195,10 @@ public class ProfileFragment extends Fragment {
 
 
 
-    // 根据选择的日期实时监听 Firestore 数据的更改
+    // Fetch specific date data
     private void fetchUserDailyInfo(String date) {
         DocumentReference userRef = FirebaseFirestore.getInstance().collection("users").document(userId);
 
-        // 添加实时监听器，当数据库数据发生变化时会自动调用
         userRef.addSnapshotListener((documentSnapshot, error) -> {
             if (error != null) {
                 Log.w("FETCH DATA", "Listen failed.", error);
@@ -211,7 +209,7 @@ public class ProfileFragment extends Fragment {
                 Map<String, Map<String, Object>> dailyJumpInfo = (Map<String, Map<String, Object>>) documentSnapshot.get("dailyJumpInfo");
                 Map<String, Map<String, Object>> dailyRunningInfo = (Map<String, Map<String, Object>>) documentSnapshot.get("dailyRunningInfo");
 
-                // 处理跳绳数据
+                // Jump data
                 if (dailyJumpInfo != null && dailyJumpInfo.containsKey(date)) {
                     Map<String, Object> todayJumpData = dailyJumpInfo.get(date);
 
@@ -224,7 +222,7 @@ public class ProfileFragment extends Fragment {
                     updateJumpUINoRecord();
                 }
 
-                // 处理跑步数据
+                // Run data
                 if (dailyRunningInfo != null && dailyRunningInfo.containsKey(date)) {
                     Map<String, Object> todayRunningData = dailyRunningInfo.get(date);
 
@@ -248,17 +246,14 @@ public class ProfileFragment extends Fragment {
     private void uploadImage() {
         if (selectedImageUri != null) {
             if (userId != null && !userId.isEmpty()) {
-                // 初始化 Firebase Storage 的引用
                 storageReference = FirebaseStorage.getInstance().getReference()
                         .child("users").child(userId).child("images/profile_image");
 
                 storageReference.putFile(selectedImageUri)
                         .addOnSuccessListener(taskSnapshot -> {
-                            // 上传成功的处理逻辑
 //                            Toast.makeText(getContext(), "Image Uploaded", Toast.LENGTH_SHORT).show();
                         })
                         .addOnFailureListener(e -> {
-                            // 上传失败的处理逻辑
                             Toast.makeText(getContext(), "Upload Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
             } else {
@@ -312,13 +307,13 @@ public class ProfileFragment extends Fragment {
         TextView workoutCountTextView = getView().findViewById(R.id.workout_count_jump);
         TextView workoutCaloriesTextView = getView().findViewById(R.id.workout_calories_jump);
 
-        // 设置时长 (将秒数转换为分钟)
+        // Set sec to min
         workoutDurationTextView.setText(String.format(Locale.getDefault(), "%.1f min", (double) activeTime / 60));
 
-        // 设置跳跃次数
+        // Set jump count
         workoutCountTextView.setText(String.format(Locale.getDefault(), "%d times", jumpCount));
 
-        // 设置卡路里
+        // Set cal
         workoutCaloriesTextView.setText(String.format(Locale.getDefault(), "%.1f kcal", calories / 1000));
     }
 
@@ -328,13 +323,13 @@ public class ProfileFragment extends Fragment {
         TextView workoutCountTextView = getView().findViewById(R.id.workout_count_run);
         TextView workoutCaloriesTextView = getView().findViewById(R.id.workout_calories_run);
 
-        // 设置时长 (将秒数转换为分钟)
+        // Set sec to min
         workoutDurationTextView.setText(String.format(Locale.getDefault(), "%.1f min", (double) activeTime / 60));
 
-        // 设置跳跃次数
+        // Set run distance to km
         workoutCountTextView.setText(String.format(Locale.getDefault(), "%.1f km", distance / 1000));
 
-        // 设置卡路里
+        // Set cal
         workoutCaloriesTextView.setText(String.format(Locale.getDefault(), "%.1f kcal", calories / 1000));
     }
 
@@ -382,24 +377,24 @@ public class ProfileFragment extends Fragment {
                 .child("images/profile_image")
                 .getDownloadUrl()
                 .addOnSuccessListener(uri -> {
-                    // 成功获取到图片 URL，设置用户自定义头像
+                    // Get user profile pic
                     setProfilePic(getContext(), uri, profileImage);
                 })
                 .addOnFailureListener(exception -> {
-                    // 文件不存在，处理 StorageException，并根据性别设置默认头像
+                    // Set default profile pic based on gender
                     if (exception instanceof StorageException) {
                         StorageException storageException = (StorageException) exception;
                         if (storageException.getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
-                            // 根据性别设置默认头像
+                            // Set default pic based on gender
                             if (gender != null) {
                                 if (gender.equalsIgnoreCase("male")) {
-                                    // 设置男性默认头像
+                                    // Male pic
                                     profileImage.setImageResource(R.drawable.male_default_avatar);
                                 } else if (gender.equalsIgnoreCase("female")) {
-                                    // 设置女性默认头像
+                                    // Female pic
                                     profileImage.setImageResource(R.drawable.female_default_avatar);
                                 }else if (gender.equalsIgnoreCase("other")) {
-                                    // 如果性别为other，设置通用默认头像
+                                    // Other pic
                                     profileImage.setImageResource(R.drawable.default_avatar);
                                 }
                             }
@@ -460,24 +455,24 @@ public class ProfileFragment extends Fragment {
                 .child("images/profile_image")
                 .getDownloadUrl()
                 .addOnSuccessListener(uri -> {
-                    // 成功获取到图片 URL，设置用户自定义头像
+                    // Get user profile pic
                     setProfilePic(getContext(), uri, profileImage);
                 })
                 .addOnFailureListener(exception -> {
-                    // 文件不存在，处理 StorageException，并根据性别设置默认头像
+                    // Set default profile pic based on gender
                     if (exception instanceof StorageException) {
                         StorageException storageException = (StorageException) exception;
                         if (storageException.getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
-                            // 根据性别设置默认头像
+                            // Set default pic based on gender
                             if (gender != null) {
                                 if (gender.equalsIgnoreCase("male")) {
-                                    // 设置男性默认头像
+                                    // Male pic
                                     profileImage.setImageResource(R.drawable.male_default_avatar);
                                 } else if (gender.equalsIgnoreCase("female")) {
-                                    // 设置女性默认头像
+                                    // Female pic
                                     profileImage.setImageResource(R.drawable.female_default_avatar);
                                 }else if (gender.equalsIgnoreCase("other")) {
-                                    // 如果性别为other，设置通用默认头像
+                                    // Other pic
                                     profileImage.setImageResource(R.drawable.default_avatar);
                                 }
                             }

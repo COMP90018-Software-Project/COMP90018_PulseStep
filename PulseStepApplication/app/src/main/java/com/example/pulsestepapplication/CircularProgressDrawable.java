@@ -23,7 +23,7 @@ public class CircularProgressDrawable extends Drawable {
 
     @Override
     public void draw(Canvas canvas) {
-        float startAngle = -90;  // 从12点钟方向开始
+        float startAngle = -90;
         canvas.drawArc(oval, startAngle, sweepAngle, false, paint);
     }
 
@@ -50,7 +50,7 @@ public class CircularProgressDrawable extends Drawable {
 
     public void setProgress(float progress) {
         sweepAngle = 360 * progress / 100;
-        invalidateSelf();  // 重新绘制
+        invalidateSelf();  // Redraw
     }
 
     public void setColor(int color) {
