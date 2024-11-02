@@ -18,11 +18,11 @@ public class ResetPassword extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reset_password);
-        // 初始化 Firebase Auth
+        // Initialize Firebase Auth
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // 获取从上一个页面传递的电子邮件
+        // Get the email passed from the previous page
         String email = getIntent().getStringExtra("EMAIL");
 
         // Find the back button by its ID
@@ -56,5 +56,10 @@ public class ResetPassword extends AppCompatActivity {
         transaction.replace(R.id.fragment_container, fragment);
         transaction.addToBackStack(null); // Allows the user to go back
         transaction.commit();
+    }
+
+
+    @Override
+    public void onBackPressed() {
     }
 }

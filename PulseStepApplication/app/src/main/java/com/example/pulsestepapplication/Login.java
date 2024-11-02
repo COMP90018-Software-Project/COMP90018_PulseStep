@@ -31,13 +31,13 @@ public class Login extends AppCompatActivity {
         continueButton = findViewById(R.id.continueButton);
         createAccountText = findViewById(R.id.createAccountText);
 
-        // 设置 "Create Account" 部分的文本样式
+        // Set the text style of the "Create Account" section
         String fullText = "Don't have an account? Create Account";
         SpannableString spannableString = new SpannableString(fullText);
         int startIndex = fullText.indexOf(" Create Account");
         int endIndex = startIndex + " Create Account".length();
 
-        // 设置加粗和黑色
+        // Set bold and black
         spannableString.setSpan(new ForegroundColorSpan(getResources().getColor(android.R.color.black)), startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         createAccountText.setText(spannableString);
@@ -57,7 +57,7 @@ public class Login extends AppCompatActivity {
             }
         });
 
-        // 设置 "Create Account" 的点击事件
+        // Set up a click event for "Create Account"
         createAccountText.setOnClickListener(view -> {
             Intent intent = new Intent(Login.this, Registration.class);
             startActivity(intent);

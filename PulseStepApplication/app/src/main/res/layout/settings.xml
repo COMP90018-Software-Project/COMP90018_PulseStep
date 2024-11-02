@@ -84,78 +84,6 @@
                 android:checked="true" />
         </LinearLayout>
 
-        <!-- Notification setting -->
-        <LinearLayout
-            android:id="@+id/notification"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingLeft ="25dp"
-            android:paddingRight="25dp"
-            android:paddingTop="15dp"
-            android:paddingBottom="15dp"
-            android:gravity="center_vertical"
-            app:layout_constraintTop_toBottomOf="@+id/location">
-
-            <ImageView
-                android:layout_width="55dp"
-                android:layout_height="55dp"
-                android:src="@drawable/ic_notification" />
-
-            <TextView
-                android:id="@+id/notification_label"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="5"
-                android:paddingLeft="19dp"
-                android:text="Notification"
-                android:fontFamily="@font/overpass_medium"
-                android:textSize="19sp" />
-
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/notification_switch"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                app:trackTint="@color/dark_pink"
-                android:checked="true" />
-        </LinearLayout>
-
-        <!-- Light setting -->
-        <!--        <LinearLayout-->
-        <!--            android:id="@+id/light"-->
-        <!--            android:layout_width="match_parent"-->
-        <!--            android:layout_height="wrap_content"-->
-        <!--            android:orientation="horizontal"-->
-        <!--            android:paddingLeft ="25dp"-->
-        <!--            android:paddingRight="25dp"-->
-        <!--            android:paddingTop="15dp"-->
-        <!--            android:paddingBottom="15dp"-->
-        <!--            android:gravity="center_vertical"-->
-        <!--            app:layout_constraintTop_toBottomOf="@+id/notification">-->
-
-        <!--            <ImageView-->
-        <!--                android:layout_width="55dp"-->
-        <!--                android:layout_height="55dp"-->
-        <!--                android:src="@drawable/ic_light" />-->
-
-        <!--            <TextView-->
-        <!--                android:id="@+id/light_label"-->
-        <!--                android:layout_width="0dp"-->
-        <!--                android:layout_height="wrap_content"-->
-        <!--                android:layout_weight="5"-->
-        <!--                android:paddingLeft="19dp"-->
-        <!--                android:text="Light"-->
-        <!--                android:fontFamily="@font/overpass_medium"-->
-        <!--                android:textSize="19sp" />-->
-
-        <!--            <com.google.android.material.materialswitch.MaterialSwitch-->
-        <!--                android:id="@+id/light_switch"-->
-        <!--                android:layout_width="wrap_content"-->
-        <!--                android:layout_height="match_parent"-->
-        <!--                app:trackTint="@color/dark_pink"-->
-        <!--                android:checked="true" />-->
-        <!--        </LinearLayout>-->
-
         <!-- Reset Password setting -->
         <LinearLayout
             android:id="@+id/reset_password"
@@ -258,7 +186,6 @@
                 android:src="@drawable/ic_setting_arrow" />
         </LinearLayout>
     </LinearLayout>
-
 
     <!-- Logout Button -->
     <Button

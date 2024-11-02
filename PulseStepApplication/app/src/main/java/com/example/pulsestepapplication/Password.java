@@ -37,9 +37,9 @@ public class Password extends AppCompatActivity {
     private ImageButton backButton;
     private TextView createAccountText;
     private TextView forgotPasswordText;
-    private FirebaseAuth mAuth; // Firebase Authentication 实例
-    private String email; // 保存从上一个页面传递的电子邮件
-    private ProgressDialog progressDialog; // ProgressDialog 用于显示加载框
+    private FirebaseAuth mAuth; // Firebase Authentication
+    private String email; // Save the email delivered from the previous page
+    private ProgressDialog progressDialog; // ProgressDialog is used to display a loading box
     private FirebaseFirestore db;
 
 
@@ -49,9 +49,9 @@ public class Password extends AppCompatActivity {
         setContentView(R.layout.activity_password);
 
 
-        // 初始化 Firebase Auth
+        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
-        // 获取 Firestore 实例
+        // Get a Firestore instance
         db = FirebaseFirestore.getInstance();
 
 
@@ -62,100 +62,100 @@ public class Password extends AppCompatActivity {
         forgotPasswordText = findViewById(R.id.forgotPasswordText);
 
 
-        // 初始化 ProgressDialog
+        // Initialize ProgressDialog
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Signing in...");
         progressDialog.setCancelable(false);
 
 
-        // 获取从上一个页面传递的电子邮件
+        // Get the email passed from the previous page
         email = getIntent().getStringExtra("EMAIL");
 
 
-        // 设置 "Create Account" 部分的文本样式
+        // Set the text style of the "Create Account" section
         String fullText = "Don't have an account? Create Account";
         SpannableString spannableString = new SpannableString(fullText);
         int startIndex = fullText.indexOf("Create Account");
         int endIndex = startIndex + "Create Account".length();
 
 
-        // 设置加粗和黑色
+        // Set bold and black
         spannableString.setSpan(new ForegroundColorSpan(getResources().getColor(android.R.color.black)), startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         createAccountText.setText(spannableString);
 
 
-        // 设置 "Forgot password?" 的文本样式
+        // Set the text style of "Forgot password?"
         String forgotText = "Forgot password?";
         SpannableString forgotSpannable = new SpannableString(forgotText);
         forgotSpannable.setSpan(new ForegroundColorSpan(getResources().getColor(android.R.color.black)), 0, forgotText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         forgotPasswordText.setText(forgotSpannable);
 
 
-        // 设置返回按钮的点击事件
+        // Set the click event of the back button
         backButton.setOnClickListener(view -> finish());
 
 
-        // 设置 "Sign In" 按钮的点击事件
+        // Set up the click event for the "Sign In" button
         signInButton.setOnClickListener(view -> {
             String password = passwordEditText.getText().toString();
             if (password.isEmpty()) {
                 passwordEditText.setError("Enter your password");
             } else {
-                // 显示加载框
+                // Show loading box
                 progressDialog.show();
-                signInUser(email, password); // 调用登录方法
+                signInUser(email, password); // Calling the login method
             }
         });
 
 
-        // 设置 "Create Account" 的点击事件
+        // Set up a click event for "Create Account"
         createAccountText.setOnClickListener(view -> {
             Intent intent = new Intent(Password.this, Registration.class);
             startActivity(intent);
         });
 
 
-        // 设置 "Forgot password?" 的点击事件
+        // Set up a click event for "Forgot password?"
         forgotPasswordText.setOnClickListener(view -> {
             Intent intent = new Intent(Password.this, ResetPassword.class);
-            intent.putExtra("EMAIL", email); // 传递email到下一个页面
+            intent.putExtra("EMAIL", email);// Pass email to next page
             startActivity(intent);
         });
     }
 
 
-    // 登录方法
+    //Login Method
     private void signInUser(String email, String password) {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
-                    // 隐藏加载框
+                    // Hide loading box
                     progressDialog.dismiss();
 
 
                     if (task.isSuccessful()) {
-                        // 登录成功
+                        // Login successful
                         Toast.makeText(Password.this, "Login successful", Toast.LENGTH_SHORT).show();
-                        // 获取当前用户的 UID
+                        // Get the UID of the current user
                         String userId = mAuth.getCurrentUser().getUid();
-                        // 从 Firestore 中获取用户信息
+                        // Get user information from Firestore
                         db.collection("users").document(userId).get()
                                 .addOnSuccessListener(documentSnapshot -> {
                                     if (documentSnapshot.exists()) {
-                                        // 获取用户的全名
+                                        // Get the user's full name
                                         String fullName = documentSnapshot.getString("fullName");
-                                        // 显示登录成功信息和全名
+                                        // Display login success information and full name
                                         Toast.makeText(Password.this, "Login successful. Welcome " + fullName, Toast.LENGTH_SHORT).show();
-                                        // 跳转到主页面或其他页面
+                                        // Jump to the main page or other pages
                                         Intent intent = new Intent(Password.this, MainActivity.class);
-                                        intent.putExtra("FULL_NAME", fullName); // 传递全名到下一个页面
-                                        intent.putExtra("USER_ID", userId); // 传递 UID 到下一个页面
+                                        intent.putExtra("FULL_NAME", fullName); // Passing full name to next page
+                                        intent.putExtra("USER_ID", userId); // Passing the UID to the next page
                                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                         startActivity(intent);
                                         finish();
                                     }
                                 });
                     } else {
-                        // 登录失败
+                        // Login Failed
                         if (task.getException() instanceof FirebaseAuthInvalidUserException) {
                             passwordEditText.setError("No account found with this email.");
                         } else if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {

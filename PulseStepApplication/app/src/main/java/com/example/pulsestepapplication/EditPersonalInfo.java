@@ -52,7 +52,7 @@ public class EditPersonalInfo extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
-        // 获取从 ProfileFragment 传递的 userId
+        // Get userId
         Intent intent = getIntent();
         userId = intent.getStringExtra("userId");
 
@@ -206,39 +206,39 @@ public class EditPersonalInfo extends AppCompatActivity {
     }
 
     private void loadUserData() {
-        // 从 Firestore 获取用户数据
+        // Get user data from firebase
         db.collection("users").document(userId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        // 获取用户的详细信息
+                        // Get user details
                         String fullName = documentSnapshot.getString("fullName");
                         String birthday = documentSnapshot.getString("birthday");
                         String height = documentSnapshot.getString("height");
                         String weight = documentSnapshot.getString("weight");
                         String gender = documentSnapshot.getString("gender");
 
-                        // 设置 UI 元素的值
+                        // Set personal info page UI
                         fullNameEditText.setText(fullName);
                         birthdayTextView.setText(birthday);
                         heightEditText.setText(height);
                         weightEditText.setText(weight);
 
-                        // 将 birthday 日期解析为年、月、日
+                        // Set the birthday data in the format MM/dd/yyyy
                         SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
                         Calendar calendar = Calendar.getInstance();
                         try {
-                            Date date = dateFormat.parse(birthday); // 解析从数据库获取的日期
+                            Date date = dateFormat.parse(birthday); // Get birthday data
                             if (date != null) {
-                                calendar.setTime(date); // 设置日期到 Calendar
+                                calendar.setTime(date); // Set date to Calendar
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
 
-                        // 获取 year, month, day
+                        // Get year, month, day
                         int year = calendar.get(Calendar.YEAR);
-                        int month = calendar.get(Calendar.MONTH); // 注意，Calendar.MONTH 是 0-based
+                        int month = calendar.get(Calendar.MONTH);
                         int day = calendar.get(Calendar.DAY_OF_MONTH);
 
                         // Set up DatePickerDialog with the selected birthday from the database
@@ -246,15 +246,15 @@ public class EditPersonalInfo extends AppCompatActivity {
                             DatePickerDialog datePickerDialog = new DatePickerDialog(
                                     EditPersonalInfo.this,
                                     (view, selectedYear, selectedMonth, selectedDay) -> {
-                                        // 将用户选择的日期设置为 TextView
+                                        // Set user selected date to textview
                                         String selectedDate = (selectedMonth + 1) + "/" + selectedDay + "/" + selectedYear;
                                         birthdayTextView.setText(selectedDate);
                                     },
-                                    year, month, day); // 传递解析出来的年、月、日作为初始日期
+                                    year, month, day);
                             datePickerDialog.show();
                         });
 
-                        // 设置性别单选按钮
+                        // Set gender selected button
                         if (gender != null) {
                             if (gender.equalsIgnoreCase("Male")) {
                                 maleRadioButton.setChecked(true);

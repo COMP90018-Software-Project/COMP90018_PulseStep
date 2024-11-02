@@ -11,11 +11,10 @@
     <style name="Custom.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@color/lighter_orange</item>
     </style>
-    <!-- 自定义 Bottom NavigationView 样式 -->
 
-    <!-- 自定义按钮样式 -->
+    <!-- Set workout button style -->
     <style name="bt_workout" parent="Widget.MaterialComponents.Button">
-        <item name="backgroundTint">@null</item> <!-- 防止背景色被主题覆盖 -->
-        <item name="background">@drawable/bg_ripple</item> <!-- 防止背景色被主题覆盖 -->
+        <item name="backgroundTint">@null</item> <!-- Prevents the background color from being overwritten by the theme -->
+        <item name="background">@drawable/bg_ripple</item>
     </style>
 </resources>

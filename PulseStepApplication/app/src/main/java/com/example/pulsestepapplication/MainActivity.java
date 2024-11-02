@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void passDataToFragments(String userId, String fullName, Double weight, String gender) {
-        // 创建 Bundle 存储数据
+        // Create Bundle for storing user data
         Bundle args = new Bundle();
         args.putString("userId", userId);
         args.putString("fullName", fullName);
@@ -239,7 +239,5 @@ public class MainActivity extends AppCompatActivity {
             userListenerRegistration = null;
         }
     }
-
-
 
 }

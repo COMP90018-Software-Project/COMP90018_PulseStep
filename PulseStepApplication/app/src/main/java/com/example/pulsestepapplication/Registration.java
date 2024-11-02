@@ -48,10 +48,10 @@ public class Registration extends AppCompatActivity {
         fullNameInputLayout = findViewById(R.id.fullNameInputLayout);
         emailInputLayout = findViewById(R.id.emailInputLayout);
 
-        // 设置返回按钮的点击事件
+        // Back button logic
         backButton.setOnClickListener(view -> finish());
 
-        // 设置 "Sign In" 部分的文本样式
+        // Set "Sign In" text style
         String fullText = "Already have an account? Sign In";
         SpannableString spannableString = new SpannableString(fullText);
         int startIndex = fullText.indexOf("Sign In");
@@ -72,18 +72,18 @@ public class Registration extends AppCompatActivity {
             String fullName = fullNameEditText.getText().toString();
             String email = emailEditText.getText().toString();
 
-            // 检查全名是否为空或者不符合格式
+            // Check if the full name is empty or does not conform to the format
             if (fullName.isEmpty()) {
                 fullNameInputLayout.setError("Full name cannot be empty");
                 return;
-            } else if (!fullName.matches("[a-zA-Z ]+")) { // 只允许字母和空格
+            } else if (!fullName.matches("[a-zA-Z ]+")) { // Only letters and spaces are allowed
                 fullNameInputLayout.setError("Full name can only contain letters and spaces");
                 return;
             } else {
-                fullNameInputLayout.setError(null); // 清除错误
+                fullNameInputLayout.setError(null); // Clear errors
             }
 
-            // 检查邮箱是否为空或格式不正确
+            // Check if the mailbox is empty or malformed
             if (email.isEmpty()) {
                 emailInputLayout.setError("Enter your email address");
                 return;
@@ -91,21 +91,21 @@ public class Registration extends AppCompatActivity {
                 emailInputLayout.setError("Invalid email format");
                 return;
             } else {
-                emailInputLayout.setError(null); // 清除错误
+                emailInputLayout.setError(null); // Clear errors
             }
 
-            // 检查邮箱是否已经在 Firebase 中注册
+            // Check if the email address is already registered in Firebase
             mAuth.fetchSignInMethodsForEmail(email)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             boolean isEmailRegistered = task.getResult().getSignInMethods().size() > 0;
-                            // 跳转到设置密码页面
+                            // Jump to the password setting page
                             Intent intent = new Intent(Registration.this, SetPassword.class);
                             intent.putExtra("FULL_NAME", fullName);
                             intent.putExtra("EMAIL", email);
                             startActivity(intent);
                         } else {
-                            // 如果发生错误，显示错误信息
+                            // If an error occurs, display the error message
                             Toast.makeText(Registration.this, "Error checking email: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });

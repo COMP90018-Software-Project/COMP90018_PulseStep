@@ -22,8 +22,6 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Run Summary Title -->
-
-    <!-- Run Distance -->
     <TextView
         android:id="@+id/run_summary_title"
         android:layout_width="wrap_content"
@@ -39,7 +37,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Run Unit -->
+    <!-- Run Distance -->
     <TextView
         android:id="@+id/run_distance"
         android:includeFontPadding="false"
@@ -57,8 +55,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/run_summary_title" />
 
-    <!-- Google Map Fragment -->
-
+    <!-- Run unit -->
     <TextView
         android:id="@+id/run_unit"
         android:layout_width="wrap_content"
@@ -73,6 +70,7 @@
         app:layout_constraintHorizontal_bias="0.07"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/run_distance" />
+
     <LinearLayout
         android:id="@+id/location"
         android:layout_width="wrap_content"
@@ -93,6 +91,7 @@
             android:src="@drawable/ic_location"
             app:tint="@color/gray"
             android:layout_marginRight="5dp"/>
+
         <!-- Address Text -->
         <TextView
             android:id="@+id/run_summary_address"
@@ -110,7 +109,7 @@
         android:id="@+id/map_container"
         android:layout_width="0dp"
         android:layout_height="170dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:layout_marginHorizontal="40dp"
         android:layout_marginBottom="5dp"
         app:cardCornerRadius="16dp"

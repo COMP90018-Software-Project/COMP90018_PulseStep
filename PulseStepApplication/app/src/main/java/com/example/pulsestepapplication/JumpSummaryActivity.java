@@ -35,22 +35,16 @@ import java.util.Map;
 public class JumpSummaryActivity extends AppCompatActivity {
 
     // UI Components
-    // private GoogleMap googleMap;
-    // private SupportMapFragment mapFragment;
     private TextView avgPaceTextView;
     private TextView timeTextView;
     private TextView addressTextView;
     private TextView totalJumpCountTextView;
-    // private ImageView defaultBackground;
     private TextView caloriesTextView;
 
     // Tracking Data
-    // private float distance; // in kilometers
     private String time; // formatted as "MM:SS"
     private String address; // optional
     private int jumpCount;
-    // private ArrayList<LatLng> trajectory;
-    // private CardView mapCard;
     private String avgPace;
     private Button finishButton;
     private String calories;
@@ -74,9 +68,6 @@ public class JumpSummaryActivity extends AppCompatActivity {
 
         // Display data
         displayData();
-
-        // Initialize and set up the jump speed gif
-//        setUpGif(savedInstanceState);
 
         // Get user UID
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -132,8 +123,6 @@ public class JumpSummaryActivity extends AppCompatActivity {
 
     }
 
-
-
     /**
      * Initializes the UI components by finding them via their IDs.
      */
@@ -142,9 +131,7 @@ public class JumpSummaryActivity extends AppCompatActivity {
         addressTextView = findViewById(R.id.jump_summary_address);
         avgPaceTextView = findViewById(R.id.jump_summary_avg_count);
         totalJumpCountTextView = findViewById(R.id.jump_count);
-        // defaultBackground = findViewById(R.id.default_background);
         caloriesTextView = findViewById(R.id.jump_summary_calories);
-        // mapCard = findViewById(R.id.map_container);
         finishButton = findViewById(R.id.bt_finish_jump);
     }
 
@@ -328,10 +315,5 @@ public class JumpSummaryActivity extends AppCompatActivity {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM", Locale.getDefault());
         return dateFormat.format(date);
     }
-
-
-
-
-
 
 }

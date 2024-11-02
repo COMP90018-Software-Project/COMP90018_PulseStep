@@ -15,7 +15,6 @@ public class JumpCounter {
 
     private final SensorManager sensorManager;
     private final Sensor accelerometerSensor;
-//    private final Activity activity;
     private final Context context;
 
     private SensorEventListener jumpListener;
@@ -25,11 +24,10 @@ public class JumpCounter {
 
     private JumpCounterListener jumpCounterListener;
 
-
-    private final float upThreshold = 0.8f;
-    private final float maxThreshold = 0.8f;
+    private final float upThreshold = 0.7f;
+    private final float maxThreshold = 0.9f;
     private final float finishThreshold = 1.0f;
-    private final float largeMovingRate = 1.05f;
+    private final float largeMovingRate = 1.03f;
     private static final int JUMP_DETECTION_WINDOW_MS = 5; // Time window to detect a jump (ms)
     private long lastJumpTime = 0;
     private boolean is_initial = true;
@@ -80,9 +78,9 @@ public class JumpCounter {
 
                 if (nowAcc < largeMovingRate * initAcc) {
                     // Update the initial gravity vector components
-                    xInit = 0.95f * xInit + 0.05f * x;
-                    yInit = 0.95f * yInit + 0.05f * y;
-                    zInit = 0.95f * zInit + 0.05f * z;
+                    xInit = 0.9f * xInit + 0.1f * x;
+                    yInit = 0.9f * yInit + 0.1f * y;
+                    zInit = 0.9f * zInit + 0.1f * z;
                 }
 
                 // Normalize xInit, yInit, zInit to ensure their magnitude equals 9.8

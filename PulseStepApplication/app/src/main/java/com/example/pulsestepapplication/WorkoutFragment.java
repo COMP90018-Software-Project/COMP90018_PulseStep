@@ -322,7 +322,7 @@ public class WorkoutFragment extends Fragment {
 
     private void jumpToStarActivity() {
         Intent intent = new Intent(getActivity(), LikeActivity.class);
-        intent.putExtra("USER_ID", userId); // 传递 UID 到下一个页面)
+        intent.putExtra("USER_ID", userId); // Pass the UID to the next page)
         startActivity(intent);
     }
 
@@ -829,15 +829,6 @@ public class WorkoutFragment extends Fragment {
             proceedToJumpActivity(0.0, 0.0);
         }
     }
-
-    /**
-     * Determines if the given latitude and longitude are within China's boundaries.
-     *
-     * @param latitude  The latitude to check.
-     * @param longitude The longitude to check.
-     * @return True if within China, false otherwise.
-     */
-
 
     /**
      * Starts the appropriate map activity based on the user's location and permissions.
