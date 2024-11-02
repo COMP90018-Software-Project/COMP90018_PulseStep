@@ -5,13 +5,21 @@ import static com.google.firebase.firestore.DocumentChange.Type.MODIFIED;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.icu.text.SimpleDateFormat;
 import android.location.Location;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,10 +50,14 @@ import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.nio.channels.FileChannel;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class WorkoutFragment extends Fragment {
@@ -77,6 +89,18 @@ public class WorkoutFragment extends Fragment {
     private Bundle savedInstanceState; // Store savedInstanceState if needed
     private ListenerRegistration userListenerRegistration; // Store Firestore listener
     private ListenerRegistration likeListener;
+    private ImageView  myStar;
+    private View notification_badge;
+
+    private static final long MAP_LOADING_TIMEOUT = 5000;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable mapLoadingTimeoutRunnable;
+
+    private AtomicBoolean isRunButtonClicked = new AtomicBoolean(false);
+    private AtomicBoolean isJumpButtonClicked = new AtomicBoolean(false);
+    private Button runButton;
+    private Button jumpButton;
+    private boolean useMap;
 
 
     public WorkoutFragment() {
@@ -150,21 +174,65 @@ public class WorkoutFragment extends Fragment {
         TextView dateTextView = rootView.findViewById((R.id.date_text));
         dateTextView.setText(getFormattedDate());
 
-        ImageView myStar = rootView.findViewById(R.id.my_star);
-        myStar.setOnClickListener(view -> jumpToStarActivity());
+        myStar = rootView.findViewById(R.id.my_star);
+        notification_badge = rootView.findViewById(R.id.notification_badge);
+        if (myStar != null) {
+            myStar.setOnClickListener(view -> jumpToStarActivity());
+        }
 
         // Set up Run button to initiate permission and network checks
-        Button runButton = rootView.findViewById(R.id.run_button);
+        runButton = rootView.findViewById(R.id.run_button);
         runButton.setOnClickListener(v -> {
-            // When the user clicks the Run button, check and request activity recognition permission, then start the map activity
-            checkActivityRecognitionPermissionAndProceed();
+            Log.d(TAG, "Run button clicked.");
+            if (isRunButtonClicked.getAndSet(true)) {
+                Log.d(TAG, "Run button is already clicked, ignoring additional clicks.");
+                return;
+            }
+            v.setEnabled(false);
+            Log.d(TAG, "Run button clicked. Disabling button and proceeding.");
+            boolean networkConnected = isNetworkConnected();
+            boolean gpsEnabled = isGPSEnabled();
+            if (networkConnected && gpsEnabled && hasLocationPermissions()) {
+                useMap = true;
+                checkActivityRecognitionPermissionAndProceed();
+            } else {
+                useMap = false;
+                checkActivityRecognitionPermissionAndProceedNoMap();
+            }
+            handler.postDelayed(() -> {
+                isRunButtonClicked.set(false);
+                if (runButton != null) {
+                    runButton.setEnabled(true);
+                    Log.d(TAG, "Run button re-enabled after timeout.");
+                }
+            }, 5000);
         });
-
         //Set up Jump button to navigate to JumpActivity
-        Button jumpButton = rootView.findViewById(R.id.jump_button);
+        jumpButton = rootView.findViewById(R.id.jump_button);
         jumpButton.setOnClickListener(v -> {
-            // When the user clicks the Jump button, pass user info into intent, then start the jump activity
-            checkActivityRecognitionPermissionAndProceedToJump();
+            Log.d(TAG, "Jump button clicked.");
+            if (isJumpButtonClicked.getAndSet(true)) {
+                Log.d(TAG, "Jump button is already clicked, ignoring additional clicks.");
+                return;
+            }
+            v.setEnabled(false);
+            Log.d(TAG, "Jump button clicked. Disabling button and proceeding.");
+            boolean networkConnected = isNetworkConnected();
+            boolean gpsEnabled = isGPSEnabled();
+            if (networkConnected && gpsEnabled && hasLocationPermissions()) {
+                useMap = true;
+                checkActivityRecognitionPermissionAndProceedToJump();
+            } else {
+                useMap = false;
+                checkActivityRecognitionPermissionAndProceedToNoMapJump();
+            }
+            handler.postDelayed(() -> {
+                isJumpButtonClicked.set(false);
+                if (jumpButton != null) {
+                    jumpButton.setEnabled(true);
+                    Log.d(TAG, "Jump button re-enabled after timeout.");
+                }
+            }, 5000); // 5秒
         });
 
         return rootView;
@@ -208,6 +276,12 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void starLikeDataListener() {
+        SharedPreferences sharedPref = getActivity().getSharedPreferences("my_prefs", Context.MODE_PRIVATE);
+        boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
+        long savedTimestamp = sharedPref.getLong("notification_time", 0);
+        if(!isNotificationEnabled){
+            return;
+        }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         likeListener = db.collection("message")
                 .addSnapshotListener((snapshots, e) -> {
@@ -215,17 +289,16 @@ public class WorkoutFragment extends Fragment {
                         Log.w("Firestore", "Listen failed.", e);
                         return;
                     }
-
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         if (dc.getType() == ADDED) {
                             MessageBean messageBean = dc.getDocument().toObject(MessageBean.class);
                             if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0")) {
-                                rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
+                                notification_badge.setVisibility(View.VISIBLE);
                             }
                         } else if (dc.getType() == MODIFIED) {
                             MessageBean messageBean = dc.getDocument().toObject(MessageBean.class);
                             if (messageBean.getUpdateUserId().equals(userId) && messageBean.getIsRead().equals("0")) {
-                                rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
+                                notification_badge.setVisibility(View.GONE);
                             }
                         }
                     }
@@ -262,7 +335,15 @@ public class WorkoutFragment extends Fragment {
             checkLocationPermissionAndProceed();
         }
     }
-
+    private void checkActivityRecognitionPermissionAndProceedNoMap() {
+        if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+            // Request activity recognition permission
+            requestActivityRecognitionPermission();
+        } else {
+            // Activity recognition permission granted, continue to check location permissions
+            proceedToNoMapActivity();
+        }
+    }
     private void checkActivityRecognitionPermissionAndProceedToJump() {
         if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
             // Request activity recognition permission
@@ -272,7 +353,15 @@ public class WorkoutFragment extends Fragment {
             checkLocationPermissionAndProceedToJump();
         }
     }
-
+    private void checkActivityRecognitionPermissionAndProceedToNoMapJump() {
+        if (isActivityRecognitionPermissionRequired() && !hasActivityRecognitionPermission()) {
+            // Request activity recognition permission
+            requestActivityRecognitionPermissionToJump();
+        } else {
+            // Activity recognition permission granted, continue to check location permissions
+            proceedToJumpActivity(0.0,0.0);
+        }
+    }
     private void checkLocationPermissionAndProceed() {
         if (!hasLocationPermissions()) {
             // Request location permissions
@@ -298,6 +387,42 @@ public class WorkoutFragment extends Fragment {
             checkLocationAndStartJumpActivity();
         }
     }
+    private boolean isNetworkConnected() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.getActiveNetwork());
+                if (capabilities != null) {
+                    if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                        return true;
+                    }
+                }
+            } else {
+                NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+                if (activeNetwork != null && activeNetwork.isConnected()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    private boolean isGPSEnabled() {
+        LocationManager locationManager = (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                return locationManager.isLocationEnabled();
+            } else {
+                try {
+                    return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                } catch (Exception e) {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
 
     /**
      * Initializes the appropriate map based on user's location.
@@ -307,6 +432,30 @@ public class WorkoutFragment extends Fragment {
         if (!hasLocationPermissions()) {
             return;
         }
+        mapProgressBar.setVisibility(View.VISIBLE);
+        boolean networkConnected = isNetworkConnected();
+        boolean gpsEnabled = isGPSEnabled();
+        if (!networkConnected || !gpsEnabled) {
+            mapProgressBar.setVisibility(View.GONE);
+            String message = "No network or GPS, map disabled.";
+            showToast(message);
+            useMap = false;
+            return;
+        }
+
+        if (!isNetworkConnected()) {
+            Log.d(TAG, "No network connection. Skipping map initialization.");
+            mapProgressBar.setVisibility(View.GONE);
+            showToast("No network connection");
+            return;
+        }
+        mapLoadingTimeoutRunnable = () -> {
+            if (mapProgressBar != null && mapProgressBar.getVisibility() == View.VISIBLE) {
+                mapProgressBar.setVisibility(View.GONE);
+                showToast("Map loading timed out, check connection.");
+            }
+        };
+        handler.postDelayed(mapLoadingTimeoutRunnable, MAP_LOADING_TIMEOUT);
         // Obtain user's location before initializing the map
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
@@ -323,6 +472,10 @@ public class WorkoutFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to retrieve location", e);
+                    if (mapProgressBar != null) {
+                        mapProgressBar.setVisibility(View.GONE);
+                    }
+                    showToast("Unable get current location.");
                     // Keep the placeholder image visible
                 });
     }
@@ -345,6 +498,7 @@ public class WorkoutFragment extends Fragment {
                     } else {
                         // Keep the placeholder image visible
                         showToast("Unable to retrieve current location");
+                        mapProgressBar.setVisibility(View.GONE);
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -411,6 +565,9 @@ public class WorkoutFragment extends Fragment {
     private void onMapReady() {
         if (mapProgressBar != null) {
             mapProgressBar.setVisibility(View.GONE);
+        }
+        if (mapLoadingTimeoutRunnable != null) {
+            handler.removeCallbacks(mapLoadingTimeoutRunnable);
         }
         View placeholder = rootView.findViewById(R.id.map_placeholder);
         if (placeholder != null) {
@@ -634,12 +791,11 @@ public class WorkoutFragment extends Fragment {
                             Log.d(TAG, "New location obtained: " + latitude + ", " + longitude);
                             proceedToMapActivity(latitude, longitude);
                         } else {
-                            showToast("Unable to retrieve current location");
+                            //showToast("Unable to retrieve current location");
                             proceedToNoMapActivity();
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "Failed to retrieve current location", e);
                         showToast("Unable to retrieve current location");
                         proceedToNoMapActivity();
                     });
@@ -701,7 +857,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name", userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
-        startActivityForResult(intent, 123);
+        startActivityForResult(intent, 333);
     }
 
     /**
@@ -729,7 +885,7 @@ public class WorkoutFragment extends Fragment {
         intent.putExtra("name", userName);
         intent.putExtra("age", userAge);
         intent.putExtra("weight", userWeight);
-        startActivityForResult(intent, 123);
+        startActivityForResult(intent, 111);
     }
 
     /**
@@ -857,9 +1013,24 @@ public class WorkoutFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (runButton != null) {
+            runButton.setEnabled(true);
+            isRunButtonClicked.set(false);
+            Log.d(TAG, "Run button state reset.");
+        }
+
+        if (jumpButton != null) {
+            jumpButton.setEnabled(true);
+            isJumpButtonClicked.set(false);
+            Log.d(TAG, "Jump button state reset.");
+        }
         setupNotificationListener();
         boolean currentPermissionStatus = hasLocationPermissions();
-        if (currentPermissionStatus != locationGranted) {
+        boolean networkConnected = isNetworkConnected();
+        boolean gpsEnabled = isGPSEnabled();
+        boolean shouldUseMap = currentPermissionStatus != locationGranted || currentPermissionStatus && networkConnected && gpsEnabled;
+
+        if (shouldUseMap) {
             locationGranted = currentPermissionStatus;
             if (locationGranted) {
                 mapProgressBar.setVisibility(View.VISIBLE);
@@ -895,34 +1066,80 @@ public class WorkoutFragment extends Fragment {
 
     private void setupNotificationListener() {
         if (userId == null) {
-            Log.e(TAG, "User ID is null, cannot setup notifications listener.");
             return;
         }
+        // Remove existing listener if any
+        if (likeListener != null) {
+            likeListener.remove();
+            likeListener = null;
+        }
+        SharedPreferences sharedPref = requireActivity().getSharedPreferences("my_prefs", Context.MODE_PRIVATE);
+        boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
+
+        if (!isNotificationEnabled) {
+            myStar.setVisibility(View.GONE);
+            notification_badge.setVisibility(View.GONE);
+            return;
+        } else {
+            myStar.setVisibility(View.VISIBLE);
+            Log.d(TAG, "Notification is enabled. Showing myStar.");
+        }
+
+        long notificationOnTime = sharedPref.getLong("notification_on_time", 0);
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Get likes from Firestore
-        db.collection("message")
+        // Create a query with composite conditions and order
+        Query query = db.collection("message")
                 .whereEqualTo("updateUserId", userId)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            MessageBean messageBean = document.toObject(MessageBean.class);
-                            if ("0".equals(messageBean.getIsRead())) {
-                                count++;
-                            }
-                        }
-                        if (count > 0) {
-                            rootView.findViewById(R.id.notification_badge).setVisibility(View.VISIBLE);
-                        } else {
-                            rootView.findViewById(R.id.notification_badge).setVisibility(View.GONE);
-                        }
-                    } else {
-                        Log.w("Firestore", "Error getting notifications", task.getException());
-                    }
+                .whereEqualTo("isRead", "0")
+                .whereGreaterThan("timestamp", notificationOnTime)
+                .orderBy("timestamp", Query.Direction.DESCENDING);
+
+        // Add a snapshot listener to the query
+        likeListener = query.addSnapshotListener((snapshots, e) -> {
+            if (e != null) {
+                Log.w(TAG, "Listen failed.", e);
+                return;
+            }
+
+            if (snapshots == null) {
+                Log.w(TAG, "No snapshots found.");
+                requireActivity().runOnUiThread(() -> {
+                    notification_badge.setVisibility(View.GONE);
                 });
+                return;
+            }
+
+            // Count the number of unread messages
+            int unreadCount = snapshots.size();
+
+            // Update the notification badge on the main thread
+            requireActivity().runOnUiThread(() -> {
+                if (unreadCount > 0 ) {
+                    notification_badge.setVisibility(View.VISIBLE);
+                } else {
+                    notification_badge.setVisibility(View.GONE);
+                }
+            });
+        });
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        setupNotificationListener();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (likeListener != null) {
+            likeListener.remove();
+            likeListener = null;
+        }
+    }
+
 
     @Override
     public void onDestroyView() {
@@ -933,6 +1150,11 @@ public class WorkoutFragment extends Fragment {
 
         if (likeListener != null) {
             likeListener.remove();
+            likeListener = null;
         }
+        if (mapLoadingTimeoutRunnable != null) {
+            handler.removeCallbacks(mapLoadingTimeoutRunnable);
+        }
+        handler.removeCallbacksAndMessages(null);
     }
 }

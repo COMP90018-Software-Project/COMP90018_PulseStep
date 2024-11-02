@@ -2,6 +2,8 @@ package com.example.pulsestepapplication;
 
 import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
 
+import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
@@ -17,6 +19,7 @@ import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Source;
 
@@ -88,30 +91,30 @@ public class LikeActivity extends AppCompatActivity {
         });
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void getData() {
-
-        // Gets the UID of the current user
         userId = getIntent().getStringExtra("USER_ID");
-        // Get likes from Firestore
-        db.collection("message")
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        Query query = db.collection("message")
                 .whereEqualTo("updateUserId", userId)
-                .get(Source.SERVER)
+                .orderBy("timestamp", Query.Direction.ASCENDING);
+
+        query.get(Source.SERVER)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         messageBeanList.clear();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             MessageBean messageBean = document.toObject(MessageBean.class);
-                            messageBeanList.add(messageBean);
+                            messageBeanList.add(0, messageBean);
+                            Log.d("LikeActivity", "Fetched message: " + messageBean.toString());
                         }
-                        messageBeanList.sort((msg1, msg2) -> Long.compare(msg2.getTimestamp(),
-                                msg1.getTimestamp()));
                         likeAdapter.notifyDataSetChanged();
                         readMessage(messageBeanList);
                     } else {
                         Log.w("Firestore", "Error getting notifications", task.getException());
                     }
                 });
-
     }
 
     private void readMessage(List<MessageBean> messageBeanList) {

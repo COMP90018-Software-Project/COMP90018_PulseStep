@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -36,6 +37,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 public class Settings extends AppCompatActivity {
 
@@ -51,8 +55,9 @@ public class Settings extends AppCompatActivity {
     private MaterialSwitch locationSwitch;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private boolean isUserInitiatedSwitchChange = false;
-
-
+    private MaterialSwitch notificationSwitch;
+    private SharedPreferences sharedPref;
+    private String userId;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -62,7 +67,7 @@ public class Settings extends AppCompatActivity {
 
         // Get user Id
         Intent intent = getIntent();
-        String userId = intent.getStringExtra("userId");
+        userId = intent.getStringExtra("userId");
 
         if (userId != null) {
             Log.d("SettingsActivity", "Received userId: " + userId);
@@ -80,7 +85,28 @@ public class Settings extends AppCompatActivity {
                 finish(); // End the Settings activity and return to MainActivity
             }
         });
+        notificationSwitch = findViewById(R.id.notification_switch);
 
+        sharedPref = getSharedPreferences("my_prefs", MODE_PRIVATE);
+        boolean isNotificationEnabled = sharedPref.getBoolean("notification_switch", true);
+        notificationSwitch.setChecked(isNotificationEnabled);
+        // Set listener
+        notificationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("notification_switch", isChecked);
+            long currentTimestamp = System.currentTimeMillis();
+            if (isChecked) {
+                // Notification enabledonStop
+                editor.putLong("notification_on_time", currentTimestamp);
+                // Delete messages during notification off period
+                deleteMessagesDuringNotificationOffPeriod(currentTimestamp);
+            } else {
+
+                editor.putLong("notification_off_time", currentTimestamp);
+            }
+
+            editor.apply();
+        });
         // Reference to the reset_password redirecting button
         resetPasswordButton = findViewById(R.id.reset_password);
         resetPasswordButton.setOnClickListener(new View.OnClickListener(){
@@ -256,7 +282,48 @@ public class Settings extends AppCompatActivity {
             }
         });
     }
+    private void deleteMessagesDuringNotificationOffPeriod(long notificationOnTime) {
+        // Get the last notification off time
+        long notificationOffTime = sharedPref.getLong("notification_off_time", 0);
 
+        if (notificationOffTime == 0) {
+            // No previous off time, nothing to delete
+            return;
+        }
+
+        if (userId == null) {
+            Log.e("Settings", "userId is null. Cannot delete messages.");
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Create a query to find messages during the off period
+        Query query = db.collection("message")
+                .whereEqualTo("updateUserId", userId)
+                .whereGreaterThanOrEqualTo("timestamp", notificationOffTime)
+                .whereLessThan("timestamp", notificationOnTime);
+
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                WriteBatch batch = db.batch();
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    batch.delete(document.getReference());
+                }
+
+                // Commit the batch
+                batch.commit()
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("Settings", "Messages during notification off period deleted successfully.");
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("Settings", "Failed to delete messages: ", e);
+                        });
+            } else {
+                Log.e("Settings", "Error getting messages to delete: ", task.getException());
+            }
+        });
+    }
     // ReEnter password to confirm deactivate
     private void showPasswordInputDialog(FirebaseUser user) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
