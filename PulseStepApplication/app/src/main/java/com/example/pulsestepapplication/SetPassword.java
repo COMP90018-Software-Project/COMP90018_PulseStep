@@ -54,19 +54,19 @@ public class SetPassword extends AppCompatActivity {
     private String fullName, email;
     private boolean emailVerificationSent = false; // Track if email is sent
     private final String passVerificationMessage = "Continue";
-    private Handler handler = new Handler(Looper.getMainLooper()); // 用于定时检查
-    private final int CHECK_INTERVAL = 1000; // 每隔5秒检查一次
+    private Handler handler = new Handler(Looper.getMainLooper()); // For timing check
+    private final int CHECK_INTERVAL = 1000; // Check every 5 seconds
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_set_password);
 
-        // 初始化 Firebase Auth
+        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // 初始化 UI 元素
+        // Initialize UI elements
         newPasswordEditText = findViewById(R.id.newPasswordEditText);
         confirmPasswordEditText = findViewById(R.id.confirmPasswordEditText);
         newPasswordInputLayout = findViewById(R.id.newPasswordInputLayout);
@@ -98,19 +98,19 @@ public class SetPassword extends AppCompatActivity {
 
 
 
-        // 设置 "Sign In" 部分的文本样式
+        // Set the text style of the "Sign In" part
         String fullText = "Already have an account? Sign In";
         SpannableString spannableString = new SpannableString(fullText);
         int startIndex = fullText.indexOf("Sign In");
         int endIndex = startIndex + "Sign In".length();
 
-        // 设置加粗和黑色
+        // Set bold and black
         spannableString.setSpan(new StyleSpan(Typeface.BOLD), startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         spannableString.setSpan(new ForegroundColorSpan(getResources().getColor(android.R.color.black)), startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         signInText.setText(spannableString);
 
-        // 设置 "Sign In" 的点击事件
+        // Set up the click event for "Sign In"
         signInText.setOnClickListener(view -> {
             Intent intent = new Intent(SetPassword.this, Login.class);
             startActivity(intent);
@@ -123,10 +123,10 @@ public class SetPassword extends AppCompatActivity {
             String confirmPassword = confirmPasswordEditText.getText().toString();
 
             if (!termCheckbox.isChecked()) {
-                // 如果用户未勾选复选框，弹出Toast提示
+                // If the user does not check the box, a Toast prompt will pop up
                 Toast.makeText(this, "You must agree to the Terms of Service and Privacy Policy to continue.",
                         Toast.LENGTH_SHORT).show();
-                return; // 直接返回，不继续执行
+                return; // Return directly without continuing execution
             }
 
             if (emailVerificationSent) {
@@ -134,7 +134,7 @@ public class SetPassword extends AppCompatActivity {
                 if (user != null) {
                     user.reload().addOnCompleteListener(task -> {
                         if (user.isEmailVerified()) {
-                            navigateToPersonalDetails(); // 如果已验证，则直接跳转到下一个页面
+                            navigateToPersonalDetails(); // If verified, jump directly to the next page
                         } else {
                             Toast.makeText(this, "Please verify your email before continuing.",
                                     Toast.LENGTH_LONG).show();
@@ -173,7 +173,7 @@ public class SetPassword extends AppCompatActivity {
                             sendVerificationEmail(user);
                             emailVerificationSent = true;
                             continueButton.setText(passVerificationMessage);
-                            startVerificationCheck(); // 启动验证状态的定时检查
+                            startVerificationCheck(); // Start the periodic check of the verification status
                         }
                     } else {
                         String errorMessage = task.getException() != null ?
@@ -208,14 +208,14 @@ public class SetPassword extends AppCompatActivity {
                 if (user != null) {
                     user.reload().addOnCompleteListener(task -> {
                         if (user.isEmailVerified()) {
-                            // 验证成功后，显示 Toast 提示
+                            // After successful verification, display Toast prompt
                             Toast.makeText(SetPassword.this,
                                     "Email verified! Updating your password...",
                                     Toast.LENGTH_SHORT).show();
 
-                            updatePassword(); // 验证成功后自动更新密码
+                            updatePassword(); // Automatically update the password after successful verification
                         } else {
-                            // 如果未验证，则继续检查
+                            // If not verified, continue checking
                             handler.postDelayed(this, CHECK_INTERVAL);
                         }
                     });
@@ -227,7 +227,7 @@ public class SetPassword extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // 如果用户未完成验证且退出流程，删除用户
+        // If the user does not complete the verification and exits the process, delete the user
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null && !user.isEmailVerified()) {
             user.delete().addOnCompleteListener(task -> {
@@ -263,12 +263,12 @@ public class SetPassword extends AppCompatActivity {
         termLink.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
-    // 显示滚动对话框的方法
+    // Method to display the scroll dialog box
     private void showTermDialog(Context context, String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(title);
 
-        // 使用布局填充器创建可滚动对话框
+        // Create a scrollable dialog using the layout infill
         View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_scrollable, null);
         TextView dialogText = dialogView.findViewById(R.id.dialog_text);
         dialogText.setText(message);
