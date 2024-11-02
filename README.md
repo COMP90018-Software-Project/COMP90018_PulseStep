@@ -12,6 +12,7 @@
   ```properties
   MAPS_API_KEY=your_api_key_here
   ```
+
 ### Build Configuration
 - **Namespace**: `com.example.pulsestepapplication`
 - **SDK Versions**:
@@ -39,37 +40,53 @@
 ## Features
 
 ### 1. Sign-Up and Sign-In
-
 - **Sign-Up**: New users create an account by entering name, birthdate, height, weight, and gender, then verify by email.
 - **Sign-In**: Existing users log in with email and password. If you forget your password, use the "Forgot Password" option to reset it via email.
 
 ### 2. Workout Modes
-
 - **Running**: Tracks distance, pace, time, steps, and calories burned. Requires GPS to show your path.
 - **Jump Rope**: Counts jumps, pace, time, and calories burned. Music control is available for both workout modes.
 - **Upload Data**: After finishing a workout, tap "End" to save data to Firebase.
 
 ### 3. Social Leaderboard and Interaction
-
 - **Daily and Monthly Leaderboards**: Set daily goals, view your rank, and interact with other users.
 - **Minimum Time for Leaderboard**: Workouts must be **over 5 minutes** to appear on the leaderboard.
 - **Likes and Notifications**: Like other users’ achievements. Notifications appear in the notification center.
 
 ### 4. Notification Settings
-
 - **In-App Notifications**: You can turn on or off notifications like likes and leaderboard updates in the settings menu.
 
 ### 5. Profile Management
-
 - **Profile Settings**: Change your profile picture from your gallery or camera. Update height and weight for accurate calorie tracking.
 - **View Workout Data**: Check your daily workout history with a built-in calendar (view up to 15 days back and 7 days ahead).
 
 ### 6. App Settings
-
 - **Location Settings**: Turn location tracking on or off.
 - **Change Password**: Update your password anytime for account security.
 - **User Guide**: Find instructions on using the app.
 - **Account Management**: Log out or deactivate your account if you wish.
+
+---
+
+## Sensors Used
+
+PulseStep leverages multiple sensors for real-time tracking and user experience:
+
+1. **Location Sensor (GPS)**:
+   - Used for real-time location tracking and path mapping during workouts.
+   - Integrated via `FusedLocationProviderClient` to capture GPS and network-based location data for accurate route tracking.
+
+2. **Step Detector Sensor** (`TYPE_STEP_DETECTOR`):
+   - Counts steps during running sessions, ensuring accurate measurement of the user's physical activity.
+   - Requires **ACTIVITY_RECOGNITION** permission for step detection.
+
+3. **Accelerometer Sensor** (`TYPE_ACCELEROMETER`):
+   - Tracks jump rope activity by detecting changes in acceleration, counting jumps based on motion data.
+   - Provides acceleration data along the x, y, and z axes, allowing the app to recognize specific motion patterns associated with jumps.
+
+4. **Camera Sensor**:
+   - Allows users to capture or upload a profile picture.
+   - Integrated through **ImagePicker**, enabling users to take photos or select images from the gallery.
 
 ---
 
@@ -136,7 +153,3 @@ PulseStep is licensed under the [MIT License](LICENSE).
 | <img src="https://avatars.githubusercontent.com/u/133179618?s=64&v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/57372321?v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/107629638?v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/128003981?v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/87736238?s=400&u=298a7edde9918b0a5900afb1d27c7e1b5343555f&v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/176295257?v=4" width="50"/> |
 |:--:|:--:|:--:|:--:|:--:|:--:|
 | [**Qiyue Zhang**](https://github.com/yuk1Zhang) | [**Peng Cheng**](https://github.com/jackie174) | [**longxin Li**](https://github.com/heizi1307) | [**Haoyuan Qin**](https://github.com/QHYY2002) | [**Huacong Ying**](https://github.com/eareyemouthheart) |[**Shiwen Ye**](https://github.com/xx) |
-
-
-
-
