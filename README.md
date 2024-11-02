@@ -38,14 +38,14 @@
 
 ### 2. Workout Modes
 
-- **Running**: Tracks distance, pace, time, steps, and calories burned. Requires GPS to show your path.
+- **Running**: Tracks distance, pace, time, steps, and calories burned. Requires GPS to show your path. (without GPS permission, entering no-map model)
 - **Jump Rope**: Counts jumps, pace, time, and calories burned. Music control is available for both workout modes.
 - **Upload Data**: After finishing a workout, tap "End" to save data to Firebase.
 
 ### 3. Social Leaderboard and Interaction
 
 - **Daily and Monthly Leaderboards**: Set daily goals, view your rank, and interact with other users.
-- **Minimum Time for Leaderboard**: Workouts must be **over 5 minutes** to appear on the leaderboard.
+- **Minimum Time for Leaderboard**: Workouts must be **over 5 minutes** in total within one day to appear on the leaderboard.
 - **Likes and Notifications**: Like other users’ achievements. Notifications appear in the notification center.
 
 ### 4. Notification Settings
@@ -113,6 +113,7 @@ These libraries ensure smooth UI, accurate location tracking, Firebase integrati
 PulseStep has been tested on:
 
 - Xiaomi 14 Ultra
+- Xiaomi 14 Pro
 - Xiaomi 13
 - Google Pixel 8 Pro (API 35)
 
