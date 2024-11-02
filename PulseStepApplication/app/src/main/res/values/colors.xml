@@ -13,8 +13,10 @@
     <color name="dark_pink">#FEDCDC</color>
     <color name="lighter_orange">#F5EBE6</color>
     <color name="light_orange">#FFC3A9</color>
-    <color name="like_orange">#FF9F76</color>
+    <color name="like_orange">#FD9366</color>
     <color name="progress_orange">#FFAE8C</color>
     <color name="bar_orange">#FFC6AE</color>
+    <color name="user_rank_row_orange">#FAD8C8</color>
+    <color name="jump_orange">#FFD4C1</color>
 
 </resources>

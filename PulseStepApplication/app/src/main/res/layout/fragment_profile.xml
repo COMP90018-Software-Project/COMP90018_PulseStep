@@ -25,7 +25,6 @@
             android:fontFamily="@font/overpass_bold"
             android:text="Your Profile"
             android:textColor="@color/black"
-            android:paddingLeft="10dp"
             android:textSize="20sp"
             android:layout_gravity="center"
             android:paddingTop="8dp" />
@@ -49,58 +48,45 @@
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:layout_marginTop="40dp"
-        android:src="@drawable/sample_profile_img"
         app:layout_constraintTop_toBottomOf="@id/toolbar_profile"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Profile Username -->
-    <TextView
-        android:id="@+id/profile_username"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="UK"
-        android:gravity="center"
-        android:fontFamily="@font/overpass_bold"
-        android:textSize="14dp"
-        android:textStyle="bold"
-        android:textColor="#9B9BA1"
-        android:layout_marginTop="5dp"
-        app:layout_constraintTop_toBottomOf="@id/profile_image" />
+    <ImageView
+        android:id="@+id/btn_image_picker"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="image_picker"
+        android:paddingTop="8dp"
+        android:paddingBottom="0dp"
+        android:src="@drawable/ic_edit_avatar"
+        app:layout_constraintBottom_toBottomOf="@id/profile_image"
+        app:layout_constraintEnd_toEndOf="@id/profile_image"/>
 
     <!-- Profile Username -->
     <TextView
-        android:id="@+id/location"
+        android:id="@+id/name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/sample_username"
         android:gravity="center"
         android:fontFamily="@font/overpass_bold"
-        android:textSize="24dp"
+        android:textSize="20dp"
         android:textStyle="bold"
         android:layout_marginTop="5dp"
-        app:layout_constraintTop_toBottomOf="@id/profile_username" />
-
-    <TextView
-        android:id="@+id/month"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:padding="8dp"
-        android:textSize="16dp"
-        android:fontFamily="@font/overpass_bold"
-        android:gravity="center"
-        app:layout_constraintTop_toBottomOf="@+id/location" />
+        app:layout_constraintTop_toBottomOf="@id/profile_image" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/dates_rv"
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="25dp"
         android:layout_marginEnd="16dp"
         android:layout_marginStart="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/month" />
+        app:layout_constraintTop_toBottomOf="@id/name" />
+
 
     <!-- CardView for Workout (Jump) -->
     <androidx.cardview.widget.CardView
@@ -108,8 +94,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        app:layout_constraintTop_toBottomOf="@id/dates_rv"
-        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/recyclerView"
+        android:layout_marginTop="25dp"
         app:cardCornerRadius="35dp"
         app:cardElevation="1dp">
 

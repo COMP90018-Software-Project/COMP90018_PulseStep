@@ -1,18 +1,18 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 背景（进度条的底色） -->
+    <!-- Set bg color -->
     <item android:id="@android:id/background">
         <shape>
             <corners android:radius="4dp" />
-            <solid android:color="@color/bar_orange"/>  <!-- 浅橙色背景 -->
+            <solid android:color="@color/bar_orange"/>
         </shape>
     </item>
 
-    <!-- 进度条的前景（当前进度部分） -->
+    <!-- Set progress bar -->
     <item android:id="@android:id/progress">
         <clip>
             <shape>
                 <corners android:radius="4dp" />
-                <solid android:color="@color/white"/>  <!-- 白色前景进度 -->
+                <solid android:color="@color/white"/>
             </shape>
         </clip>
     </item>

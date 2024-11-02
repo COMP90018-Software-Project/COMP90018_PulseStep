@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/jump_activity"
-    android:background="@color/white"
+    android:background="@color/jump_orange"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".JumpActivity">
@@ -13,7 +13,7 @@
         android:id="@+id/toolbar_jump"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/jump_orange"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
         app:layout_constraintTop_toTopOf="parent">
@@ -41,6 +41,229 @@
             android:layout_gravity="center"
             android:paddingTop="8dp" />
 
+        <ImageView
+            android:id="@+id/music_control"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Back"
+            android:src="@drawable/ic_music_launcher"
+            android:paddingEnd="8dp"
+            android:layout_gravity="end"/>
+
     </androidx.appcompat.widget.Toolbar>
+
+
+    
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="70dp"
+        android:layout_marginHorizontal="30dp"
+        android:layout_marginBottom="50dp"
+        android:backgroundTint="#FBFDF8"
+        app:cardCornerRadius="30dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbar_jump"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        >
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+
+            <!-- Card-like bottom layout for displaying time, steps, distance, and calories -->
+
+            <!-- Buttons placed above the card layout -->
+
+            <ImageView
+                android:id="@+id/jump_default_image_view"
+                android:layout_width="match_parent"
+                android:layout_height="270dp"
+                android:layout_marginTop="40dp"
+                app:layout_constraintBottom_toTopOf="@id/jump_button_layout"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+<!--            android:src="@drawable/bg_jump"-->
+
+            <LinearLayout
+                android:id="@+id/jump_card_layout"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_alignParentBottom="true"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginBottom="40dp"
+                android:background="@drawable/jump_rounded_background"
+                android:orientation="vertical"
+                android:paddingTop="16dp"
+                android:paddingBottom="10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                tools:layout_editor_absoluteX="50dp">
+
+                <!-- Timer TextView -->
+                <TextView
+                    android:id="@+id/jump_timer_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="25dp"
+                    android:layout_marginBottom="20dp"
+                    android:text="00:00"
+                    android:textColor="@android:color/black"
+                    android:textSize="40sp"
+                    android:textStyle="bold" />
+
+                <!-- Counts, Average Counts per min, and Calories TextViews -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="20dp"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <!-- Jump Counts Title -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total Counts"
+                            android:textColor="#808080"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <!-- Jump Counts Value -->
+                        <TextView
+                            android:id="@+id/jump_count_text_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textColor="@android:color/black"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <!-- Avg counts Container -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="20dp"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <!-- Distance Title -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Avg Counts/min"
+                            android:textColor="#808080"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <!-- Distance Value -->
+                        <TextView
+                            android:id="@+id/jump_avg_text_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--'--''"
+                            android:textColor="@android:color/black"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <!-- Calories Container -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <!-- Calories Title -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Calories"
+                            android:textColor="#808080"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <!-- Calories Value -->
+                        <TextView
+                            android:id="@+id/jump_calories_text_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textColor="@android:color/black"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <RelativeLayout
+                android:id="@+id/jump_button_layout"
+                android:layout_width="match_parent"
+                android:layout_height="85dp"
+                android:layout_above="@id/jump_card_layout"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="-35dp"
+                android:paddingHorizontal="25dp"
+                app:layout_constraintBottom_toTopOf="@+id/jump_card_layout"
+                app:layout_constraintStart_toStartOf="@id/jump_card_layout"
+                app:layout_constraintEnd_toEndOf="@id/jump_card_layout">
+
+                <!-- Progress Bar around Show Button -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:indeterminate="false"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/circular_progress_drawable"
+                    android:visibility="gone" />
+
+                <!-- Show Button (centered inside the ProgressBar) -->
+                <ImageButton
+                    android:id="@+id/jump_btn_show"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="15dp"
+                    android:background="@drawable/circular_button"
+                    android:contentDescription="Finish"
+                    android:src="@drawable/ic_finish" />
+                <!--                android:visibility="gone" />-->
+
+
+                <ImageButton
+                    android:id="@+id/jump_btn_stop"
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/circular_button_ripple"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/start" />
+            </RelativeLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
