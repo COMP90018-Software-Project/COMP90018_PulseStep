@@ -249,7 +249,7 @@ public class WorkoutFragment extends Fragment {
 
     private void jumpToStarActivity() {
         Intent intent = new Intent(getActivity(), LikeActivity.class);
-        intent.putExtra("USER_ID", userId); // 传递 UID 到下一个页面)
+        intent.putExtra("USER_ID", userId); // Pass the UID to the next page)
         startActivity(intent);
     }
 
@@ -901,7 +901,7 @@ public class WorkoutFragment extends Fragment {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // 从 Firestore 中获取点赞信息
+        // Get likes from Firestore
         db.collection("message")
                 .whereEqualTo("updateUserId", userId)
                 .get()

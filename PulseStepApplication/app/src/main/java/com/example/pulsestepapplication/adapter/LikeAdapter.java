@@ -41,7 +41,7 @@ public class LikeAdapter extends RecyclerView.Adapter<LikeAdapter.ViewHolder> {
     public LikeAdapter(Activity activity, List<MessageBean> list) {
         this.mActivity = activity;
         this.list = list;
-        // 获取 Firestore 实例
+        // Get the Firestore instance
         db = FirebaseFirestore.getInstance();
     }
 
@@ -73,11 +73,11 @@ public class LikeAdapter extends RecyclerView.Adapter<LikeAdapter.ViewHolder> {
     }
 
     private void getUserInfo(CircleImageView imageView, TextView textView, String userId) {
-        // 从 Firestore 中获取用户信息
+        // Get user information from Firestore
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        // 获取用户的全名
+                        // Get the user's full name
                         String fullName = documentSnapshot.getString("fullName");
                         textView.post(() -> textView.setText(fullName));
                     }
@@ -89,7 +89,7 @@ public class LikeAdapter extends RecyclerView.Adapter<LikeAdapter.ViewHolder> {
                 .child("images/profile_image")
                 .getDownloadUrl()
                 .addOnSuccessListener(uri -> {
-                    // 成功获取到图片 URL，设置用户自定义头像
+                    // The image URL is successfully obtained, and the user-defined profile picture is set
                     Log.e("ProfileFragment", uri + "");
                     if (mActivity instanceof Activity) {
                         Activity activity = (Activity) mActivity;
@@ -103,8 +103,8 @@ public class LikeAdapter extends RecyclerView.Adapter<LikeAdapter.ViewHolder> {
 
                 })
                 .addOnFailureListener(exception -> {
-                    Log.e("ProfileFragment", "文件不存在");
-                    // 文件不存在，处理 StorageException，并根据性别设置默认头像
+                    Log.e("ProfileFragment", "file does not exist");
+                    // The file does not exist, handles StorageException, and sets the default avatar based on gender
                     if (exception instanceof StorageException) {
                         StorageException storageException = (StorageException) exception;
                         if (storageException.getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
@@ -151,13 +151,13 @@ public class LikeAdapter extends RecyclerView.Adapter<LikeAdapter.ViewHolder> {
     }
 
     private String time(long timestamp) {
-        // 创建 SimpleDateFormat 实例，设置所需的日期格式
+        // Create an instance of SimpleDateFormat and set the desired date format
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        // 将时间戳转换为 Date 对象
+        // Converts the timestamp to a Date object
         Date date = new Date(timestamp);
 
-        // 格式化日期
+        // Formatted date
         String formattedDate = sdf.format(date);
         return formattedDate;
     }

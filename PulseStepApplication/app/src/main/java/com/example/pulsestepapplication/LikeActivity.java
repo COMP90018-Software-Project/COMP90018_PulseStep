@@ -44,7 +44,7 @@ public class LikeActivity extends AppCompatActivity {
         likeAdapter = new LikeAdapter(LikeActivity.this, messageBeanList);
         binding.likeList.setAdapter(likeAdapter);
 
-        // 获取 Firestore 实例
+        // Get the Firestore instance
         db = FirebaseFirestore.getInstance();
 
         getData();
@@ -54,7 +54,7 @@ public class LikeActivity extends AppCompatActivity {
         binding.likeList.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         binding.back.setOnClickListener(view -> finish());
 
-        // 设置长按删除监听
+        // Set long press to delete listening
         likeAdapter.setItemListener(new LikeAdapter.ItemListener() {
             @Override
             public void ItemClick(String collection) {
@@ -65,7 +65,7 @@ public class LikeActivity extends AppCompatActivity {
             public void delete(int position) {
                 MessageBean message = messageBeanList.get(position);
 
-                // 显示删除确认对话框
+                // The deletion confirmation dialog box is displayed
                 new AlertDialog.Builder(LikeActivity.this)
                         .setTitle("Confirm Deletion")
                         .setMessage("Are you sure you want to delete this message?")
@@ -73,7 +73,7 @@ public class LikeActivity extends AppCompatActivity {
                             db.collection("message").document(message.getId())
                                     .delete()
                                     .addOnSuccessListener(aVoid -> {
-                                        // 从列表中删除并刷新
+                                        // Remove and refresh from the list
                                         messageBeanList.remove(position);
                                         likeAdapter.notifyItemRemoved(position);
                                         Toast.makeText(LikeActivity.this, "Message has deleted", Toast.LENGTH_SHORT).show();
@@ -90,9 +90,9 @@ public class LikeActivity extends AppCompatActivity {
 
     private void getData() {
 
-        // 获取当前用户的 UID
+        // Gets the UID of the current user
         userId = getIntent().getStringExtra("USER_ID");
-        // 从 Firestore 中获取点赞信息
+        // Get likes from Firestore
         db.collection("message")
                 .whereEqualTo("updateUserId", userId)
                 .get(Source.SERVER)
