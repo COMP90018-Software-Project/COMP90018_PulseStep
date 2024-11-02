@@ -314,7 +314,7 @@ public class ProfileFragment extends Fragment {
         workoutCountTextView.setText(String.format(Locale.getDefault(), "%d times", jumpCount));
 
         // Set cal
-        workoutCaloriesTextView.setText(String.format(Locale.getDefault(), "%.1f kcal", calories / 1000));
+        workoutCaloriesTextView.setText(String.format(Locale.getDefault(), "%.1f kcal", calories));
     }
 
     // Helper function to update the UI with retrieved data
@@ -330,7 +330,7 @@ public class ProfileFragment extends Fragment {
         workoutCountTextView.setText(String.format(Locale.getDefault(), "%.1f km", distance / 1000));
 
         // Set cal
-        workoutCaloriesTextView.setText(String.format(Locale.getDefault(), "%.1f kcal", calories / 1000));
+        workoutCaloriesTextView.setText(String.format(Locale.getDefault(), "%.1f kcal", calories));
     }
 
     private void updateRunningUINoRecord() {

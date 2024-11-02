@@ -57,4 +57,9 @@ public class ResetPassword extends AppCompatActivity {
         transaction.addToBackStack(null); // Allows the user to go back
         transaction.commit();
     }
+
+
+    @Override
+    public void onBackPressed() {
+    }
 }
