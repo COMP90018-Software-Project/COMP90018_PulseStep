@@ -56,11 +56,11 @@ public class SetPassword extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_set_password);
 
-        // 初始化 Firebase Auth
+        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // 初始化 UI 元素
+        // Initializing UI Elements
         newPasswordEditText = findViewById(R.id.newPasswordEditText);
         confirmPasswordEditText = findViewById(R.id.confirmPasswordEditText);
         newPasswordInputLayout = findViewById(R.id.newPasswordInputLayout);
@@ -90,19 +90,19 @@ public class SetPassword extends AppCompatActivity {
         // Back button logic
         backButton.setOnClickListener(view -> finish());
 
-        // 设置 "Sign In" 部分的文本样式
+        // Set the text style for the "Sign In" section
         String fullText = "Already have an account? Sign In";
         SpannableString spannableString = new SpannableString(fullText);
         int startIndex = fullText.indexOf("Sign In");
         int endIndex = startIndex + "Sign In".length();
 
-        // 设置加粗和黑色
+        // Set bold and black
         spannableString.setSpan(new StyleSpan(Typeface.BOLD), startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         spannableString.setSpan(new ForegroundColorSpan(getResources().getColor(android.R.color.black)), startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         signInText.setText(spannableString);
 
-        // 设置 "Sign In" 的点击事件
+        // Set up a click event for "Sign In"
         signInText.setOnClickListener(view -> {
             Intent intent = new Intent(SetPassword.this, Login.class);
             startActivity(intent);
@@ -199,12 +199,12 @@ public class SetPassword extends AppCompatActivity {
         termLink.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
-    // 显示滚动对话框的方法
+    // How to display a scrolling dialog box
     private void showTermDialog(Context context, String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(title);
 
-        // 使用布局填充器创建可滚动对话框
+        // Creating a scrollable dialog using a layout inflater
         View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_scrollable, null);
         TextView dialogText = dialogView.findViewById(R.id.dialog_text);
         dialogText.setText(message);
