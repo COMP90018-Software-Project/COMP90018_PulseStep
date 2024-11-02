@@ -128,7 +128,7 @@ PulseStep is licensed under the [MIT License](LICENSE).
 
 | <img src="https://avatars.githubusercontent.com/u/133179618?s=64&v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/57372321?v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/107629638?v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/128003981?v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/176295257?v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/176295257?v=4" width="50"/> |
 |:--:|:--:|:--:|:--:|:--:|:--:|
-| [**Qiyue Zhang**](https://github.com/yuk1Zhang) | [**Peng Cheng**](https://github.com/jackie174) | [**longxin Li**](https://github.com/heizi1307) | [**Haoyuan Qin**](https://github.com/QHYY2002) | [**Huacong Ying**](https://github.com/xx) |[**Shiwen Ye**](https://github.com/xx) |
+| [**Qiyue Zhang**](https://github.com/yuk1Zhang) | [**Peng Cheng**](https://github.com/jackie174) | [**longxin Li**](https://github.com/heizi1307) | [**Haoyuan Qin**](https://github.com/QHYY2002) | [**Huacong Ying**](https://github.com/eareyemouthheart) |[**Shiwen Ye**](https://github.com/xx) |
 
 
 
