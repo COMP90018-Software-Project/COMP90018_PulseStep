@@ -22,7 +22,7 @@
 - **Application ID**: `com.example.pulsestepapplication`
 
 ### Installation Steps
-1. Clone this repository.
+1. Clone this repository or Download the [app](./PulseStep_v1.apk).
 2. Add the Google Maps API key in the `local.properties` file:
    ```properties
    MAPS_API_KEY=your_api_key_here
