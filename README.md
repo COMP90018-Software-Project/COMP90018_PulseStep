@@ -53,16 +53,14 @@
 - **Minimum Time for Leaderboard**: Workouts must be **over 5 minutes** to appear on the leaderboard.
 - **Likes and Notifications**: Like other users’ achievements. Notifications appear in the notification center.
 
-### 4. Notification Settings
-- **In-App Notifications**: You can turn on or off notifications like likes and leaderboard updates in the settings menu.
-
-### 5. Profile Management
+### 4. Profile Management
 - **Profile Settings**: Change your profile picture from your gallery or camera. Update height and weight for accurate calorie tracking.
 - **View Workout Data**: Check your daily workout history with a built-in calendar (view up to 15 days back and 7 days ahead).
 
-### 6. App Settings
+### 5. App Settings
 - **Location Settings**: Turn location tracking on or off.
 - **Change Password**: Update your password anytime for account security.
+- **In-App Notifications**: You can turn on or off notifications like likes and leaderboard updates in the settings menu.
 - **User Guide**: Find instructions on using the app.
 - **Account Management**: Log out or deactivate your account if you wish.
 
