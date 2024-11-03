@@ -107,7 +107,7 @@ public class LikeActivity extends AppCompatActivity {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             MessageBean messageBean = document.toObject(MessageBean.class);
                             messageBeanList.add(0, messageBean);
-                            Log.d("LikeActivity", "Fetched message: " + messageBean.toString());
+                            Log.d("LikeActivity", "Fetched message: " + messageBean);
                         }
                         likeAdapter.notifyDataSetChanged();
                         readMessage(messageBeanList);

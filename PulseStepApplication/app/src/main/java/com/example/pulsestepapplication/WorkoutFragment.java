@@ -1045,17 +1045,30 @@ public class WorkoutFragment extends Fragment {
         if (shouldUseMap) {
             locationGranted = currentPermissionStatus;
             if (locationGranted) {
-                mapProgressBar.setVisibility(View.VISIBLE);
-                View placeholder = rootView.findViewById(R.id.map_placeholder);
-                if (placeholder != null) {
-                    placeholder.setVisibility(View.GONE);
+                if (ActivityCompat.checkSelfPermission(this.requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this.requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return;
                 }
-                View mapContainer = rootView.findViewById(R.id.map_container);
-                if (mapContainer != null) {
-                    mapContainer.setVisibility(View.VISIBLE);
-                }
-                fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-                initializeMap(rootView, savedInstanceState);
+                fusedLocationClient.getLastLocation()
+                        .addOnSuccessListener(location -> {
+                            if (location != null) {
+                                // Check if the current location differs from the last location
+                                if (shouldUpdateMap(location)) {
+                                    mapProgressBar.setVisibility(View.VISIBLE);
+                                    View placeholder = rootView.findViewById(R.id.map_placeholder);
+                                    if (placeholder != null) {
+                                        placeholder.setVisibility(View.GONE);
+                                    }
+                                    View mapContainer = rootView.findViewById(R.id.map_container);
+                                    if (mapContainer != null) {
+                                        mapContainer.setVisibility(View.VISIBLE);
+                                    }
+                                    initializeMap(rootView, savedInstanceState);
+                                }
+                            } else {
+                                Log.d(TAG, "Unable to retrieve current location");
+                            }
+                        })
+                        .addOnFailureListener(e -> Log.e(TAG, "Failed to retrieve location", e));
             } else {
                 FragmentManager fragmentManager = getChildFragmentManager();
                 Fragment mapFragment = fragmentManager.findFragmentById(R.id.map_container);

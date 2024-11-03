@@ -6,7 +6,6 @@ import android.Manifest;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -17,11 +16,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -37,18 +34,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.maps.model.LatLng;
 import pl.droidsonroids.gif.GifDrawable;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
-import com.bumptech.glide.Glide;
 
 public class JumpActivity extends AppCompatActivity {
     private static final String TAG = "JumpRopeActivity";
@@ -76,7 +69,6 @@ public class JumpActivity extends AppCompatActivity {
 
 
     // Timer Variables
-    private boolean isTracking = false;
     private boolean isPaused = false;
     private boolean isFirstStart = true;
     private float totalJumpCount = 0;
@@ -92,7 +84,6 @@ public class JumpActivity extends AppCompatActivity {
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
     //Button
-    private boolean isLongPress = false;
     private Handler handler = new Handler();
     private ProgressBar progressBar;
     private int progressStatus = 0;
@@ -266,7 +257,7 @@ public class JumpActivity extends AppCompatActivity {
                     }
                 });
 
-        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
+        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable();
         circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
         progressBar.setProgressDrawable(circularProgressDrawable);
         btnShow.setOnTouchListener((v, event) -> {
@@ -303,7 +294,6 @@ public class JumpActivity extends AppCompatActivity {
                                 }
                             }
                             if (progressStatus >= 100 && isRunning) {
-                                isLongPress = true;
                                 handler.post(() -> {
                                     showJumpResult();
                                     isRunning = false;
@@ -389,7 +379,6 @@ public class JumpActivity extends AppCompatActivity {
 
     @SuppressLint({"MissingPermission", "UseCompatLoadingForDrawables"})
     private void startTracking() {
-        isTracking = true;
         isPaused = false;
         startTime = SystemClock.elapsedRealtime();
         totalJumpCount = 0;

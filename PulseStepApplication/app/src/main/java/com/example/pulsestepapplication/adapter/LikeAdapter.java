@@ -150,15 +150,4 @@ public class LikeAdapter extends RecyclerView.Adapter<LikeAdapter.ViewHolder> {
         void delete(int position);
     }
 
-    private String time(long timestamp) {
-        // Create an instance of SimpleDateFormat and set the desired date format
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-        // Converts the timestamp to a Date object
-        Date date = new Date(timestamp);
-
-        // Formatted date
-        String formattedDate = sdf.format(date);
-        return formattedDate;
-    }
 }

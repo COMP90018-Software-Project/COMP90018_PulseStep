@@ -18,7 +18,6 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,17 +31,14 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
-import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -92,7 +88,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCallback {
     // Constants
@@ -135,11 +130,8 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private float totalDistance = 0.0f;
     private int currentStepCount = 0;
     private static final Double realDistance = 0.02;
-    private static final double metValue = 8.0;
     private static final int LOCATION_TIMEOUT = 10000; // Location timeout in milliseconds
 
-    //Button
-    private boolean isLongPress = false;
     private Handler handler = new Handler();
     private ProgressBar progressBar;
     private int progressStatus = 0;
@@ -195,7 +187,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
 
     // Mode flags: map mode is true, non-map mode is false
     private boolean isMapMode;
-    private boolean isServiceRunning = false;
 
     private String userName;
     private int userAge;
@@ -370,15 +361,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Navigate back to MainActivity
-     */
-    private void navigateToMainActivity() {
-        Intent intent = new Intent(GoogleMapActivity.this, MainActivity.class);
-        startActivity(intent);
-        finish();
-    }
-
-    /**
      * Check and request necessary permissions
      */
     private void checkPermissions() {
@@ -461,7 +443,7 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                 handleStartStopButtonClick();
             }
         });
-        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
+        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable();
         circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
         progressBar.setProgressDrawable(circularProgressDrawable);
         btnShow.setOnTouchListener((v, event) -> {
@@ -503,7 +485,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
                             }
 
                             if (progressStatus >= 100 && isRunning) {
-                                isLongPress = true;
                                 handler.post(() -> {
                                     showLastTrack();
                                     isRunning = false;
@@ -651,26 +632,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     /**
-     * Show a dialog when permission is denied, guiding the user to manually grant permission in settings
-     */
-    private void showPermissionDeniedDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Background location permission denied")
-                .setMessage("To enable background tracking, please allow background location permission in app settings.")
-                .setPositiveButton("Open Settings", (dialog, which) -> {
-                    // Open app settings page
-                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", getPackageName(), null));
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> {
-                    Toast.makeText(this, "Background location permission denied, the app will stop tracking in the background.", Toast.LENGTH_LONG).show();
-                })
-                .create()
-                .show();
-    }
-
-    /**
      * Starts the tracking process.
      */
     @SuppressLint({"MissingPermission", "UseCompatLoadingForDrawables"})
@@ -755,7 +716,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private void startTrackingService() {
         Intent serviceIntent = new Intent(this, LocationTrackingService.class);
         ContextCompat.startForegroundService(this, serviceIntent);
-        isServiceRunning = true;
     }
 
     /**
@@ -764,7 +724,6 @@ public class GoogleMapActivity extends AppCompatActivity implements OnMapReadyCa
     private void stopTrackingService() {
         Intent serviceIntent = new Intent(this, LocationTrackingService.class);
         stopService(serviceIntent);
-        isServiceRunning = false;
     }
 
     /**

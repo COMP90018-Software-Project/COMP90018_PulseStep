@@ -24,8 +24,6 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
 
     private List<String> dates;
     private int selectedPosition;
-    private RecyclerView recyclerView;
-    private LinearLayoutManager layoutManager;
     private OnDateClickListener onDateClickListener;
     private LinearSnapHelper snapHelper;
     public interface OnDateClickListener {
@@ -36,8 +34,6 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
     public CalendarAdapter(List<String> dates, int selectedPosition, RecyclerView recyclerView, LinearLayoutManager layoutManager, OnDateClickListener listener) {
         this.dates = dates;
         this.selectedPosition = selectedPosition;
-        this.recyclerView = recyclerView;
-        this.layoutManager = layoutManager;
         this.onDateClickListener = listener;
 
 

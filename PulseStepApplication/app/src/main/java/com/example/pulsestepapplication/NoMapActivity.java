@@ -10,10 +10,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,8 +23,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -42,21 +38,11 @@ import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.Priority;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 
 import pl.droidsonroids.gif.GifDrawable;
 
@@ -70,10 +56,6 @@ public class NoMapActivity extends AppCompatActivity {
     private static final String TAG = "NoMapActivity";
     private static final int PERMISSION_REQUEST_CODE = 1001;
     private static final int BACKGROUND_LOCATION_REQUEST_CODE = 1002;
-    private static final float MOVE_ZOOM_LEVEL = 17f;
-    private static final float DEFAULT_ZOOM_LEVEL = 15f;
-    private static final float MAX_ZOOM_LEVEL = 19f;
-    private static final float DISTANCE_THRESHOLD_METERS = 1.0f; // Distance threshold in meters
 
     // UI Components
     private ImageButton btnPauseResume;
@@ -82,16 +64,7 @@ public class NoMapActivity extends AppCompatActivity {
     private ImageView backButton;
     private ImageView runImageView;
     private TextView cTextView;
-    private ImageView waitView;
-    private TextView waitTextView;
     private ImageView muteMusicView;
-
-    // Map and Location
-    private GoogleMap googleMap;
-    private double initialLatitude;
-    private double initialLongitude;
-    private FusedLocationProviderClient fusedLocationClient;
-    private LocationCallback locationCallback;
 
     // Tracking Variables
     private final List<Polyline> polyLines = new ArrayList<>();
@@ -100,8 +73,6 @@ public class NoMapActivity extends AppCompatActivity {
     private boolean isTracking = false;
     private boolean isPaused = false;
     private boolean isFirstStart = true;
-    private boolean isLocationReady = false;
-    private float totalDistance = 0.0f;
     private int currentStepCount = 0;
     private static final Double realDistance = 0.01;
     private static final double metValue = 8.0;
@@ -230,8 +201,6 @@ public class NoMapActivity extends AppCompatActivity {
         cTextView = findViewById(R.id.calories_text_view);
         backButton = findViewById(R.id.back_button_running_page);
         runImageView = findViewById(R.id.default_image_view);
-        waitView = findViewById(R.id.wait);
-        waitTextView = findViewById(R.id.waitText);
         muteMusicView = findViewById(R.id.music_control);
 
         // Initialize MusicPlayer with audio resource
@@ -266,16 +235,6 @@ public class NoMapActivity extends AppCompatActivity {
 
 
     /**
-     * Navigates back to the MainActivity.
-     */
-    private void navigateToMainActivity() {
-        Intent intent = new Intent(NoMapActivity.this, MainActivity.class);
-        startActivity(intent);
-        finish();
-    }
-
-
-    /**
      * Sets up the button listeners for pause/resume and show actions.
      */
     @SuppressLint("ClickableViewAccessibility")
@@ -294,7 +253,7 @@ public class NoMapActivity extends AppCompatActivity {
                 handleStartStopButtonClick();
             }
         });
-        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(this);
+        CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable();
         circularProgressDrawable.setColor(ContextCompat.getColor(this, R.color.light_orange));
         progressBar.setProgressDrawable(circularProgressDrawable);
         btnShow.setOnTouchListener((v, event) -> {
@@ -429,7 +388,6 @@ public class NoMapActivity extends AppCompatActivity {
         isPaused = false;
         if (isFirstStart) {
             pathPoints.clear();
-            totalDistance = 0.0f;
             startTime = SystemClock.elapsedRealtime();
             timerHandler.postDelayed(timerRunnable, 0);
             isFirstStart = false;
@@ -489,19 +447,6 @@ public class NoMapActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(this, StepTrackingService.class);
         stopService(serviceIntent);
         isServiceRunning = false;
-    }
-
-    /**
-     * Displays a default map image when location permission is not granted or in No-map mode.
-     */
-    private void showDefaultMap() {
-        // Display default image
-        // Switch to run PNG
-        Glide.with(this)
-                .asBitmap()  // Load the first frame of the GIF as a static image
-                .load(R.drawable.run)
-                .into(runImageView);
-        runImageView.setVisibility(View.VISIBLE);
     }
 
 
@@ -671,10 +616,6 @@ public class NoMapActivity extends AppCompatActivity {
 
         // Get the last location's address
         String address = "Unknown Location";
-        if (isMapMode && initialLatitude != 0.0 && initialLongitude != 0.0) {
-            LatLng initialLatLng = new LatLng(initialLatitude, initialLongitude);
-            address = getAddressFromLatLng(initialLatLng);
-        }
         // Create Intent to RunSummaryActivity
         Intent intent = new Intent(NoMapActivity.this, RunSummaryActivity.class);
         intent.putExtra("distanceInKm", distanceInKm);
@@ -893,9 +834,6 @@ public class NoMapActivity extends AppCompatActivity {
         if (gifDrawable != null) {
             gifDrawable.recycle();
             gifDrawable = null;
-        }
-        if (fusedLocationClient != null && locationCallback != null) {
-            fusedLocationClient.removeLocationUpdates(locationCallback);
         }
         timerHandler.removeCallbacks(timerRunnable);
     }
