@@ -3,6 +3,7 @@ package com.example.pulsestepapplication;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,7 +24,9 @@ public class SuccessFragment extends Fragment {
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Handle continue action (e.g., navigate to login or dashboard)
+                // Clear backstack and finish activity
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 getActivity().finish(); // Close the activity after success
             }
         });
