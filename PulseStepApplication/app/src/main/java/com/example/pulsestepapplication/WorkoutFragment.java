@@ -232,7 +232,7 @@ public class WorkoutFragment extends Fragment {
                     jumpButton.setEnabled(true);
                     Log.d(TAG, "Jump button re-enabled after timeout.");
                 }
-            }, 5000); // 5秒
+            }, 5000);
         });
 
         return rootView;

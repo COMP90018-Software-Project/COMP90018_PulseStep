@@ -158,7 +158,6 @@ public class ProfileFragment extends Fragment {
             startActivity(intent);
         });
 
-        // 设置 RecyclerView 和 CalendarAdapter
         if (isAdded()) {
             recyclerView = view.findViewById(R.id.recyclerView);
             layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
