@@ -150,7 +150,7 @@ public class LocationTrackingService extends Service {
                     // Handle location updates
                     LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                     sendLocationUpdate(latLng);
-                    Log.d(TAG, "Location update: " + latLng.toString());
+                    Log.d(TAG, "Location update: " + latLng);
                 }
             }
         };

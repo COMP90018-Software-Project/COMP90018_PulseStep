@@ -1,10 +1,8 @@
 package com.example.pulsestepapplication;
 
-import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.SweepGradient;
 import android.graphics.drawable.Drawable;
 
 public class CircularProgressDrawable extends Drawable {
@@ -13,7 +11,7 @@ public class CircularProgressDrawable extends Drawable {
     private RectF oval;
     private int strokeWidth = 20;
 
-    public CircularProgressDrawable(Context context) {
+    public CircularProgressDrawable() {
         paint = new Paint();
         paint.setAntiAlias(true);
         paint.setStrokeWidth(strokeWidth);

@@ -98,7 +98,6 @@ public class Registration extends AppCompatActivity {
             mAuth.fetchSignInMethodsForEmail(email)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            boolean isEmailRegistered = task.getResult().getSignInMethods().size() > 0;
                             // Jump to the password setting page
                             Intent intent = new Intent(Registration.this, SetPassword.class);
                             intent.putExtra("FULL_NAME", fullName);

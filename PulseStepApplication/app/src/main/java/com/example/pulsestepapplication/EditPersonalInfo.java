@@ -20,8 +20,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
@@ -38,7 +36,6 @@ public class EditPersonalInfo extends AppCompatActivity {
     private RadioButton maleRadioButton, femaleRadioButton, otherRadioButton;
     private ImageView backButton;
     private Button finishButton;
-    private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private ProgressDialog progressDialog; // ProgressDialog to show saving state
     private String userId;
