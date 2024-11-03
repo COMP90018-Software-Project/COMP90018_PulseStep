@@ -2,14 +2,18 @@ package com.example.pulsestepapplication;
 
 import static android.content.ContentValues.TAG;
 
+import android.content.Context;
 import android.content.Intent;
 import android.icu.text.SimpleDateFormat;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -83,6 +87,11 @@ public class JumpSummaryActivity extends AppCompatActivity {
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (!isNetworkAvailable()) {
+                    // Display a message if there is no internet connection and stop submission
+                    Toast.makeText(JumpSummaryActivity.this, "No internet connection. Submission failed.", Toast.LENGTH_SHORT).show();
+                    return; // Exit the method without proceeding
+                }
                 Map<String, Object> userJumpRopeDetails = new HashMap<>();
 
                 userJumpRopeDetails.put("userId", userUID);
@@ -122,8 +131,11 @@ public class JumpSummaryActivity extends AppCompatActivity {
         });
 
     }
-
-    /**
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }    /**
      * Initializes the UI components by finding them via their IDs.
      */
     private void initializeUIComponents() {

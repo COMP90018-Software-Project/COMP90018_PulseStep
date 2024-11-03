@@ -2,6 +2,7 @@ package com.example.pulsestepapplication;
 
 import static android.content.ContentValues.TAG;
 
+import android.content.Context;
 import android.content.Intent;
 import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
@@ -16,6 +17,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -113,6 +116,11 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (!isNetworkAvailable()) {
+                    // Display a message if there is no internet connection and stop submission
+                    Toast.makeText(RunSummaryActivity.this, "No internet connection. Submission failed.", Toast.LENGTH_SHORT).show();
+                    return; // Exit the method without proceeding
+                }
                 Map<String, Object> userRunningDetails = new HashMap<>();
 
                 userRunningDetails.put("userId", userUID);
@@ -153,7 +161,14 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
         });
 
     }
-
+    /**
+     * Method: Check if network is available
+     */
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
     /**
      * Initializes the UI components by finding them via their IDs.
      */

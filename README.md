@@ -61,6 +61,7 @@
 - **Location Settings**: Turn location tracking on or off.
 - **Change Password**: Update your password anytime for account security.
 - **In-App Notifications**: You can turn on or off notifications like likes and leaderboard updates in the settings menu.
+- **In-App Notifications**: You can turn on or off notifications like likes and leaderboard updates in the settings menu.
 - **User Guide**: Find instructions on using the app.
 - **Account Management**: Log out or deactivate your account if you wish.
 
@@ -151,7 +152,3 @@ PulseStep is licensed under the [MIT License](LICENSE).
 | <img src="https://avatars.githubusercontent.com/u/133179618?s=64&v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/57372321?v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/107629638?v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/113833060?s=400&u=0ce27cd0e5383024e23f18fcbff0f09ec3688896&v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/87736238?s=400&u=298a7edde9918b0a5900afb1d27c7e1b5343555f&v=4" width="50"/> | <img src="https://avatars.githubusercontent.com/u/176295257?v=4" width="50"/> |
 |:--:|:--:|:--:|:--:|:--:|:--:|
 | [**Qiyue Zhang**](https://github.com/yuk1Zhang) | [**Peng Cheng**](https://github.com/jackie174) | [**longxin Li**](https://github.com/heizi1307) | [**Haoyuan Qin**](https://github.com/QHYY2002) | [**Huacong Ying**](https://github.com/eareyemouthheart) |[**Shiwen Ye**](https://github.com/xx) |
-
-
-
-

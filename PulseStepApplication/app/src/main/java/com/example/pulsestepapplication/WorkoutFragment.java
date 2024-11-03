@@ -503,6 +503,7 @@ public class WorkoutFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to retrieve location", e);
+                    mapProgressBar.setVisibility(View.GONE);
                     // Keep the placeholder image visible
                 });
     }
@@ -600,10 +601,12 @@ public class WorkoutFragment extends Fragment {
                     })
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to retrieve location", e);
+                        mapProgressBar.setVisibility(View.GONE);
                         showToast("Unable to get current location");
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
+            mapProgressBar.setVisibility(View.GONE);
             showToast("Location permission denied");
         }
     }
@@ -626,11 +629,13 @@ public class WorkoutFragment extends Fragment {
                             lastLongitude = longitude;
                         } else {
                             showToast("Unable to retrieve current location");
+                            mapProgressBar.setVisibility(View.GONE);
                         }
                     })
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to retrieve current location", e);
                         showToast("Unable to retrieve current location");
+                        mapProgressBar.setVisibility(View.GONE);
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
@@ -733,6 +738,7 @@ public class WorkoutFragment extends Fragment {
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to get location", e);
                         showToast("Unable to retrieve current location");
+                        mapProgressBar.setVisibility(View.GONE);
                         proceedToNoMapActivity();
                     });
         } catch (SecurityException e) {
@@ -770,10 +776,12 @@ public class WorkoutFragment extends Fragment {
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to get location", e);
                         showToast("Unable to retrieve current location");
+                        mapProgressBar.setVisibility(View.GONE);
                         proceedToJumpActivity(0.0, 0.0);
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
+            mapProgressBar.setVisibility(View.GONE);
             proceedToJumpActivity(0.0, 0.0);
         }
     }
@@ -791,12 +799,13 @@ public class WorkoutFragment extends Fragment {
                             Log.d(TAG, "New location obtained: " + latitude + ", " + longitude);
                             proceedToMapActivity(latitude, longitude);
                         } else {
-                            //showToast("Unable to retrieve current location");
+                            mapProgressBar.setVisibility(View.GONE);
                             proceedToNoMapActivity();
                         }
                     })
                     .addOnFailureListener(e -> {
                         showToast("Unable to retrieve current location");
+                        mapProgressBar.setVisibility(View.GONE);
                         proceedToNoMapActivity();
                     });
         } catch (SecurityException e) {
@@ -816,16 +825,19 @@ public class WorkoutFragment extends Fragment {
                             proceedToJumpActivity(latitude, longitude);
                         } else {
                             showToast("Unable to retrieve current location");
+                            mapProgressBar.setVisibility(View.GONE);
                             proceedToJumpActivity(0.0, 0.0);
                         }
                     })
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Failed to retrieve current location", e);
                         showToast("Unable to retrieve current location");
+                        mapProgressBar.setVisibility(View.GONE);
                         proceedToJumpActivity(0.0, 0.0);
                     });
         } catch (SecurityException e) {
             Log.e(TAG, "Permission error", e);
+            mapProgressBar.setVisibility(View.GONE);
             proceedToJumpActivity(0.0, 0.0);
         }
     }
