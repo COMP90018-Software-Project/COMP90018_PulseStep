@@ -53,7 +53,6 @@
 <!--        app:layout_constraintTop_toBottomOf="@+id/jump_times" />-->
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/jump_summary_box"
         android:layout_width="327dp"
         android:layout_height="204dp"
         android:layout_marginBottom="15dp"

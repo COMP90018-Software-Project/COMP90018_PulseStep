@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AndroidLayouts">
+    <shared>
+      <config />
+    </shared>
+    <layouts>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_google_map.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_jump.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_jump_summary.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_like.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_no_map.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_password.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_personal_details.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_run_summary.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_running.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_splash.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_start.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/custom_dialog.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/dialog_custom.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/dialog_set_target.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/fragment_ranking.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/fragment_workout.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/item_like.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/recyclerview_ranking_row.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/settings.xml">
+        <config>
+          <theme>@style/Theme.PulseStepApplication</theme>
+        </config>
+      </layout>
+    </layouts>
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="09df5ca5-f7cc-4c36-bdc8-9d9bfc84db1a" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable-xhdpi/sample_profile_img.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable/bg_jump.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable/bt_background_color_selector.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable/bt_text_color_selector2.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable/date_highlighter.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable/ic_launcher_background.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable/ic_light.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable/ic_steps.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable/img.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/drawable/jump_gif.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_google_map.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_google_map.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_jump.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_jump.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_jump_summary.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_jump_summary.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_like.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_like.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_personal_details.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_personal_details.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_rank_row_detail.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_rank_row_detail.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_reset_password.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_reset_password.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_run_summary.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_run_summary.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_running.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_running.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_splash.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_splash.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_user_guide_lines.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/activity_user_guide_lines.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/fragment_profile.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/fragment_profile.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/fragment_workout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/fragment_workout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/layout/settings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/mipmap-hdpi/ic_launcher.webp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/mipmap-hdpi/ic_launcher_round.webp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/mipmap-hdpi/ic_music_launcher.webp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/mipmap-hdpi/ic_music_launcher_round.webp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/mipmap-hdpi/ic_mute_music.webp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/mipmap-hdpi/ic_mute_music_round.webp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/PulseStepApplication/app/src/main/res/values/strings.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=PhysicalDevice, isTemplate=false, identifier=serial=1e7e7882)]" />
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$/PulseStepApplication">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <task path="$PROJECT_DIR$/PulseStepApplication/app">
+          <activation />
+        </task>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="PulseStep Application" type="f1a62948:ProjectNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="PulseStep Application" type="f1a62948:ProjectNode" />
+                <item name="app" type="2d1252cf:ModuleNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="PulseStep Application" type="f1a62948:ProjectNode" />
+                <item name="app" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="PulseStep Application" type="f1a62948:ProjectNode" />
+                <item name="app" type="2d1252cf:ModuleNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="other" type="c8890929:TasksNode$1" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="PulseStep Application" type="f1a62948:ProjectNode" />
+                <item name="app" type="2d1252cf:ModuleNode" />
+                <item name="Run Configurations" type="7b0102dc:RunConfigurationsNode" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="resourceFile" />
+        <option value="layoutResourceFile" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="Add-Service-4" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="ProjectErrors" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="2nBWJaCb9QYnmDoj5dFFYSpHyiM" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Android App.PulseStep_Application.app.executor": "Run",
+    "Android App.PulseStep_Application.executor": "Run",
+    "Android App.app.executor": "Run",
+    "Gradle.PulseStepApplication:app [testDebugUnitTest].executor": "Run",
+    "Gradle.PulseStepApplication:app [testReleaseUnitTest].executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.android.tools.idea.streaming.zoom.toolbar.visible": "false",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "git-widget-placeholder": "rmUnused",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/COMP90018_PulseStep",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "reference.settingsdialog.project.gradle"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\COMP90018_PulseStep\PulseStepApplication\app\src\main\res\drawable" />
+      <recent name="C:\COMP90018_PulseStep\PulseStepApplication\app\src\main\res\layout" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Android App.app">
+    <configuration name="PulseStep_Application" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
+      <module name="PulseStep_Application.app.main" />
+      <option name="DEPLOY" value="true" />
+      <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
+      <option name="DEPLOY_AS_INSTANT" value="false" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+      <option name="CLEAR_APP_STORAGE" value="false" />
+      <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="DEBUGGER_TYPE" value="Auto" />
+      <Auto>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Auto>
+      <Hybrid>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Hybrid>
+      <Java>
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Java>
+      <Native>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Native>
+      <Profilers>
+        <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Java/Kotlin Method Sample (legacy)" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
+      </Profilers>
+      <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
+      <module name="PulseStep_Application.app.main" />
+      <option name="DEPLOY" value="true" />
+      <option name="DEPLOY_APK_FROM_BUNDLE" value="true" />
+      <option name="DEPLOY_AS_INSTANT" value="false" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+      <option name="CLEAR_APP_STORAGE" value="false" />
+      <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="DEBUGGER_TYPE" value="Auto" />
+      <Auto>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Auto>
+      <Hybrid>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Hybrid>
+      <Java>
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Java>
+      <Native>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Native>
+      <Profilers>
+        <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Java/Kotlin Method Sample (legacy)" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
+      </Profilers>
+      <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="PulseStepApplication:app [testDebugUnitTest]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/PulseStepApplication/app" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="testDebugUnitTest" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>false</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <configuration name="PulseStepApplication:app [testReleaseUnitTest]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/PulseStepApplication/app" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="testReleaseUnitTest" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>false</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Android App.app" />
+      <item itemvalue="Android App.PulseStep_Application" />
+      <item itemvalue="Gradle.PulseStepApplication:app [testDebugUnitTest]" />
+      <item itemvalue="Gradle.PulseStepApplication:app [testReleaseUnitTest]" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Gradle.PulseStepApplication:app [testReleaseUnitTest]" />
+        <item itemvalue="Gradle.PulseStepApplication:app [testDebugUnitTest]" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="09df5ca5-f7cc-4c36-bdc8-9d9bfc84db1a" name="Changes" comment="" />
+      <created>1728446879523</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1728446879523</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

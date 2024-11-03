@@ -85,7 +85,6 @@
 
         <!-- Icon for Address -->
         <ImageView
-            android:id="@+id/icon_address"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@drawable/ic_location"

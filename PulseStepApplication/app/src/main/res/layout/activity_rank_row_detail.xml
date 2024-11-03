@@ -138,7 +138,6 @@
                 app:layout_constraintTop_toBottomOf="@id/workout_count_jump" />
 
             <ImageView
-                android:id="@+id/calorie_icon_jump"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:layout_marginTop="5dp"
@@ -155,7 +154,6 @@
 
     <!-- CardView for Workout (Running) -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/card_running"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
@@ -234,7 +232,6 @@
                 app:layout_constraintTop_toBottomOf="@id/workout_count_run" />
 
             <ImageView
-                android:id="@+id/calorie_icon_run"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:layout_marginTop="5dp"
