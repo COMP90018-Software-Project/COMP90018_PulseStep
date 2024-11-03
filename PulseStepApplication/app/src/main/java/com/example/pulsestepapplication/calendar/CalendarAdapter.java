@@ -28,7 +28,6 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
     private LinearLayoutManager layoutManager;
     private OnDateClickListener onDateClickListener;
     private LinearSnapHelper snapHelper;
-    // 接口用于回调点击的日期
     public interface OnDateClickListener {
         void onDateClick(String date);
     }
@@ -75,14 +74,6 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
                                     Log.d("CalculatedOffset", String.valueOf(offset));
                                     layoutManager.scrollToPositionWithOffset(selectedPosition, offset);
 
-                                    // 这里延迟调用 SnapHelper 的调整
-//                                        recyclerView.postDelayed(() -> {
-//                                            int[] snapDistances = snapHelper.calculateDistanceToFinalSnap(layoutManager, itemView);
-//                                            if (snapDistances != null) {
-//                                                recyclerView.smoothScrollBy(snapDistances[0], snapDistances[1]);
-//                                                Log.d("AAAAAAAAAAAAAAAAAA", "YYYYYYYYYYYYY");
-//                                            }
-//                                        }, 100);  // 100ms 延迟，确保之前的滚动完成
                                 } else {
                                     Log.e("CalendarAdapter", "Item view is still null after scrolling");
                                 }
@@ -111,7 +102,6 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
         String date = dates.get(position);
         holder.tvDate.setText(date);
 
-        // 处理选择状态的背景和颜色
         if (position == selectedPosition) {
             holder.tvDate.setBackgroundResource(R.drawable.calendar_item_background);
             holder.tvDate.setPadding(0, 14, 0, 14);  // Ensure consistent padding
@@ -122,18 +112,15 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
             holder.tvDate.setTextColor(Color.BLACK);
         }
 
-        // 点击事件：通知 ProfileFragment 选中的日期
         holder.itemView.setOnClickListener(v -> {
             selectedPosition = position;
             notifyDataSetChanged();
-
-            // 使用 SimpleDateFormat 格式化为 yyyy-MM-dd
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.DAY_OF_MONTH, position - 15); // 日期相对偏移量
+            cal.add(Calendar.DAY_OF_MONTH, position - 15);
 
             String formattedDate = sdf.format(cal.getTime());
-            onDateClickListener.onDateClick(formattedDate);  // 回调，传递正确格式的日期
+            onDateClickListener.onDateClick(formattedDate);
         });
     }
 

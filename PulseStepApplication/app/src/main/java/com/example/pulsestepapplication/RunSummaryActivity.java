@@ -154,7 +154,7 @@ public class RunSummaryActivity extends AppCompatActivity implements OnMapReadyC
 
                 Intent intent = new Intent(RunSummaryActivity.this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                intent.putExtra("fragment", "WorkoutFragment"); // 可选：传递参数以指示返回到WorkoutFragment
+                intent.putExtra("fragment", "WorkoutFragment");
                 startActivity(intent);
                 finish();
             }
