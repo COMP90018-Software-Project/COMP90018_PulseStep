@@ -3,9 +3,41 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_workout"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/constraint_layout"
     tools:context=".WorkoutFragment">
+    <!-- fragment_workout.xml -->
+    <!-- Map container -->
+    <FrameLayout
+        android:id="@+id/map_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+    </FrameLayout>
+
+    <!-- Placeholder ImageView -->
+    <ImageView
+        android:id="@+id/map_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="visible"
+        android:src="@drawable/bg_workout" />
+
+    <!-- ProgressBar -->
+    <ProgressBar
+        android:id="@+id/map_progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:visibility="gone"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/bar_orange"
+        android:backgroundTint="@color/bar_orange"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 
     <!-- Greeting text   -->
     <TextView
@@ -13,7 +45,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="40dp"
         android:layout_marginTop="72dp"
         android:text="Hi, XXX"
         android:fontFamily="@font/inter_semi_bold"
@@ -27,7 +59,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginStart="50dp"
+        android:layout_marginStart="40dp"
         android:layout_marginTop="52dp"
         android:text="Monday - Sep 16"
         android:textSize="18dp"
@@ -42,6 +74,7 @@
         android:layout_height="150dp"
         android:layout_marginTop="92dp"
         android:background="@drawable/bg_ripple"
+        android:backgroundTint="@null"
         android:stateListAnimator="@drawable/bt_state_animator"
         android:text="Run"
         android:textColor="@color/black"
@@ -72,4 +105,32 @@
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/run_button" />
+
+    <FrameLayout
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_margin="16dp"
+        android:paddingTop="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.96"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+
+        >
+
+        <ImageView
+            android:id="@+id/my_star"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:src="@drawable/ic_message" />
+
+        <View
+            android:id="@+id/notification_badge"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_gravity="top|end"
+            android:background="@drawable/circular_button"
+            android:visibility="gone" />
+
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

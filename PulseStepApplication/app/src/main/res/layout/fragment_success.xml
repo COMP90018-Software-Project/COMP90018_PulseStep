@@ -16,7 +16,9 @@
         android:layout_marginTop="50dp"
         android:text="Successful"
         android:textColor="@color/black"
-        android:textSize="19sp" />
+        android:textSize="19sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/context"/>
 
     <TextView
         android:id="@+id/context"

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="68dp"
         android:gravity="center"
-        android:text="Jump Rope"
+        android:text="Total Jump Count"
         android:textColor="@android:color/black"
         android:textSize="30sp"
         android:fontFamily="@font/inter_semi_bold"
@@ -22,12 +22,12 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/jump_times"
+        android:id="@+id/jump_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="-10dp"
         android:gravity="center"
-        android:text="100"
+        android:text="0"
         android:textColor="@android:color/black"
         android:textSize="90sp"
         android:fontFamily="@font/inter_black_italic"
@@ -37,20 +37,20 @@
         app:layout_constraintTop_toBottomOf="@+id/jump_summary_title" />
 
     <!-- Stats Container (Time, Avg Pace, Calories) -->
-    <TextView
-        android:id="@+id/jump_unit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="-5dp"
-        android:gravity="center"
-        android:text="Times"
-        android:textColor="@color/gray"
-        android:textSize="20sp"
-        android:fontFamily="@font/inter_medium"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.103"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/jump_times" />
+<!--    <TextView-->
+<!--        android:id="@+id/jump_unit"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="-5dp"-->
+<!--        android:gravity="center"-->
+<!--        android:text="Times"-->
+<!--        android:textColor="@color/gray"-->
+<!--        android:textSize="20sp"-->
+<!--        android:fontFamily="@font/inter_medium"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintHorizontal_bias="0.103"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/jump_times" />-->
 
     <androidx.cardview.widget.CardView
         android:id="@+id/jump_summary_box"
@@ -66,19 +66,23 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:backgroundTint="#FFFFFF"
+            android:background="@drawable/rounded_background">
 
             <!-- Time -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
 
-                <!--                <ImageView-->
-                <!--                    android:layout_width="24dp"-->
-                <!--                    android:layout_height="24dp"-->
-                <!--                    android:src="@drawable/ic_time" />-->
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_timer" />
 
                 <TextView
                     android:layout_width="0dp"
@@ -90,9 +94,10 @@
                     android:textSize="16sp" />
 
                 <TextView
+                    android:id="@+id/jump_summary_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="44:58"
+                    android:text="--:--"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
             </LinearLayout>
@@ -101,42 +106,48 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
 
-                <!--                <ImageView-->
-                <!--                    android:layout_width="24dp"-->
-                <!--                    android:layout_height="24dp"-->
-                <!--                    android:src="@drawable/ic_avg_pace" />-->
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_avg_pace" />
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:paddingStart="8dp"
-                    android:text="Avg Pace"
+                    android:text="Avg Jump Speed"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
 
                 <TextView
+                    android:id="@+id/jump_summary_avg_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="9'09&quot;"
+                    android:text="0 / min"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
             </LinearLayout>
+
 
             <!-- Calories -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
 
-                <!--                <ImageView-->
-                <!--                    android:layout_width="24dp"-->
-                <!--                    android:layout_height="24dp"-->
-                <!--                    android:src="@drawable/ic_calories" />-->
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_calories" />
 
                 <TextView
                     android:layout_width="0dp"
@@ -148,12 +159,46 @@
                     android:textSize="16sp" />
 
                 <TextView
+                    android:id="@+id/jump_summary_calories"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="308"
+                    android:text="0"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
             </LinearLayout>
+
+            <!-- Location -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_location_mark" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingStart="8dp"
+                    android:text="Location"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/jump_summary_address"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
